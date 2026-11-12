@@ -2,10 +2,10 @@
 
 - **ID:** 001-mvp-architecture
 - **Wersja:** 0.2
-- **Status:** Draft — do review
+- **Status:** Approved — zatwierdzono merytorycznie przez właściciela
 - **Lekcja:** 01 — Analiza wymagań, MVP i architektura docelowa
 - **Źródła:** `syllabus.md`, `progress.md`, `requirements.md` v0.1, decyzje D-01–D-05 zatwierdzone w rozmowie
-- **Charakter:** rewizja wymagań do review; nie stanowi zatwierdzenia `spec.md` ani implementacji
+- **Charakter:** zatwierdzona rewizja wymagań; zatwierdzenie `spec.md` jest odrębną decyzją i nie oznacza implementacji
 
 ## 1. Cel i problem
 
