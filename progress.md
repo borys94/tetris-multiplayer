@@ -1,11 +1,11 @@
 # Multiplayer Tetris — dziennik postępów
 
 ## Stan projektu
-- **Ukończone lekcje:** 0/60
-- **Aktualna lekcja:** 01
+- **Ukończone lekcje:** 1/60
+- **Aktualna lekcja:** 02
 - **Etap:** M1 — Fundament inżynierski
-- **Ostatnia aktualizacja:** nie rozpoczęto
-- **Repozytorium / gałąź:** do uzupełnienia
+- **Ostatnia aktualizacja:** 2026-11-12 — zamknięcie lekcji 01
+- **Repozytorium / gałąź:** `borys94/tetris-multiplayer` / `main`
 - **Środowiska:** lokalne — planowane; beta — nieuruchomione; produkcja — nieuruchomiona
 
 ## Statusy
@@ -14,7 +14,7 @@
 ## Lista lekcji
 | Nr | Lekcja | Status | Specyfikacja / PR | Dowód weryfikacji | Uwagi |
 |---|---|---|---|---|---|
-| 01 | Analiza wymagań, MVP i architektura docelowa | Nie rozpoczęto | — | — | — |
+| 01 | Analiza wymagań, MVP i architektura docelowa | Ukończono | `specs/001-mvp-architecture/` (`requirements.md` v0.2, `spec.md` v0.3, `design.md` v0.2, `tasks.md` v0.4) | [Commit dokumentacji](https://github.com/borys94/tetris-multiplayer/commit/7c421bd0a2d381a788a008717f0ab689754c220c); review T-01–T-06: PASS | `Lesson 01: CLOSED` — decyzja właściciela 2026-11-12; bez testów aplikacji |
 | 02 | Test diagnostyczny i organizacja pracy z AI | Nie rozpoczęto | — | — | — |
 | 03 | Monorepo, TypeScript, pnpm i Turborepo | Nie rozpoczęto | — | — | — |
 | 04 | Dokumentacja, ADR, konwencje i szablony SDD | Nie rozpoczęto | — | — | — |
@@ -78,6 +78,14 @@
 ## Historia ukończonych lekcji
 Dla każdej lekcji dopisz: datę, link do PR/commita, zmienione artefakty, wykonane testy, wynik review i wnioski.
 
+### Lekcja 01 — 2026-11-12 — Ukończono
+- **Decyzja:** `Lesson 01: CLOSED` — jawne zatwierdzenie właściciela po raporcie `Lesson 01 Completion Gate`.
+- **Dowód Git:** [commit zatwierdzonych dokumentów](https://github.com/borys94/tetris-multiplayer/commit/7c421bd0a2d381a788a008717f0ab689754c220c) (`main`).
+- **Artefakty:** `specs/001-mvp-architecture/requirements.md` v0.2, `spec.md` v0.3, `design.md` v0.2, `tasks.md` v0.4 — wszystkie `Approved`.
+- **Weryfikacja:** przegląd dokumentacji T-01–T-06: `PASS` po korekcie statusów; sprawdzono zakres MVP, wymagania, kryteria, macierze śledzenia, decyzje i zawartość plików w GitHub.
+- **Testy:** nie uruchamiano testów aplikacji, CI ani E2E; lekcja dotyczyła dokumentacji.
+- **Wnioski:** oddzielać zatwierdzenie merytoryczne od formalnego zamknięcia; dokumentować odroczenia (m.in. FR-10/S-17, reconnect, wejścia); kandydatów ADR-001–ADR-005 sformalizować w lekcji 04.
+
 ## Testy wiedzy (co 5 lekcji)
 | Lekcje | Data | Wynik | Mocne strony | Luki i działania |
 |---|---|---|---|---|
@@ -103,6 +111,6 @@ Dla każdej lekcji dopisz: datę, link do PR/commita, zmienione artefakty, wykon
 |---|---|---|---|---|
 
 ## Następne kroki
-1. Rozpocząć lekcję 01 w nowym czacie projektu.
-2. Zatwierdzić MVP i kryteria akceptacji.
-3. Zaktualizować ten plik dopiero po zweryfikowaniu wyników.
+1. Rozpocząć lekcję 02 — Test diagnostyczny i organizacja pracy z AI — w osobnym czacie projektu.
+2. Odczytać aktualny `syllabus.md`, `progress.md` i zatwierdzony pakiet SDD lekcji 01 jako punkt wyjścia.
+3. Kontynuować cykl SDD; aktualizować `progress.md` dopiero na podstawie dowodów i po wymaganej akceptacji.
