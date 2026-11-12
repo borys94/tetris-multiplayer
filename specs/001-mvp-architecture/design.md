@@ -2,8 +2,8 @@
 
 - **ID:** 001-mvp-architecture
 - **Wersja:** 0.2
-- **Status:** Draft — do review
-- **Decyzja ogólna:** zachowano kierunek i kandydatów ADR-001–ADR-005; uzupełniono projekt względem zatwierdzonych `requirements.md` v0.2 i `spec.md` v0.3. Dokument oczekuje na review.
+- **Status:** Approved — zatwierdzono merytorycznie przez właściciela
+- **Decyzja ogólna:** zachowano kierunek i kandydatów ADR-001–ADR-005; uzupełniono projekt względem zatwierdzonych `requirements.md` v0.2 i `spec.md` v0.3. Dokument został zatwierdzony merytorycznie przez właściciela.
 
 ## 1. Cele architektoniczne
 1. Umożliwić etapowe dostarczenie single-player, następnie 1v1 i późniejszych funkcji.
@@ -207,4 +207,4 @@ Silnik wyznacza przejścia z jawnego stanu, uporządkowanych wejść, numeru tic
 **Mapowanie kandydatów AC produktu:** AC-INV-01/02 → Room & Invitation (§6); AC-GUEST-01 → Guest Session (§4/§6); AC-MATCH-01–04 → Match Session (§4); AC-REC-01–05 → reconnect i sesje (§5/§6); AC-INPUT-01/02 → Keyboard Adapter (§3/§6). Pełne testy produktu powstaną w odpowiednich lekcjach.
 
 ## 13. Review i status
-Kierunek ADR-001–ADR-005 zachowano jako kandydatów na formalne ADR (L04); nie twierdzimy, że zostały już zapisane i zatwierdzone osobne pliki ADR. `requirements.md` v0.2 i `spec.md` v0.3 zostały merytorycznie zatwierdzone przez właściciela w rozmowie; ich metadane w plikach mogą nadal wskazywać Draft. Niniejszy `design.md` v0.2 jest **Draft — do review**. Nie jest dowodem implementacji, uruchomienia testów ani spełnienia AC-06 dla wszystkich czterech dokumentów SDD.
+Kierunek ADR-001–ADR-005 zachowano jako kandydatów na formalne ADR (L04); nie twierdzimy, że zostały już zapisane i zatwierdzone osobne pliki ADR. `requirements.md` v0.2, `spec.md` v0.3 i niniejszy `design.md` v0.2 zostały merytorycznie zatwierdzone przez właściciela w rozmowie; metadane dokumentów mają status `Approved`. Zatwierdzenie projektu nie jest dowodem implementacji ani uruchomienia testów; spełnienie AC-06 wymaga osobnej kontroli spójności całego pakietu SDD.
