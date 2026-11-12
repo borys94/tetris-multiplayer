@@ -2,7 +2,7 @@
 
 - **ID:** 001-mvp-architecture
 - **Wersja:** 0.4
-- **Status:** Draft — do review
+- **Status:** Approved — zatwierdzono merytorycznie przez właściciela
 - **Podstawa:** `requirements.md` v0.2, `spec.md` v0.3, `design.md` v0.2 (zatwierdzone merytorycznie przez właściciela)
 - **Zakres:** wyłącznie dokumentacja i jej weryfikacja; bez kodu aplikacji, konfiguracji CI i infrastruktury
 
