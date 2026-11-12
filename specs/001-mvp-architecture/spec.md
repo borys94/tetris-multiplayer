@@ -2,7 +2,7 @@
 
 - **ID:** 001-mvp-architecture
 - **Wersja:** 0.3
-- **Status:** Draft — do review
+- **Status:** Approved — zatwierdzono merytorycznie przez właściciela
 - **Rodzaj:** Specyfikacja zakresu i kontraktów architektonicznych, nie pełna specyfikacja reguł gry
 
 - **Podstawa:** zatwierdzone merytorycznie `requirements.md` v0.2 oraz decyzje D-01–D-05; review `spec.md` v0.2 (2 Major, 4 Minor)
@@ -152,11 +152,11 @@ Niniejszy dokument definiuje weryfikowalne zobowiązania architektoniczne i prod
 - `AC-01`–`AC-06` pozostają kryteriami dokumentacyjnymi **lekcji 01**, nie dowodem wdrożenia gry.
 - `S-01`–`S-20` opisują **przyszłe scenariusze produktu i kontrole architektoniczne**. Zachowano identyfikatory `S-01`–`S-17`; dodano S-18 (FR-09), S-19 (NFR-02) i S-20 (NFR-06). S-17 jest jawnie odroczonym zobowiązaniem specyfikacyjnym, nie testem endpointów.
 - **Otwarte:** format i ważność zaproszeń, polityka aktualności wejść, obsługa wielu rozłączeń, równoczesne rozłączenie obu graczy, graniczny timeout, mapowanie klawiszy i wersje przeglądarek, szczegółowa definicja `top-out`, ataki/punktacja i API FR-10. S-17 pozostaje oznaczony jako `Deferred specification`.
-- **Nie uruchomiono testów aplikacji, CI ani E2E.** Dokument wymaga review właściciela projektu oraz kontroli spójności z `design.md` i `tasks.md`.
+- **Nie uruchomiono testów aplikacji, CI ani E2E.** Właściciel zatwierdził treść dokumentu; kontrola spójności z `design.md` i `tasks.md` jest odrębnym elementem bramki lekcji 01.
 
 ### Rejestr odroczeń i status źródeł
 - **FR-10 / S-17:** przed implementacją API w lekcjach 21–24 wymagane są osobne testowalne kontrakty endpointów, modeli i błędów.
 - **FR-09 / S-18:** przed implementacją walidacji w lekcji 27 należy zatwierdzić reguły aktualności wejść.
 - **FR-08 / S-07:** przed implementacją reconnect w lekcji 30 należy rozstrzygnąć wiele rozłączeń, rozłączenie obu graczy i zdarzenia na granicy timeoutu.
 - **D-05 / S-15:** przed testami przeglądarkowymi w lekcjach 16–20 należy zatwierdzić macierz przeglądarek i mapowanie klawiszy.
-- **Status `requirements.md` v0.2:** właściciel projektu zatwierdził treść w rozmowie; nagłówek pliku źródłowego nadal zawiera `Draft — do review`. Aktualizacja jego metadanych wymaga osobnej zmiany dokumentu, nie jest częścią niniejszej rewizji.
+- **Status `requirements.md` v0.2:** właściciel projektu zatwierdził treść w rozmowie; metadane pliku źródłowego zaktualizowano na `Approved` w ramach korekty statusów pakietu SDD.
