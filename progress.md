@@ -2,12 +2,12 @@
 
 ## Stan projektu
 
-- **Ukończone lekcje:** 4/60
-- **Aktualna lekcja:** 05
+- **Ukończone lekcje:** 5/60
+- **Aktualna lekcja:** 06
 - **Etap:** M1 — Fundament inżynierski
-- **Ostatnia aktualizacja:** 2026-11-13 — zamknięcie lekcji 04
+- **Ostatnia aktualizacja:** 2026-11-13 — zamknięcie lekcji 05
 - **Repozytorium / gałąź:** `borys94/tetris-multiplayer` / `main`
-- **Środowiska:** lokalne — monorepo (`yarn install --immutable`, `yarn check`); aplikacje jeszcze nieuruchamialne; beta — nieuruchomione; produkcja — nieuruchomiona
+- **Środowiska:** lokalne — monorepo (`yarn install --immutable`, `yarn check`); CI — GitHub Actions na PR do `main` (6 wymaganych checks, ruleset `main-quality-gates`); aplikacje jeszcze nieuruchamialne; beta — nieuruchomione; produkcja — nieuruchomiona
 
 ## Statusy
 
@@ -21,7 +21,7 @@
 | 02 | Test diagnostyczny i organizacja pracy z AI | Ukończono | `specs/002-ai-workflow/` (`requirements.md`, `spec.md`, `design.md`, `tasks.md` — `Approved`); [PR #1](https://github.com/borys94/tetris-multiplayer/pull/1) | Kontrole spójności ID R-01–R-05 / S-01–S-05 / T-01–T-06: PASS; symulacje S-01–S-05: PASS (S-02, S-03 dokumentacyjnie); testy/lint/typecheck: NOT_RUN (brak kodu aplikacji) | `Lesson 02: CLOSED` — decyzja właściciela 2026-11-13 po code review PR #1: PASS; „test diagnostyczny” nieobjęty specyfikacją 002 |
 | 03 | Monorepo, TypeScript, Yarn i Turborepo | Ukończono | `specs/003-monorepo-tooling/` (`Approved`); [PR #2](https://github.com/borys94/tetris-multiplayer/pull/2) | S-01–S-05: PASS na świeżym klonie (`yarn check` 9/9, cache `FULL TURBO`, constraints i granice TS — scenariusze negatywne); CI: NOT_RUN (L05) | `Lesson 03: CLOSED` — merge PR #2 przez właściciela 2026-11-13 |
 | 04 | Dokumentacja, ADR, konwencje i szablony SDD | Ukończono | `specs/004-documentation-sdd/` (`Approved`); `docs/conventions.md`, `docs/templates/sdd/`, `docs/adr/`; [PR #4](https://github.com/borys94/tetris-multiplayer/pull/4) | Linki (16) i kotwice: PASS; sekcje szablonów i ADR: PASS; traceability REQ-001–005 → SPEC → TASK → AC-001–006: PASS; zakres tylko dokumentacja: PASS; `yarn check` 9/9: PASS; lint Markdown: NOT_RUN (L05) | Od 004 schemat ID `REQ/SPEC/TASK/AC` (001–003 legacy); ADR-003 `Accepted`; K-01 → Express; `Lesson 04: CLOSED` — merge PR #4 przez właściciela 2026-11-13 |
-| 05 | CI: lint, sprawdzanie typów, testy i kontrole PR | Nie rozpoczęto | — | — | — |
+| 05 | CI: lint, sprawdzanie typów, testy i kontrole PR | Ukończono | `specs/005-ci-quality-gates/` (`Approved`); `.github/workflows/ci.yml`; [PR #6](https://github.com/borys94/tetris-multiplayer/pull/6) | AC-001–AC-006: PASS (raport w `tasks.md`); przebiegi CI na PR #6 — pozytywne i negatywne; blokada merge przez ruleset potwierdzona; `yarn check` 12/12: PASS | ESLint + markdownlint-cli2; TS 6/7 side-by-side (D-002); `Lesson 05: CLOSED` — decyzja właściciela 2026-11-13, squash merge PR #6 |
 | 06 | Model domenowy i stan gry | Nie rozpoczęto | — | — | — |
 | 07 | Plansza, tetromino i układ współrzędnych | Nie rozpoczęto | — | — | — |
 | 08 | Ruch, wykrywanie kolizji i granice planszy | Nie rozpoczęto | — | — | — |
@@ -119,6 +119,16 @@ Dla każdej lekcji dopisz: datę, link do PR/commita, zmienione artefakty, wykon
 - **Testy:** `yarn check` 9/9 — `PASS` (bez zmian w kodzie); lint Markdown — `NOT_RUN` (L05).
 - **Wnioski:** draft `requirements.md` był kopią `spec.md` — kontrolować kompletność pakietu przed zatwierdzeniem; konflikty konwencji (ID, numeracja ADR, nazwa gałęzi) rozstrzygać przed pisaniem; status `Accepted` tylko po jawnej decyzji właściciela.
 
+### Lekcja 05 — 2026-11-13 — Ukończono
+
+- **Decyzja:** `Lesson 05: CLOSED` — zatwierdzenie SDD z decyzjami D1–D5 i polecenie zamknięcia przez właściciela; squash merge PR #6 przez agenta na polecenie właściciela.
+- **Dowód Git:** [PR #6](https://github.com/borys94/tetris-multiplayer/pull/6) z gałęzi `feature/005-ci-quality-gates`; squash merge `afa1b2c` w `main` (pełna historia z commitami testów negatywnych w PR).
+- **Artefakty:** `specs/005-ci-quality-gates/` (REQ-001–005, SPEC-001–005, AC-001–006, D-001–006, TASK-001–006 — `Approved`/`DONE`); `.github/workflows/ci.yml`, `.github/actions/setup/`; `eslint.config.mjs`, `.markdownlint-cli2.jsonc`; skrypty `lint`, `lint:ts`, `lint:md`, rozszerzone `check`; README.
+- **Decyzje:** `typescript-eslint` nie wspiera TS 7.0 → side-by-side `typescript` = `@typescript/typescript6`, `tsc` z `@typescript/native` (TS 7.0.2); ESLint bez reguł type-aware; markdownlint dla wszystkich `*.md` (MD013, MD060, MD036 wyłączone, MD033 tylko `<nazwa>`), jednorazowa korekta pustych linii; brak cache zależności w CI; ruleset `main-quality-gates` (6 checks, bez bypass) po upublicznieniu repo.
+- **Weryfikacja:** AC-001 (opened/synchronize/reopened/zmiana bazy), AC-002 (lint TS i MD), AC-003 (lockfile), AC-005 (uprawnienia) — `PASS` w CI; AC-004 — `PASS` lokalnie (logi Turborepo); AC-006 — `PASS` (`gh pr merge` odrzucony przy nieudanym `lint-markdown`). Czas przebiegu CI 18–49 s.
+- **Testy:** `yarn check` 12/12 — `PASS` lokalnie i na `main` po merge; `actionlint` — `NOT_RUN` (blokada uruchomienia pobranej binarki).
+- **Wnioski:** weryfikować kompatybilność narzędzi z nową główną wersją kompilatora przed zatwierdzeniem designu; ochrona gałęzi w prywatnym repo wymaga GitHub Pro (repo upublicznione); auto mode wymaga jawnej zgody na operacje zmieniające stan GitHuba (zmiana bazy PR, ruleset, merge).
+
 ## Testy wiedzy (co 5 lekcji)
 
 | Lekcje | Data | Wynik | Mocne strony | Luki i działania |
@@ -143,6 +153,7 @@ Dla każdej lekcji dopisz: datę, link do PR/commita, zmienione artefakty, wykon
 | ADR-003 | Server-authoritative multiplayer | Accepted (2026-11-13) | [`docs/adr/ADR-003-server-authoritative-multiplayer.md`](docs/adr/ADR-003-server-authoritative-multiplayer.md) |
 | ADR-001, 002, 004, 005 | Kandydaci z `specs/001-mvp-architecture/design.md` §7 | Do formalizacji | — |
 | ADR-006 (planowany) | Backend: Express.js (rozstrzygnięcie K-01) | Decyzja właściciela 2026-11-13; ADR do zapisania | — |
+| Kandydat (L05) | TypeScript 6/7 side-by-side dla `typescript-eslint` (`specs/005-ci-quality-gates/design.md` D-002) | Decyzja właściciela 2026-11-13; ADR do zapisania | — |
 
 ## Ryzyka i blokery
 
@@ -151,10 +162,13 @@ Dla każdej lekcji dopisz: datę, link do PR/commita, zmienione artefakty, wykon
 | 2026-11-13 | „Test diagnostyczny” z tytułu lekcji 02 nie jest objęty `specs/002-ai-workflow/` | Niepełna realizacja tematu lekcji 02 | Zrealizować poza repozytorium albo uzasadnić pominięcie przed zamknięciem lekcji | Właściciel |
 | 2026-11-13 | Wymagania lekcji 02 zweryfikowane przez review i symulację, bez testów automatycznych (S-03) | Dowody mają charakter manualny | Jawnie odnotowane w PR #1; automatyczne kontrole od lekcji 05 (CI) | Właściciel |
 | 2026-11-13 | K-01: `specs/001-mvp-architecture/design.md` wymienia Fastify, a `AGENTS.md` — Express | Sprzeczne źródła prawdy dla backendu | **Rozstrzygnięte 2026-11-13: Express** (004 design Q-003); pozostaje zapis ADR-006 i korekta wzmianek o Fastify w `specs/001` | Właściciel |
-| 2026-11-13 | Importy niezadeklarowanych (wyhoistowanych) pakietów nie są wykrywane w monorepo | Ukryta zależność, np. silnika od pakietu aplikacji | Lint importów w lekcji 05 | Właściciel |
+| 2026-11-13 | Importy niezadeklarowanych (wyhoistowanych) pakietów nie są wykrywane w monorepo | Ukryta zależność, np. silnika od pakietu aplikacji | Poza zakresem L05 (decyzja 2026-11-13); lint importów do zaplanowania — najpóźniej przed L16/L21 (pierwsze zależności runtime) | Właściciel |
+| 2026-11-13 | Side-by-side TS 6/7: edytor i ESLint używają API TS 6, `tsc` — TS 7; wyhoistowany `node_modules/.bin/tsc` w root to TS 6 | Możliwe rozbieżności diagnostyk; ostrzeżenie Yarn YN0066 przy instalacji | Wrócić do jednego `typescript` po wsparciu TS ≥ 7.1 w `typescript-eslint` (issue #10940) | Właściciel |
+| 2026-11-13 | Repo publiczne: workflowy z forków nowych kontrybutorów wymagają zatwierdzenia (`first_time_contributors`) | Uruchomienie kodu z forka bez sekretów, z tokenem tylko do odczytu | Rozważyć `all_external_contributors`; nigdy `pull_request_target` | Właściciel |
 
 ## Następne kroki
 
-1. Rozpocząć lekcję 05 — CI: lint, sprawdzanie typów, testy i kontrole PR — w osobnym czacie projektu, na podstawie szablonów z `docs/templates/sdd/`; uwzględnić lint Markdown/linków i lint importów (ryzyka z L03/L04).
-2. Osobna zmiana dokumentacyjna: ADR-006 (Express), formalizacja ADR-001, 002, 004, 005 i kandydatów z L03 (Yarn 4 + `node-modules`, Turborepo + pakiety kompilowane, egzekucja granic zależności) wg `docs/conventions.md`.
-3. Odczytać aktualne `AGENTS.md`, `syllabus.md`, `progress.md` oraz specyfikacje w `specs/` przed pracą.
+1. Przeprowadzić test wiedzy 01–05 (przegląd po lekcji 5).
+2. Rozpocząć lekcję 06 — Model domenowy i stan gry — w osobnym czacie projektu, na podstawie szablonów z `docs/templates/sdd/`; każda zmiana przechodzi 6 wymaganych checks CI.
+3. Osobna zmiana dokumentacyjna: ADR-006 (Express), formalizacja ADR-001, 002, 004, 005, kandydatów z L03 (Yarn 4 + `node-modules`, Turborepo + pakiety kompilowane, egzekucja granic zależności) i L05 (TS 6/7 side-by-side) wg `docs/conventions.md`.
+4. Odczytać aktualne `AGENTS.md`, `syllabus.md`, `progress.md` oraz specyfikacje w `specs/` przed pracą.
