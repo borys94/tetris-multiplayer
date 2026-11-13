@@ -1,12 +1,12 @@
 # Specification — Lesson 005: CI Quality Gates
 
-**Status:** Draft  
+**Status:** Approved — zatwierdzono przez właściciela 2026-11-13  
 **Requirements:** [requirements.md](./requirements.md)
 
 ## 1. Kontrakty
 
 **SPEC-001 — Uruchamianie i zestaw kontroli (REQ-001)**
-PR kierowany do `main` (`opened`, `reopened`, `synchronize`, `edited`) uruchamia CI; `edited` obejmuje również zmianę gałęzi bazowej. Kontrole obejmują ESLint dla trzech workspace'ów, markdownlint dla dokumentacji, Yarn constraints, TypeScript, Vitest i build. Każda kontrola ma własny, stabilny status check: `lint-ts`, `lint-markdown`, `constraints`, `typecheck`, `test`, `build`. Nie stosujemy filtrów ścieżek, które mogłyby pozostawić obowiązkowy check bez wyniku. Błąd dowolnej obowiązkowej kontroli powoduje nieudany status odpowiedniego checka. Lokalne `yarn check` uruchamia wszystkie sześć kategorii kontroli (constraints, oba rodzaje lintu, typecheck, testy, build), chociaż CI może wykonywać je w osobnych jobach.
+PR kierowany do `main` (`opened`, `reopened`, `synchronize`, `edited`) uruchamia CI; `edited` obejmuje również zmianę gałęzi bazowej. Kontrole obejmują ESLint dla trzech workspace'ów, markdownlint dla wszystkich plików `*.md` w repozytorium (poza `node_modules` i `dist`), Yarn constraints, TypeScript, Vitest i build. Każda kontrola ma własny, stabilny status check: `lint-ts`, `lint-markdown`, `constraints`, `typecheck`, `test`, `build`. Nie stosujemy filtrów ścieżek, które mogłyby pozostawić obowiązkowy check bez wyniku. Błąd dowolnej obowiązkowej kontroli powoduje nieudany status odpowiedniego checka. Lokalne `yarn check` uruchamia wszystkie sześć kategorii kontroli (constraints, oba rodzaje lintu, typecheck, testy, build), chociaż CI może wykonywać je w osobnych jobach.
 
 **SPEC-002 — Odtwarzalne środowisko (REQ-002)**
 CI używa Node.js zgodnego z `.nvmrc` (26), Yarn 4.18.1 z `packageManager` i `yarn install --immutable`; nie zapisuje zmienionego lockfile.
@@ -25,7 +25,7 @@ Wyniki sześciu obowiązkowych kontroli są widoczne jako odrębne, stabilnie na
 - Błąd ESLint, markdownlint, typecheck, Vitest lub build → nieudany status.
 - Zmiana publicznego API `game-engine` łamiąca konsumenta → CI wykrywa błąd w zależnym workspace.
 - Naruszenia historycznego Markdown → audyt i decyzja właściciela przed masową korektą; nie wyciszać wszystkich reguł dla uzyskania zielonego CI.
-- Brak dostępu do konfiguracji ochrony `main` → AC-006 `NOT_RUN`/zadanie `BLOCKED`, bez deklaracji pełnego `PASS`.
+- Brak dostępu do konfiguracji ochrony `main` → AC-006 `NOT_RUN`, TASK-005 `BLOCKED`, bez deklaracji pełnego `PASS`.
 - PR z forka → brak potrzeby sekretów lub uprzywilejowanych uprawnień.
 
 ## 3. Weryfikacja

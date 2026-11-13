@@ -1,6 +1,6 @@
 # Requirements — Lesson 005: CI Quality Gates
 
-**Status:** Draft  
+**Status:** Approved — zatwierdzono przez właściciela 2026-11-13  
 **Specification:** [spec.md](./spec.md)
 
 ## Cel
@@ -23,4 +23,7 @@ Zmiana jest zakończona, gdy AC-001–AC-006 ze [spec.md](./spec.md) mają udoku
 - Deployment, publikowanie artefaktów i sekrety AWS.
 - Selekcja wyłącznie zmienionych workspace'ów i zdalny cache Turborepo.
 - Egzekwowanie docelowego czasu CI jako twardej bramki; mierzymy czas, cel p95 ≤ 5 minut pozostaje propozycją do walidacji.
-- Masowe formatowanie zatwierdzonych specyfikacji bez osobnej zgody.
+- Masowe formatowanie zatwierdzonych specyfikacji bez osobnej zgody (zgoda na wąską korektę pustych linii: [design.md](./design.md) D-003).
+- Lint importów (niezadeklarowane, wyhoistowane zależności) i sprawdzanie linków w Markdown — ryzyko pozostaje w `progress.md`.
+- Reguły ESLint wymagające informacji o typach (type-aware).
+- Cache pobierania Yarn w CI — pierwsza wersja bez cache; czasy mierzymy.
