@@ -17,11 +17,16 @@ Sprawdzenie: `yarn --version` w katalogu repo powinno zwrócić `4.18.1`.
 | `yarn build` | Build wszystkich workspace'ów (Turborepo, zależności przed konsumentami) |
 | `yarn typecheck` | Sprawdzenie typów |
 | `yarn test` | Testy Vitest |
+| `yarn lint` | `lint:ts` (ESLint w workspace'ach) + `lint:md` (markdownlint-cli2 dla `*.md`) |
 | `yarn constraints` | Reguły zależności (`yarn.config.cjs`); `--fix` naprawia część naruszeń |
-| `yarn check` | `constraints` + `build`, `typecheck`, `test` — pełna weryfikacja |
+| `yarn check` | `constraints` + `lint:md` + `lint`, `build`, `typecheck`, `test` — pełna weryfikacja |
 | `yarn clean` | Usunięcie `dist/` i `.turbo/` w workspace'ach |
 
 Pojedynczy workspace: `yarn turbo run test --filter=@tetris/game-engine`.
+
+CI (`.github/workflows/ci.yml`) uruchamia dla PR do `main` sześć niezależnych checks: `constraints`, `lint-ts`, `lint-markdown`, `typecheck`, `test`, `build`.
+
+**TypeScript side-by-side:** `typescript` w `package.json` to alias na `@typescript/typescript6` (API TS 6 dla ESLint i edytora), a `tsc` w skryptach pochodzi z `@typescript/native` (TS 7.0.2). Uzasadnienie: [`specs/005-ci-quality-gates/design.md`](specs/005-ci-quality-gates/design.md) D-002.
 
 ## Struktura
 
