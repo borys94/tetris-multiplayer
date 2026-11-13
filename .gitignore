@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.DS_Store
+
+# Yarn 4 (bez Zero-Installs)
+.yarn/*
+!.yarn/releases
+!.yarn/patches
+!.yarn/plugins

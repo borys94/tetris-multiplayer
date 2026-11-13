@@ -26,10 +26,12 @@ Na początku wybieramy **jeden klaster z dwoma namespace'ami**:
 ## Konsekwencje
 
 **Pozytywne**
+
 - Niski koszt, jedna infrastruktura do utrzymania.
 - Prosty pipeline: jeden kubeconfig, dwa namespace'y.
 
 **Negatywne**
+
 - Słabsza izolacja: awaria węzła albo nieudany upgrade k3s dotyka obu środowisk.
 - Upgrade'u klastra nie przetestujemy najpierw na becie.
 - Obciążenie bety może wpłynąć na prod, jeśli limity zostaną źle ustawione.

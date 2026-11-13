@@ -21,9 +21,11 @@ Wybieramy **opcję X**, ponieważ …
 ## Konsekwencje
 
 **Pozytywne**
+
 - …
 
 **Negatywne**
+
 - …
 
 ## Kiedy wrócić do decyzji

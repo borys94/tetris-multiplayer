@@ -26,10 +26,12 @@ Wybieramy **opcję 3**:
 ## Konsekwencje
 
 **Pozytywne**
+
 - Pipeline i infrastrukturę sprawdzamy na prawdziwym AWS wcześnie.
 - Żadna wersja liczona w przeglądarce nie trafia do publicznych użytkowników.
 
 **Negatywne**
+
 - Pierwsze publiczne wydanie przesuwa się na koniec M4 (v0.3).
 - Trzeba utrzymać mechanizm zamkniętego dostępu i jego dane uwierzytelniające.
 
