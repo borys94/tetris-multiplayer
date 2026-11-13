@@ -4,7 +4,7 @@
 - **Ukończone lekcje:** 3/60
 - **Aktualna lekcja:** 04
 - **Etap:** M1 — Fundament inżynierski
-- **Ostatnia aktualizacja:** 2026-11-13 — zamknięcie lekcji 03
+- **Ostatnia aktualizacja:** 2026-11-13 — lekcja 04 do przeglądu (SDD i ADR-003 zatwierdzone, K-01 rozstrzygnięte)
 - **Repozytorium / gałąź:** `borys94/tetris-multiplayer` / `main`
 - **Środowiska:** lokalne — monorepo (`yarn install --immutable`, `yarn check`); aplikacje jeszcze nieuruchamialne; beta — nieuruchomione; produkcja — nieuruchomiona
 
@@ -17,7 +17,7 @@
 | 01 | Analiza wymagań, MVP i architektura docelowa | Ukończono | `specs/001-mvp-architecture/` (`requirements.md` v0.2, `spec.md` v0.3, `design.md` v0.2, `tasks.md` v0.4) | [Commit dokumentacji](https://github.com/borys94/tetris-multiplayer/commit/7c421bd0a2d381a788a008717f0ab689754c220c); review T-01–T-06: PASS | `Lesson 01: CLOSED` — decyzja właściciela 2026-11-12; bez testów aplikacji |
 | 02 | Test diagnostyczny i organizacja pracy z AI | Ukończono | `specs/002-ai-workflow/` (`requirements.md`, `spec.md`, `design.md`, `tasks.md` — `Approved`); [PR #1](https://github.com/borys94/tetris-multiplayer/pull/1) | Kontrole spójności ID R-01–R-05 / S-01–S-05 / T-01–T-06: PASS; symulacje S-01–S-05: PASS (S-02, S-03 dokumentacyjnie); testy/lint/typecheck: NOT_RUN (brak kodu aplikacji) | `Lesson 02: CLOSED` — decyzja właściciela 2026-11-13 po code review PR #1: PASS; „test diagnostyczny” nieobjęty specyfikacją 002 |
 | 03 | Monorepo, TypeScript, Yarn i Turborepo | Ukończono | `specs/003-monorepo-tooling/` (`Approved`); [PR #2](https://github.com/borys94/tetris-multiplayer/pull/2) | S-01–S-05: PASS na świeżym klonie (`yarn check` 9/9, cache `FULL TURBO`, constraints i granice TS — scenariusze negatywne); CI: NOT_RUN (L05) | `Lesson 03: CLOSED` — merge PR #2 przez właściciela 2026-11-13 |
-| 04 | Dokumentacja, ADR, konwencje i szablony SDD | Nie rozpoczęto | — | — | — |
+| 04 | Dokumentacja, ADR, konwencje i szablony SDD | Do przeglądu | `specs/004-documentation-sdd/` (`Approved`); `docs/conventions.md`, `docs/templates/sdd/`, `docs/adr/`; gałąź `feature/004-documentation-sdd` (PR — oczekuje) | Linki (16) i kotwice: PASS; sekcje szablonów i ADR: PASS; traceability REQ-001–005 → SPEC → TASK → AC-001–006: PASS; zakres tylko dokumentacja: PASS; `yarn check` 9/9: PASS; lint Markdown: NOT_RUN (L05) | Od 004 schemat ID `REQ/SPEC/TASK/AC` (001–003 legacy); ADR-003 `Accepted`; K-01 → Express |
 | 05 | CI: lint, sprawdzanie typów, testy i kontrole PR | Nie rozpoczęto | — | — | — |
 | 06 | Model domenowy i stan gry | Nie rozpoczęto | — | — | — |
 | 07 | Plansza, tetromino i układ współrzędnych | Nie rozpoczęto | — | — | — |
@@ -121,15 +121,19 @@ Dla każdej lekcji dopisz: datę, link do PR/commita, zmienione artefakty, wykon
 ## Rejestr decyzji (ADR)
 | ID | Temat | Status | Link |
 |---|---|---|---|
+| ADR-003 | Server-authoritative multiplayer | Accepted (2026-11-13) | [`docs/adr/ADR-003-server-authoritative-multiplayer.md`](docs/adr/ADR-003-server-authoritative-multiplayer.md) |
+| ADR-001, 002, 004, 005 | Kandydaci z `specs/001-mvp-architecture/design.md` §7 | Do formalizacji | — |
+| ADR-006 (planowany) | Backend: Express.js (rozstrzygnięcie K-01) | Decyzja właściciela 2026-11-13; ADR do zapisania | — |
 
 ## Ryzyka i blokery
 | Data | Ryzyko / bloker | Wpływ | Działanie | Właściciel |
 |---|---|---|---|---|
 | 2026-11-13 | „Test diagnostyczny” z tytułu lekcji 02 nie jest objęty `specs/002-ai-workflow/` | Niepełna realizacja tematu lekcji 02 | Zrealizować poza repozytorium albo uzasadnić pominięcie przed zamknięciem lekcji | Właściciel |
 | 2026-11-13 | Wymagania lekcji 02 zweryfikowane przez review i symulację, bez testów automatycznych (S-03) | Dowody mają charakter manualny | Jawnie odnotowane w PR #1; automatyczne kontrole od lekcji 05 (CI) | Właściciel |
-| 2026-11-13 | K-01: `specs/001-mvp-architecture/design.md` wymienia Fastify, a `AGENTS.md` — Express | Sprzeczne źródła prawdy dla backendu | Rozstrzygnąć w ADR w lekcji 04 | Właściciel |
+| 2026-11-13 | K-01: `specs/001-mvp-architecture/design.md` wymienia Fastify, a `AGENTS.md` — Express | Sprzeczne źródła prawdy dla backendu | **Rozstrzygnięte 2026-11-13: Express** (004 design Q-003); pozostaje zapis ADR-006 i korekta wzmianek o Fastify w `specs/001` | Właściciel |
 | 2026-11-13 | Importy niezadeklarowanych (wyhoistowanych) pakietów nie są wykrywane w monorepo | Ukryta zależność, np. silnika od pakietu aplikacji | Lint importów w lekcji 05 | Właściciel |
 
 ## Następne kroki
-1. Rozpocząć lekcję 04 — Dokumentacja, ADR, konwencje i szablony SDD — w osobnym czacie projektu; sformalizować ADR-001–ADR-005 oraz kandydatów z L03 (Yarn 4 + `node-modules`, Turborepo + pakiety kompilowane, egzekucja granic zależności) i rozstrzygnąć K-01.
-2. Odczytać aktualne `AGENTS.md`, `syllabus.md`, `progress.md` oraz specyfikacje w `specs/` przed pracą.
+1. Zamknąć lekcję 04: commit, PR z `feature/004-documentation-sdd`, code review, merge przez właściciela.
+2. Osobna zmiana dokumentacyjna: ADR-006 (Express), formalizacja ADR-001, 002, 004, 005 i kandydatów z L03 (Yarn 4 + `node-modules`, Turborepo + pakiety kompilowane, egzekucja granic zależności) wg `docs/conventions.md`.
+3. Odczytać aktualne `AGENTS.md`, `syllabus.md`, `progress.md` oraz specyfikacje w `specs/` przed pracą.
