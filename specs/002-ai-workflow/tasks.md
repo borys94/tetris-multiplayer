@@ -5,10 +5,10 @@
 | ID | Zadanie | Dowód ukończenia | Status |
 |---|---|---|---|
 | T-01 | Zatwierdzić wymagania R-01–R-05 i granice autonomii agenta. | Decyzja właściciela; uwagi naniesione w SDD. | DONE |
-| T-02 | Dodać cztery dokumenty SDD w `specs/002-ai-workflow/`. | Diff gałęzi `feature/002-ai-workflow`; spójne identyfikatory. | TODO |
-| T-03 | Zaproponować dopisanie polityki scope change do `AGENTS.md` po sprawdzeniu istniejących zasad. | Minimalny diff bez nadpisania wcześniejszych reguł. | TODO |
-| T-04 | Przećwiczyć scenariusze S-01–S-05 (symulacja/review). | Tabela wyników z PASS/FAIL i uzasadnieniem. | TODO |
-| T-05 | Sprawdzić spójność SDD i przygotować PR. | Review checklist, lista zmian, PR lub udokumentowany brak PR. | TODO |
+| T-02 | Dodać cztery dokumenty SDD w `specs/002-ai-workflow/`. | Diff gałęzi `feature/002-ai-workflow`; spójne identyfikatory. | READY_FOR_REVIEW |
+| T-03 | Zaproponować dopisanie polityki scope change do `AGENTS.md` po sprawdzeniu istniejących zasad. | Minimalny diff bez nadpisania wcześniejszych reguł. | READY_FOR_REVIEW |
+| T-04 | Przećwiczyć scenariusze S-01–S-05 (symulacja/review). | Tabela wyników z PASS/FAIL i uzasadnieniem. | READY_FOR_REVIEW |
+| T-05 | Sprawdzić spójność SDD i przygotować PR. | Review checklist, lista zmian, PR lub udokumentowany brak PR. | READY_FOR_REVIEW |
 | T-06 | Po akceptacji zaktualizować `progress.md`. | Faktyczne dowody weryfikacji, status lekcji i odnośnik do PR/commita. | TODO |
 
 ## Powiązanie wymagań z weryfikacją
