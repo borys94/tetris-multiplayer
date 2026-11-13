@@ -1,4 +1,4 @@
-# ADR-0004: Udostępniaj grę publicznie dopiero, gdy liczy ją serwer
+# ADR-0003: Udostępniaj grę publicznie dopiero, gdy liczy ją serwer
 
 - **Status:** Accepted
 - **Data:** 2026-11-13

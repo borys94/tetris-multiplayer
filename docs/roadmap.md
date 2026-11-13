@@ -56,7 +56,7 @@ gantt
 | M4 | Serwer jako źródło prawdy | Express + WebSocket, `game-core` uruchamiany na serwerze, klient wysyła tylko inputy, typowany protokół wiadomości, reconnect, obsługa lagów, otwarcie prod publicznie (beta zostaje zamknięta) | Singleplayer działa przez serwer, wynik liczy serwer, prod jest publiczny | server-authoritative, `ws` vs Socket.IO, format protokołu |
 | M5 | Konta, role, admin, wyniki | Rejestracja i logowanie, sesje po stronie serwera (cookies `httpOnly`/`Secure`/`SameSite`, CSRF), autoryzacja WS przez cookie, role (`player`/`admin`), panel admina, zapis wyników w bazie, ranking | Gracz loguje się i widzi swoje wyniki, admin zarządza użytkownikami | baza danych (Postgres vs Mongo), magazyn sesji, model ról |
 | M6 | Metryki | `prom-client` i `/metrics`, Prometheus i Grafana (kube-prometheus-stack), dashboard jako kod, logi JSON, podstawowe alerty | Dashboard z beta i prod | — |
-| M7 | Battle royale | Pokoje 2–16 graczy (1v1 jako pokój dwuosobowy), lobby i matchmaking, garbage lines i targeting, eliminacje, testy obciążeniowe (k6) | Mecz 16 graczy na prod bez degradacji ticka | model pokoju BR (limit 16), skalowanie pokoi |
+| M7 | Battle royale | Pokoje 2–16 graczy (1v1 jako pokój dwuosobowy), lobby i matchmaking, garbage lines i targeting, eliminacje, testy obciążeniowe (k6) | Mecz 16 graczy na prod bez degradacji ticka | model pokoju (uwzględnia limit 16 graczy), skalowanie pokoi |
 
 ## Zależności
 
