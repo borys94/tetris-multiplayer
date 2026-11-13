@@ -1,10 +1,10 @@
 # Multiplayer Tetris — dziennik postępów
 
 ## Stan projektu
-- **Ukończone lekcje:** 1/60
-- **Aktualna lekcja:** 02
+- **Ukończone lekcje:** 2/60
+- **Aktualna lekcja:** 03
 - **Etap:** M1 — Fundament inżynierski
-- **Ostatnia aktualizacja:** 2026-11-12 — zamknięcie lekcji 01
+- **Ostatnia aktualizacja:** 2026-11-13 — zamknięcie lekcji 02
 - **Repozytorium / gałąź:** `borys94/tetris-multiplayer` / `main`
 - **Środowiska:** lokalne — planowane; beta — nieuruchomione; produkcja — nieuruchomiona
 
@@ -15,7 +15,7 @@
 | Nr | Lekcja | Status | Specyfikacja / PR | Dowód weryfikacji | Uwagi |
 |---|---|---|---|---|---|
 | 01 | Analiza wymagań, MVP i architektura docelowa | Ukończono | `specs/001-mvp-architecture/` (`requirements.md` v0.2, `spec.md` v0.3, `design.md` v0.2, `tasks.md` v0.4) | [Commit dokumentacji](https://github.com/borys94/tetris-multiplayer/commit/7c421bd0a2d381a788a008717f0ab689754c220c); review T-01–T-06: PASS | `Lesson 01: CLOSED` — decyzja właściciela 2026-11-12; bez testów aplikacji |
-| 02 | Test diagnostyczny i organizacja pracy z AI | Nie rozpoczęto | — | — | — |
+| 02 | Test diagnostyczny i organizacja pracy z AI | Ukończono | `specs/002-ai-workflow/` (`requirements.md`, `spec.md`, `design.md`, `tasks.md` — `Approved`); [PR #1](https://github.com/borys94/tetris-multiplayer/pull/1) | Kontrole spójności ID R-01–R-05 / S-01–S-05 / T-01–T-06: PASS; symulacje S-01–S-05: PASS (S-02, S-03 dokumentacyjnie); testy/lint/typecheck: NOT_RUN (brak kodu aplikacji) | `Lesson 02: CLOSED` — decyzja właściciela 2026-11-13 po code review PR #1: PASS; „test diagnostyczny” nieobjęty specyfikacją 002 |
 | 03 | Monorepo, TypeScript, Yarn i Turborepo | Nie rozpoczęto | — | — | — |
 | 04 | Dokumentacja, ADR, konwencje i szablony SDD | Nie rozpoczęto | — | — | — |
 | 05 | CI: lint, sprawdzanie typów, testy i kontrole PR | Nie rozpoczęto | — | — | — |
@@ -86,6 +86,14 @@ Dla każdej lekcji dopisz: datę, link do PR/commita, zmienione artefakty, wykon
 - **Testy:** nie uruchamiano testów aplikacji, CI ani E2E; lekcja dotyczyła dokumentacji.
 - **Wnioski:** oddzielać zatwierdzenie merytoryczne od formalnego zamknięcia; dokumentować odroczenia (m.in. FR-10/S-17, reconnect, wejścia); kandydatów ADR-001–ADR-005 sformalizować w lekcji 04.
 
+### Lekcja 02 — 2026-11-13 — Ukończono
+- **Decyzja:** `Lesson 02: CLOSED` — jawne zatwierdzenie właściciela po pozytywnym końcowym code review PR #1.
+- **Dowód Git:** [PR #1](https://github.com/borys94/tetris-multiplayer/pull/1) z gałęzi `feature/002-ai-workflow`; merge do `main` po stronie właściciela.
+- **Artefakty:** `specs/002-ai-workflow/requirements.md` (R-01–R-05), `spec.md` (S-01–S-05, stany pracy z wyjściem z `BLOCKED`), `design.md`, `tasks.md` (T-01–T-06) — wszystkie `Approved`; polityka scope change w `AGENTS.md` (reguła 5); `syllabus.md` ujednolicony z `AGENTS.md` (Express.js, Yarn Workspaces).
+- **Weryfikacja:** kontrole spójności ID i macierzy śledzenia: `PASS`; symulacje S-01–S-05: `PASS` (S-01, S-04, S-05 również przećwiczone na żywo; S-02, S-03 dokumentacyjnie); końcowy code review: `PASS`.
+- **Testy:** `NOT_RUN` — brak kodu aplikacji; lint markdown i render Mermaid nie były uruchamiane automatycznie.
+- **Wnioski:** rozbieżności między dokumentami rozstrzygać przed implementacją (status Draft vs zatwierdzenie, stack w sylabusie); stany procesu muszą mieć zdefiniowane wyjścia; „test diagnostyczny” z tytułu lekcji pozostaje poza specyfikacją 002 (zob. ryzyka).
+
 ## Testy wiedzy (co 5 lekcji)
 | Lekcje | Data | Wynik | Mocne strony | Luki i działania |
 |---|---|---|---|---|
@@ -109,8 +117,10 @@ Dla każdej lekcji dopisz: datę, link do PR/commita, zmienione artefakty, wykon
 ## Ryzyka i blokery
 | Data | Ryzyko / bloker | Wpływ | Działanie | Właściciel |
 |---|---|---|---|---|
+| 2026-11-13 | „Test diagnostyczny” z tytułu lekcji 02 nie jest objęty `specs/002-ai-workflow/` | Niepełna realizacja tematu lekcji 02 | Zrealizować poza repozytorium albo uzasadnić pominięcie przed zamknięciem lekcji | Właściciel |
+| 2026-11-13 | Wymagania lekcji 02 zweryfikowane przez review i symulację, bez testów automatycznych (S-03) | Dowody mają charakter manualny | Jawnie odnotowane w PR #1; automatyczne kontrole od lekcji 05 (CI) | Właściciel |
 
 ## Następne kroki
-1. Rozpocząć lekcję 02 — Test diagnostyczny i organizacja pracy z AI — w osobnym czacie projektu.
-2. Odczytać aktualne `syllabus.md`, `progress.md` oraz dokumentację SDD lekcji 02 przed pracą.
-3. Zaktualizować `progress.md` dopiero po weryfikacji wyników i decyzji o zamknięciu lekcji 02.
+1. Scalić [PR #1](https://github.com/borys94/tetris-multiplayer/pull/1) do `main` (decyzja właściciela).
+2. Rozpocząć lekcję 03 — Monorepo, TypeScript, Yarn i Turborepo — w osobnym czacie projektu.
+3. Odczytać aktualne `AGENTS.md`, `syllabus.md`, `progress.md` oraz specyfikacje w `specs/` przed pracą.

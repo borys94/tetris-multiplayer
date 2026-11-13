@@ -28,6 +28,8 @@
 3. Ustal projekt techniczny, kontrakty i decyzje architektoniczne; dokumentuj ważne decyzje w ADR.
 4. Podziel pracę na małe zadania; zatwierdź zakres przed implementacją.
 5. Implementuj tylko zatwierdzony zakres; nie dodawaj niezamówionych funkcjonalności.
+   - Bez osobnej zgody: poprawki błędów i literówek, lokalny refactor oraz testy w zatwierdzonym zakresie, jeśli nie zmieniają kontraktów, wymagań ani decyzji architektonicznych; opisz je w raporcie.
+   - Zmiana poza zakresem: zatrzymaj się i przedstaw propozycję (problem, warianty, kompromisy, ryzyka, wpływ na pliki i testy); po zgodzie najpierw zaktualizuj SDD. Gdy klasyfikacja jest niejasna — pytaj.
 6. Uruchom adekwatne testy, lint i typecheck; nie deklaruj sukcesu bez wyników.
 7. Wykonaj code review, przygotuj PR i zaktualizuj `progress.md` dopiero po weryfikacji.
 

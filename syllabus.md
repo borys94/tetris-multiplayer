@@ -7,7 +7,7 @@ Zbudowanie i wdrożenie gry multiplayer 1v1 z użyciem React, Node.js i AWS. Ka�
 - Praca w cyklu SDD: wymagania → specyfikacja → projekt techniczny → zadania → implementacja w Claude Code → testy i przegląd → aktualizacja postępów.
 - Każda funkcja ma kryteria akceptacji, przypadki brzegowe i dowody weryfikacji.
 - Co pięć lekcji: test wiedzy, przegląd architektury i retrospektywa.
-- Stack: React, TypeScript, Vite, Canvas 2D; Node.js, Fastify, WebSocket; pnpm/Turborepo; PostgreSQL/Drizzle; Redis; Vitest/Playwright; Docker; AWS ECS Fargate, RDS, S3/CloudFront; Terraform; GitHub Actions; OpenTelemetry, Prometheus i Grafana.
+- Stack: React, TypeScript, Vite, Canvas 2D; Node.js, Express.js, WebSocket (`ws`); Yarn Workspaces/Turborepo; PostgreSQL/Drizzle; Redis; Vitest/Playwright; Docker; AWS ECS Fargate, RDS, S3/CloudFront; Terraform; GitHub Actions; OpenTelemetry, Prometheus i Grafana.
 - Na początku modularny monolit, deterministyczny silnik gry i autorytatywny serwer multiplayer. Infrastrukturę chmurową wdrażamy etapami, z kontrolą kosztów.
 
 ## Kamienie milowe
@@ -34,8 +34,8 @@ Zbudowanie i wdrożenie gry multiplayer 1v1 z użyciem React, Node.js i AWS. Ka�
 - **Artefakty SDD:** `specs/002-<slug>/requirements.md`, `spec.md`, `design.md`, `tasks.md` (dla pracy wyłącznie organizacyjnej można uzasadnić pominięcie wybranych artefaktów).
 - **Weryfikacja:** Powiązanie kryteriów akceptacji z testami, wyniki kontroli CI lub manualnych, przegląd zmian i aktualizacja `progress.md`.
 
-### Lekcja 03 — Monorepo, TypeScript, pnpm i Turborepo
-- **Cel:** Zrozumieć i zastosować zagadnienie: monorepo, typescript, pnpm i turborepo.
+### Lekcja 03 — Monorepo, TypeScript, Yarn i Turborepo
+- **Cel:** Zrozumieć i zastosować zagadnienie: monorepo, typescript, yarn i turborepo.
 - **Rezultat:** Zatwierdzona, ograniczona zakresem zmiana w kodzie, infrastrukturze lub dokumentacji, zgodna z tematem lekcji.
 - **Artefakty SDD:** `specs/003-<slug>/requirements.md`, `spec.md`, `design.md`, `tasks.md` (dla pracy wyłącznie organizacyjnej można uzasadnić pominięcie wybranych artefaktów).
 - **Weryfikacja:** Powiązanie kryteriów akceptacji z testami, wyniki kontroli CI lub manualnych, przegląd zmian i aktualizacja `progress.md`.
@@ -158,8 +158,8 @@ Zbudowanie i wdrożenie gry multiplayer 1v1 z użyciem React, Node.js i AWS. Ka�
 
 ## Moduł 05: Backend i trwałość danych
 
-### Lekcja 21 — Fastify, REST API, walidacja i obsługa błędów
-- **Cel:** Zrozumieć i zastosować zagadnienie: fastify, rest api, walidacja i obsługa błędów.
+### Lekcja 21 — Express, REST API, walidacja i obsługa błędów
+- **Cel:** Zrozumieć i zastosować zagadnienie: express, rest api, walidacja i obsługa błędów.
 - **Rezultat:** Zatwierdzona, ograniczona zakresem zmiana w kodzie, infrastrukturze lub dokumentacji, zgodna z tematem lekcji.
 - **Artefakty SDD:** `specs/021-<slug>/requirements.md`, `spec.md`, `design.md`, `tasks.md` (dla pracy wyłącznie organizacyjnej można uzasadnić pominięcie wybranych artefaktów).
 - **Weryfikacja:** Powiązanie kryteriów akceptacji z testami, wyniki kontroli CI lub manualnych, przegląd zmian i aktualizacja `progress.md`.
