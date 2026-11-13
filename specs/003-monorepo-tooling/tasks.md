@@ -12,7 +12,7 @@ Każde zadanie = osobny commit + dowód z uruchomionych poleceń. Status: `TODO`
 | ID | Zadanie | Wymagania | Dowód ukończenia | Status |
 |---|---|---|---|---|
 | T-01 | Bootstrap: `.nvmrc`, `.yarnrc.yml`, aktywacja Yarn 4 (D-02), root `package.json`, `.gitignore`; przypięcie wersji narzędzi. | R-01 | `yarn --version` = 4.x przy globalnym Yarn 1.22; `yarn install --immutable` = 0. Brak Yarn 4 → `BLOCKED`. | TODO |
-| T-02 | `tsconfig.base.json` i trzy workspace'y (`game-engine`, `server`, `web`) z placeholderem API silnika i testami smoke. | R-01, R-03, R-05 | `yarn workspaces foreach -At run test` = 0; `packages/game-engine/dist/index.d.ts` istnieje. | TODO |
+| T-02 | `tsconfig.base.json` i trzy workspace'y (`game-engine`, `server`, `web`) z placeholderem API silnika i testami smoke. | R-01, R-03, R-05 | `yarn workspaces foreach -At run build` i `... run test` = 0; `packages/game-engine/dist/index.d.ts` istnieje. | TODO |
 | T-03 | `turbo.json` i skrypty root (`build`, `typecheck`, `test`, `clean`, `check`). | R-04 | S-02, S-03. | TODO |
 | T-04 | `yarn.config.cjs` z regułami DEP-01–DEP-06. | R-02 | `yarn constraints` = 0; S-04. | TODO |
 | T-05 | `README.md`, weryfikacja na czystym klonie, scenariusze negatywne (S-05), raport `PASS`/`FAIL`/`NOT_RUN` dla S-01–S-05, PR do `main`. | wszystkie | Raport w opisie PR; brak merge bez zgody. | TODO |
