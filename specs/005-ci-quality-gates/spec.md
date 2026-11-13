@@ -21,6 +21,7 @@ Workflow korzysta z `pull_request`, uprawnień `contents: read`, bez `pull_reque
 Wyniki sześciu obowiązkowych kontroli są widoczne jako odrębne, stabilnie nazwane status checks: `constraints`, `lint-ts`, `lint-markdown`, `typecheck`, `test`, `build`. Każdy z nich jest wymagany przez GitHub Rulesets/branch protection dla `main`. Niepowodzenie dowolnego z nich uniemożliwia merge. Weryfikacja rzeczywistej blokady merge jest niezależna od samego uruchomienia workflow; brak dostępu do ustawień ochrony nie jest dowodem spełnienia kontraktu.
 
 ## 2. Przypadki brzegowe
+
 - Niespójny `yarn.lock` → instalacja kończy się błędem.
 - Błąd ESLint, markdownlint, typecheck, Vitest lub build → nieudany status.
 - Zmiana publicznego API `game-engine` łamiąca konsumenta → CI wykrywa błąd w zależnym workspace.

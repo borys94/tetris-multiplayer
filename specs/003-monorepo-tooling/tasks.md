@@ -18,6 +18,7 @@ Każde zadanie = osobny commit + dowód z uruchomionych poleceń. Status: `TODO`
 | T-05 | `README.md`, weryfikacja na czystym klonie, scenariusze negatywne (S-05), raport `PASS`/`FAIL`/`NOT_RUN` dla S-01–S-05, PR do `main`. | wszystkie | Raport w opisie PR; brak merge bez zgody. | DONE — [PR #2](https://github.com/borys94/tetris-multiplayer/pull/2) |
 
 ## Polecenia weryfikacyjne (T-05)
+
 ```bash
 git clean -xdn                     # podgląd; właściwe -xdf po potwierdzeniu
 yarn install --immutable           # S-01

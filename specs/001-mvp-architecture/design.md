@@ -6,6 +6,7 @@
 - **Decyzja ogólna:** zachowano kierunek i kandydatów ADR-001–ADR-005; uzupełniono projekt względem zatwierdzonych `requirements.md` v0.2 i `spec.md` v0.3. Dokument został zatwierdzony merytorycznie przez właściciela.
 
 ## 1. Cele architektoniczne
+
 1. Umożliwić etapowe dostarczenie single-player, następnie 1v1 i późniejszych funkcji.
 2. Utrzymać reguły gry niezależnie od UI, transportu i infrastruktury.
 3. Zapewnić autorytatywność serwera bez blokowania późniejszej predykcji klienta.
@@ -52,6 +53,7 @@ docs/
 ```
 
 ### Reguły zależności
+
 - `game-engine` nie importuje Reacta, DOM, Canvas, Fastify, WebSocket, ORM ani bazy danych.
 - `contracts` nie zawiera logiki gameplayu ani dostępu do infrastruktury.
 - `web` może korzystać z `game-engine` dla symulacji lokalnej, ale nie decyduje o autorytatywnym wyniku meczu; mapowanie klawiatury jest adapterem frontendu, nie częścią silnika.
@@ -88,11 +90,13 @@ Silnik wyznacza przejścia z jawnego stanu, uporządkowanych wejść, numeru tic
 ## 6. Przepływy multiplayer i walidacja
 
 ### Utworzenie pokoju i dołączenie
+
 1. Gość bez logowania tworzy prywatny pokój; `Room & Invitation` wydaje kod i link odnoszące się do **tego samego** identyfikatora zaproszenia i wspólnej ścieżki walidacji.
 2. Drugi gość dołącza kodem lub linkiem; zajęte są maksymalnie dwa miejsca. Trzecia próba nie zmienia składu.
 3. `Guest Session` ustanawia odrębne uprawnienie do własnego miejsca. Kod zaproszenia nie daje prawa do odzyskania ani przejęcia istniejącej sesji (S-02, S-10, S-14).
 
 ### Wejścia i snapshoty
+
 1. `Keyboard Adapter` mapuje klawisze na komendy domenowe; klient wysyła intencję z kontekstem sekwencji. Opcjonalna predykcja lokalna nie jest źródłem prawdy.
 2. Gateway weryfikuje schemat Zod i kontekst połączenia; `Match Session` sprawdza prawo do miejsca, aktualność, duplikaty, epokę, stan meczu i reguły wejścia. Nieprawidłowe, nieaktualne, powtórzone i nieautoryzowane wejścia nie zmieniają stanu (S-04, S-08, S-18).
 3. Silnik oblicza przejście; Match Session wylicza autorytatywny stan/wynik. Serwer publikuje snapshot z kontekstem meczu/epoki, tickiem i potwierdzeniami wejść.
@@ -101,6 +105,7 @@ Silnik wyznacza przejścia z jawnego stanu, uporządkowanych wejść, numeru tic
 **Odroczone:** konkretne DTO, okno aktualności wejść, snapshot rate, limity RTT, retry i kody błędów — L26–30. Walidacja Zod nie zastępuje autoryzacji ani kontroli stanu domenowego.
 
 ### Rozłączenie i reconnect (D-04)
+
 1. Serwer wykrywa utratę połączenia A, zapisuje początek 30-sekundowego okna według czasu serwera. **Nie pauzuje** symulacji żadnej planszy i **nie generuje wejść zastępczych** za A; B może nadal grać.
 2. Przed terminem A może odzyskać **swoją** sesję po weryfikacji uprawnienia do miejsca. Nowe połączenie przejmuje uprawnienia; stare nie może już sterować. Jeśli mecz trwa, A dostaje aktualny snapshot.
 3. Jeśli w trakcie rozłączenia mecz zakończył się poprawnie, wynik pozostaje końcowy i może zostać odzyskany przez uprawnionego uczestnika; reconnect nie wznawia meczu.
@@ -111,6 +116,7 @@ Silnik wyznacza przejścia z jawnego stanu, uporządkowanych wejść, numeru tic
 ## 7. Decyzje i kompromisy (kandydaci na ADR)
 
 ### ADR-001 — Modularny monolit
+
 - **Wybór:** jeden backend z granicami modułów.
 - **Alternatywa:** mikroserwisy.
 - **Korzyść:** prostsze testowanie, uruchamianie i deployment.
@@ -118,36 +124,42 @@ Silnik wyznacza przejścia z jawnego stanu, uporządkowanych wejść, numeru tic
 - **Warunek:** kontrola importów i kontraktów.
 
 ### ADR-002 — Współdzielony deterministyczny Game Engine
+
 - **Wybór:** jedna biblioteka reguł w TypeScript.
 - **Alternatywa:** niezależne silniki klienta i serwera.
 - **Korzyść:** mniejsze ryzyko rozbieżności, testowalność i przyszły replay.
 - **Koszt:** dyscyplina czasu, losowości i zgodności wersji.
 
 ### ADR-003 — Server-authoritative
+
 - **Wybór:** serwer wylicza stan i wynik; klient wysyła intencje.
 - **Alternatywa:** klient wylicza wynik i raportuje go serwerowi.
 - **Korzyść:** mniejsza powierzchnia oszustw.
 - **Koszt:** synchronizacja, obsługa opóźnień i reconciliation.
 
 ### ADR-004 — REST + WebSocket
+
 - **Wybór:** REST dla zasobów, WebSocket dla rozgrywki.
 - **Alternatywa:** jeden protokół do wszystkich operacji.
 - **Korzyść:** dopasowanie transportu do potrzeb.
 - **Koszt:** dwa modele API i dwa rodzaje testów.
 
 ### ADR-005 — Local-first, infrastruktura etapami
+
 - **Wybór:** rozwój lokalny; Docker i AWS zgodnie z syllabusem.
 - **Alternatywa:** pełne AWS od pierwszego dnia.
 - **Korzyść:** mniejszy koszt i krótsza pętla informacji zwrotnej.
 - **Koszt:** późniejsza praca integracyjna; ograniczamy ją konfiguracją środowiskową i izolacją infrastruktury.
 
 ## 8. Dane i trwałość
+
 - Aktywne mecze: pamięć procesu backendu w początkowym MVP.
 - Dane trwałe: PostgreSQL + Drizzle.
 - Redis: później dla obecności/matchmakingu i elementów architektury rozproszonej.
 - Awaria procesu może przerwać aktywny mecz; polityka odzyskiwania wymaga osobnej decyzji.
 
 ## 9. Bezpieczeństwo, konfiguracja i niezawodność
+
 - **Warstwy walidacji:** (1) struktura/wersja wiadomości w Gateway (Zod); (2) tożsamość sesji, uprawnienie do miejsca i aktualne połączenie; (3) epoka, tick, sekwencja, duplikaty i aktualność; (4) stan meczu i reguły domenowe w Match Session / silniku. Każde odrzucenie nie zmienia autorytatywnego stanu (S-04, S-08, S-14, S-18).
 - Nie przyjmujemy od klienta autorytatywnych punktów, planszy ani wyniku. Po `FINISHED` wynik jest niezmienny.
 - Kod/link zaproszenia nie jest sekretem do przejęcia sesji; stara sesja transportowa po poprawnym reconnect traci prawo sterowania.
@@ -156,6 +168,7 @@ Silnik wyznacza przejścia z jawnego stanu, uporządkowanych wejść, numeru tic
 - Limity ruchu, format poświadczeń i szczegółowe kody błędów wymagają osobnej specyfikacji; nie deklarujemy odporności na awarie procesu ani gwarancji dostępności.
 
 ## 10. Ryzyka
+
 | Ryzyko | Skutek | Redukcja |
 |---|---|---|
 | Niejednakowy wynik symulacji | Desynchronizacja | Testy deterministyczne, jawny seed i tick |
@@ -168,6 +181,7 @@ Silnik wyznacza przejścia z jawnego stanu, uporządkowanych wejść, numeru tic
 ## 11. Rejestr decyzji i otwartych kontraktów
 
 ### Zatwierdzone decyzje produktowe (źródło: `requirements.md` v0.2)
+
 | ID | Ustalenie | Konsekwencja w projekcie |
 |---|---|---|
 | D-01 | Kod i link używają jednego mechanizmu zaproszenia | Room & Invitation, wspólna walidacja; kod nie autoryzuje przejęcia miejsca |
@@ -177,6 +191,7 @@ Silnik wyznacza przejścia z jawnego stanu, uporządkowanych wejść, numeru tic
 | D-05 | Desktop i klawiatura M2/M3 | Keyboard Adapter w web; brak obowiązku mobile/touch/gamepad |
 
 ### Otwarte — wymagają osobnych decyzji przed implementacją
+
 | Kontrakt | Kiedy | Co pozostaje otwarte |
 |---|---|---|
 | Silnik | L06–15, L29 | Tick rate, definicja `top-out`, kolejność zdarzeń ticka, ataki i punktacja |
@@ -207,4 +222,5 @@ Silnik wyznacza przejścia z jawnego stanu, uporządkowanych wejść, numeru tic
 **Mapowanie kandydatów AC produktu:** AC-INV-01/02 → Room & Invitation (§6); AC-GUEST-01 → Guest Session (§4/§6); AC-MATCH-01–04 → Match Session (§4); AC-REC-01–05 → reconnect i sesje (§5/§6); AC-INPUT-01/02 → Keyboard Adapter (§3/§6). Pełne testy produktu powstaną w odpowiednich lekcjach.
 
 ## 13. Review i status
+
 Kierunek ADR-001–ADR-005 zachowano jako kandydatów na formalne ADR (L04); nie twierdzimy, że zostały już zapisane i zatwierdzone osobne pliki ADR. `requirements.md` v0.2, `spec.md` v0.3 i niniejszy `design.md` v0.2 zostały merytorycznie zatwierdzone przez właściciela w rozmowie; metadane dokumentów mają status `Approved`. Zatwierdzenie projektu nie jest dowodem implementacji ani uruchomienia testów; spełnienie AC-06 wymaga osobnej kontroli spójności całego pakietu SDD.

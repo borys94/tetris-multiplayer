@@ -32,6 +32,7 @@ yarn check
 `yarn lint` i rozszerzone `yarn check` są poleceniami **docelowymi**, nie istniejącymi obecnie gwarancjami. `yarn check` musi lokalnie wykonać constraints, oba rodzaje lintu, typecheck, testy i build; CI może uruchamiać te kontrole w sześciu niezależnych jobach. W raporcie należy odnotować zarówno wynik pełnego `yarn check`, jak i wyniki poszczególnych checks. Dowody testów negatywnych należy zachować bez pozostawiania celowych błędów w końcowym kodzie.
 
 ## Definition of Done
+
 - AC-001–AC-006 mają wynik `PASS`, a PR przeszedł review.
 - Zmiany ograniczono do zatwierdzonego zakresu; żadnego nieuzgodnionego masowego formatowania.
 - `progress.md` aktualizujemy dopiero po weryfikacji i zgodzie właściciela.

@@ -63,10 +63,12 @@ Narzędzia używane w skryptach workspace'u (`tsc`, `vitest` i jego wymagany pee
 - Brak `env` w L03 (tryb `strict`); zdalny cache — L41.
 
 ## 5. Polecenia root
+
 `yarn build` / `typecheck` / `test` / `clean` → `turbo run <task>`; `yarn constraints`; `yarn check` = constraints + `turbo run build typecheck test`.
 `.gitignore` dostaje: `node_modules/`, `dist/`, `.turbo/`, `*.tsbuildinfo`, `.yarn/*` z wyjątkiem `releases`, `patches`, `plugins`, `sdks`, `versions`.
 
 ## 6. Konflikty i ryzyka
+
 - **K-01:** `specs/001-mvp-architecture/design.md` wymienia Fastify, a `AGENTS.md` — Express. Nie blokuje L03 (Q-08).
 - **K-02:** `001/design.md` przewiduje `packages/contracts` — odroczony do L26 (D-06).
 - **RK-01:** globalny Yarn 1 zamiast Yarn 4 → D-02 i weryfikacja w T-01.
@@ -77,6 +79,7 @@ Narzędzia używane w skryptach workspace'u (`tsc`, `vitest` i jego wymagany pee
 Kandydaci na ADR (L04): Yarn 4 + `node-modules`; Turborepo + pakiety kompilowane; egzekucja granic zależności.
 
 ## 7. Decyzje właściciela (2026-11-13)
+
 - **Q-01:** Node 26.
 - **Q-02:** `yarnPath` + `packageManager`.
 - **Q-03:** szkielety TS aplikacji.

@@ -7,9 +7,11 @@
 - **Powiązania:** `AGENTS.md` (stack), `specs/001-mvp-architecture/` (NFR-02, S-19, §3), `specs/002-ai-workflow/` (proces SDD).
 
 ## Cel
+
 Powtarzalny fundament repozytorium: jeden menedżer pakietów, jawny graf workspace'ów, wspólny TypeScript, orkiestracja zadań z cache i automatycznie egzekwowane granice zależności.
 
 ## Stan wyjściowy (2026-11-13)
+
 Repo zawiera tylko dokumentację (brak `package.json`, `tsconfig`, `apps/`, `packages/`). Lokalnie: Node `v26.11.1`, globalny Yarn `1.22.22`, brak `corepack`.
 
 ## Wymagania
@@ -23,7 +25,9 @@ Repo zawiera tylko dokumentację (brak `package.json`, `tsconfig`, `apps/`, `pac
 | R-05 | Każdy workspace ma test smoke (Vitest, Node, bez przeglądarki i serwera). | `yarn test` uruchamia test w każdym workspace; testy aplikacji importują silnik przez nazwę pakietu. |
 
 ## Poza zakresem
+
 Logika gry (L06+), Vite/React (L16), Express/`ws` (L21/L26), `packages/contracts` (L26), ESLint i CI (L05), zdalny cache (L41), Docker, formalne ADR (L04), zmiany w `specs/001-mvp-architecture/`.
 
 ## Kryterium zakończenia
+
 R-01–R-05 mają dowód `PASS` z uruchomionych poleceń, PR przeszedł review, właściciel zatwierdził zamknięcie; dopiero wtedy aktualizowany jest `progress.md`.
