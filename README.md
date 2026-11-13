@@ -48,3 +48,6 @@ Szczegóły i uzasadnienie: [`specs/003-monorepo-tooling/design.md`](specs/003-m
 ## Telemetria
 
 Telemetria Yarn jest wyłączona w `.yarnrc.yml`, a skrypty root wyłączają telemetrię Turborepo (`TURBO_TELEMETRY_DISABLED=1`). Przy wywołaniu `yarn turbo ...` bezpośrednio można ją wyłączyć trwale: `yarn turbo telemetry disable`.
+
+# Bad heading
+text right after
