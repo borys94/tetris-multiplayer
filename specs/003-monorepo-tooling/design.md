@@ -1,9 +1,9 @@
 # Lekcja 03 — Projekt techniczny: monorepo tooling
 
 - **ID:** 003-monorepo-tooling
-- **Wersja:** 0.1
+- **Wersja:** 0.2
 - **Status:** Draft — do zatwierdzenia przez właściciela
-- **Uwaga:** fragmenty konfiguracji poniżej są **szkicami kontraktu**, nie gotowymi plikami. Dokładne numery wersji narzędzi ustala T-02 na podstawie aktualnych wydań (`npm view <pkg> version`) i przypina w `package.json`/`yarn.lock`; nie są zgadywane w tym dokumencie.
+- **Uwaga:** fragmenty konfiguracji poniżej są **szkicami kontraktu**, nie gotowymi plikami. Dokładne numery wersji narzędzi ustala T-01 na podstawie aktualnych wydań (`npm view <pkg> version`) i przypina w `package.json`/`yarn.lock`; nie są zgadywane w tym dokumencie.
 
 ## 1. Ocena wstępnych decyzji
 
@@ -28,7 +28,7 @@
 - **Wybór (rekomendacja):** pole `"packageManager": "yarn@4.<x>.<y>"` jako źródło prawdy **oraz** `yarnPath` wskazujący na śledzony `.yarn/releases/yarn-4.<x>.<y>.cjs` (generowany przez `yarn set version`).
 - **Dlaczego:** Node ≥ 25 nie dołącza `corepack`; u właściciela `corepack` jest niedostępny. `yarnPath` sprawia, że globalny Yarn 1.22 deleguje wywołania do wersji z repo — bez dodatkowych kroków u developera i w CI.
 - **Alternatywa:** samo `packageManager` + `npm i -g corepack && corepack enable` — mniejsze repo (brak ~3 MB pliku `.cjs`), ale dodatkowy krok ręczny i zależność od pakietu `corepack` z npm.
-- **Warunek weryfikacji (T-02):** empirycznie potwierdzić, że `yarn --version` w repo zwraca 4.x przy globalnym Yarn 1.22.22. Jeżeli nie — STOP i decyzja właściciela (Q-02).
+- **Warunek weryfikacji (T-01):** empirycznie potwierdzić, że `yarn --version` w repo zwraca 4.x przy globalnym Yarn 1.22.22. Jeżeli nie — STOP i decyzja właściciela (Q-02).
 
 ### D-03 — `.yarnrc.yml`
 ```yaml
@@ -124,7 +124,7 @@ Zmieniany: `.gitignore` (dopisanie wpisów, bez usuwania `.DS_Store`).
 
 | Workspace | `module` / `moduleResolution` | `lib` | `types` | Uzasadnienie |
 |---|---|---|---|---|
-| `game-engine` | `NodeNext` / `NodeNext` | `ES2022` | `[]` | Emitowany kod musi działać w Node (server) i w bundlerze (web); brak DOM i Node = egzekucja S-07. |
+| `game-engine` | `NodeNext` / `NodeNext` | `ES2022` | `[]` | Emitowany kod musi działać w Node (server) i w bundlerze (web); brak DOM i Node = egzekucja S-05. |
 | `server` | `NodeNext` / `NodeNext` | `ES2022` | `["node"]` | Uruchamiany bezpośrednio w Node; `@types/node` jako devDependency `server`. |
 | `web` | `ESNext` / `Bundler` | `ES2022`, `DOM`, `DOM.Iterable` | `[]` | Przygotowanie pod Vite (L16); w L03 build = `tsc`. |
 
@@ -179,7 +179,7 @@ module.exports = defineConfig({
   },
 });
 ```
-Dokładne API (`Yarn.workspaces`, `dep.type`, `dep.error`) T-06 weryfikuje względem zainstalowanej wersji `@yarnpkg/types`.
+Dokładne API (`Yarn.workspaces`, `dep.type`, `dep.error`) T-04 weryfikuje względem zainstalowanej wersji `@yarnpkg/types`.
 
 ## 6. Turborepo — graf zadań i cache
 
@@ -262,10 +262,10 @@ coverage/
 ### Ryzyka
 | ID | Ryzyko | Skutek | Redukcja |
 |---|---|---|---|
-| RK-01 | Brak `corepack` w Node 26; globalny Yarn 1 może obsłużyć repo zamiast Yarn 4 | Niezgodny lockfile, błędne polecenia (`yarn check`) | D-02 (`yarnPath`), weryfikacja w T-02, instrukcja w README |
+| RK-01 | Brak `corepack` w Node 26; globalny Yarn 1 może obsłużyć repo zamiast Yarn 4 | Niezgodny lockfile, błędne polecenia (`yarn check`) | D-02 (`yarnPath`), weryfikacja w T-01, instrukcja w README |
 | RK-02 | Phantom dependencies przez hoisting `node-modules` | Silnik może zaimportować wyhoistowany pakiet mimo DEP-04 | `types: []`, brak lib DOM; DEP-08 lint w L05; review |
 | RK-03 | Nieaktualne `dist/` lub nawigacja IDE do `.d.ts` | Mylące błędy typów w IDE | `declarationMap`; `^build`; tryb watch w L16 |
-| RK-04 | Fałszywe trafienia cache (niezadeklarowane wejścia) | Zielony wynik dla nieaktualnego kodu | `globalDependencies`, tryb `strict` env, S-10 jako test cache |
+| RK-04 | Fałszywe trafienia cache (niezadeklarowane wejścia) | Zielony wynik dla nieaktualnego kodu | `globalDependencies`, tryb `strict` env, S-03 jako test cache |
 | RK-05 | `NodeNext` wymaga `.js` w importach względnych | Tarcie dla developerów | Świadomy koszt; błąd jest wykrywany przez `typecheck` |
 | RK-06 | Determinizm nie jest egzekwowany przez L03 (`Date`, `Math.random` dostępne w lib ES) | Fałszywe poczucie bezpieczeństwa | Jawnie poza zakresem; reguły lint/architektury w L05–L06 |
 | RK-07 | `rm -rf` w `clean` nie działa na Windows | Brak przenośności | Akceptowalne (macOS/Linux, CI Linux); ewentualnie `node -e` lub `rimraf` |
