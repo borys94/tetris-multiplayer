@@ -14,9 +14,9 @@
 - Uzgodnić minimalne, kompilowalne typy `GameConfig`, `GameStatus`, `GameState`, `Board`, `ActivePiece`.
 - Wyeksportować publiczne kontrakty bez zależności od UI i sieci.
 - **Dowód:** przegląd API, kompilacja TS. **Wynik:** PASS lokalnie.
-  - Pliki: `piece.ts`, `board.ts`, `game-config.ts`, `game-state.ts`, eksporty typów w `index.ts`, `contracts.test.ts` (`expectTypeOf` + `@ts-expect-error`, wyłącznie przez `./index.js`).
-  - AC-001: importy w `src/` tylko względne (`vitest` wyłącznie w testach, poza buildem); brak `socketId`, `react`, `express`, `ws`, `node:`; brak `dependencies`/`peerDependencies`; `keyof GameState` = dokładnie 4 pola.
-  - AC-002: testy negatywne — usunięcie `readonly` z `score`, z `BoardRow`, z `Position.x` oraz dodanie `socketId` do `GameState` powodują błąd `yarn typecheck` (TS2578 / TS2344) w odpowiedniej asercji; po przywróceniu exit 0.
+  - Pliki: `piece.ts`, `board.ts`, `game-config.ts`, `game-state.ts`, eksporty typów w `index.ts`, `contracts.test.ts` (`@ts-expect-error` przy mutacji pól, wyłącznie przez `./index.js`; odchudzony 2026-11-13 — usunięto asercje powielające definicje typów i dokładne `keyof GameState`, które blokowałoby rozszerzenia stanu w L07–L14).
+  - AC-001: importy w `src/` tylko względne (`vitest` wyłącznie w testach, poza buildem); brak `socketId`, `react`, `express`, `ws`, `node:`; brak `dependencies`/`peerDependencies`.
+  - AC-002: obecność i typy pól `GameState` potwierdza kompilacja `create-initial-state.test.ts` i przegląd eksportów; niemutowalność — testy negatywne: usunięcie `readonly` z `score`, `rows`, `BoardRow`, `Position.x`, `boardWidth` powoduje błąd `yarn typecheck` (TS2578) w odpowiedniej asercji; po przywróceniu exit 0.
   - `yarn install --immutable` = 0, `yarn check` = 0.
 
 ### TASK-002 — Walidacja GameConfig
@@ -60,7 +60,7 @@
 - Sprawdzić zakres diffu, publiczne eksporty, brak zależności infrastrukturalnych i zgodność z AGENTS.md.
 - Przygotować PR; nie wykonywać merge bez zgody właściciela.
 - **Dowód:** logi kontroli i link do PR. **Wynik:** PASS.
-  - Lokalnie: `yarn install --immutable` = 0; `yarn check` = 0 (12/12 zadań, 34 pliki Markdown bez naruszeń); Vitest `game-engine` 34/34.
+  - Lokalnie: `yarn install --immutable` = 0; `yarn check` = 0 (12/12 zadań, 34 pliki Markdown bez naruszeń); Vitest `game-engine` 31/31 (po odchudzeniu `contracts.test.ts`; wcześniej 34/34).
   - CI: [PR #8](https://github.com/borys94/tetris-multiplayer/pull/8), [run 43475535510](https://github.com/borys94/tetris-multiplayer/actions/runs/43475535510) dla `bfbbd18` — 6/6 checks `success`.
   - Zakres: zmiany wyłącznie w `packages/game-engine/src` i `specs/006-game-domain-model/`. Publiczne eksporty runtime: `ENGINE_API_VERSION`, `createInitialGameState`; walidator i limit wewnętrzne. Brak zależności runtime i odwołań do czasu, losowości, transportu (`grep` źródeł bez testów).
   - Testy mutacyjne (ręczne, 10 defektów: limit ±1, akceptacja `0`, `isFinite` zamiast `isSafeInteger`, brak walidacji wysokości, `score` 1, status `playing`, współdzielony wiersz, zapis do konfiguracji, `Math.random`, zamiana wymiarów) — każdy wykryty przez co najmniej 1 test.
