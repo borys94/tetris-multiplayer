@@ -5,6 +5,13 @@
     "apps/*",
     "packages/*"
   ],
+  "scripts": {
+    "build": "TURBO_TELEMETRY_DISABLED=1 turbo run build",
+    "typecheck": "TURBO_TELEMETRY_DISABLED=1 turbo run typecheck",
+    "test": "TURBO_TELEMETRY_DISABLED=1 turbo run test",
+    "clean": "TURBO_TELEMETRY_DISABLED=1 turbo run clean",
+    "check": "yarn constraints && TURBO_TELEMETRY_DISABLED=1 turbo run build typecheck test"
+  },
   "engines": {
     "node": ">=26"
   },
