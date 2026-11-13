@@ -15,7 +15,7 @@ Każde zadanie = osobny commit + dowód z uruchomionych poleceń. Status: `TODO`
 | T-02 | `tsconfig.base.json` i trzy workspace'y (`game-engine`, `server`, `web`) z placeholderem API silnika i testami smoke. | R-01, R-03, R-05 | `yarn workspaces foreach -At run build` i `... run test` = 0; `packages/game-engine/dist/index.d.ts` istnieje. | DONE |
 | T-03 | `turbo.json` i skrypty root (`build`, `typecheck`, `test`, `clean`, `check`). | R-04 | S-02, S-03. | DONE |
 | T-04 | `yarn.config.cjs` z regułami DEP-01–DEP-06. | R-02 | `yarn constraints` = 0; S-04. | DONE |
-| T-05 | `README.md`, weryfikacja na czystym klonie, scenariusze negatywne (S-05), raport `PASS`/`FAIL`/`NOT_RUN` dla S-01–S-05, PR do `main`. | wszystkie | Raport w opisie PR; brak merge bez zgody. | IN_PROGRESS — PR do utworzenia |
+| T-05 | `README.md`, weryfikacja na czystym klonie, scenariusze negatywne (S-05), raport `PASS`/`FAIL`/`NOT_RUN` dla S-01–S-05, PR do `main`. | wszystkie | Raport w opisie PR; brak merge bez zgody. | DONE — [PR #2](https://github.com/borys94/tetris-multiplayer/pull/2) |
 
 ## Polecenia weryfikacyjne (T-05)
 ```bash
