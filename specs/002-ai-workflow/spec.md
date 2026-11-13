@@ -16,6 +16,7 @@ Dopuszczalne przejścia zwrotne:
 - `VERIFYING → IMPLEMENTING`: poprawka w zatwierdzonym zakresie.
 - `READY_FOR_REVIEW → IMPLEMENTING`: uwagi z code review.
 - `VERIFYING → BLOCKED`: nie można przeprowadzić wymaganej weryfikacji.
+- `BLOCKED → VERIFYING`: przeszkoda usunięta (decyzja właściciela).
 
 Przejście do `CLOSED` wymaga potwierdzenia właściciela i dowodów akceptacji.
 

@@ -15,6 +15,9 @@ flowchart TD
   E -- Tak --> F[Propozycja i decyzja właściciela]
   F --> B
   E -- Nie --> G[Testy, lint, typecheck, dowody]
+  G -- Weryfikacja niemożliwa --> K[BLOCKED: raport NOT_RUN i przyczyna]
+  K --> L[Decyzja właściciela]
+  L --> G
   G --> H[Review zmian i PR]
   H --> I{Akceptacja?}
   I -- Nie --> D
