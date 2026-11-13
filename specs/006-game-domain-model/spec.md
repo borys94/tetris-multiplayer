@@ -1,6 +1,6 @@
 # Lekcja 06 — Model domenowy i stan gry: specyfikacja zachowania
 
-**Status:** Draft — do przeglądu przed implementacją  
+**Status:** Approved — zatwierdzono przez właściciela 2026-11-13  
 **Wymagania źródłowe:** `requirements.md`
 
 ## Kontrakty
@@ -11,7 +11,7 @@ Publiczne typy i fabryka w `@tetris/game-engine` nie importują warstw UI, serwe
 
 ### SPEC-002 — Reprezentacja stanu (REQ-002)
 
-Publiczny `GameState` udostępnia co najmniej `readonly board`, `readonly activePiece`, `readonly score`, `readonly status`. `activePiece` dopuszcza `null`. `GameStatus` jawnie określa dopuszczone statusy: `idle`, `playing`, `paused`, `game-over` (roboczy zestaw — do potwierdzenia podczas przeglądu kontraktu). Typy `Board` i `ActivePiece` muszą być spójne i kompilowalne, bez implementowania zasad planszy i figur z lekcji 07.
+Publiczny `GameState` udostępnia co najmniej `readonly board`, `readonly activePiece`, `readonly score`, `readonly status`. `activePiece` dopuszcza `null`. `GameStatus` jawnie określa dopuszczone statusy: `idle`, `playing`, `paused`, `game-over` (zatwierdzone 2026-11-13; `paused` dla single-player — design D-008). Typy `Board` i `ActivePiece` muszą być spójne i kompilowalne, bez implementowania zasad planszy i figur z lekcji 07 (kształt: design D-006, D-007).
 
 ### SPEC-003 — Stan początkowy (REQ-003)
 

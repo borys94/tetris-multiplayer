@@ -1,6 +1,6 @@
 # Lekcja 06 — Model domenowy i stan gry: wymagania
 
-**Status:** Approved (wymagania REQ-001–REQ-005 zatwierdzone przez właściciela w rozmowie; zapis w repozytorium oczekuje na PR)  
+**Status:** Approved — zatwierdzono przez właściciela 2026-11-13  
 **Zakres:** `packages/game-engine`  
 **Poza zakresem:** ruch, kolizje, obrót/SRS, generowanie figur, punktowanie zdarzeń, WebSocket i mechanika meczu.
 

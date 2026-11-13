@@ -1,6 +1,6 @@
 # Lekcja 06 — Model domenowy i stan gry: plan zadań
 
-**Status dokumentu:** Draft — do zatwierdzenia przed implementacją  
+**Status dokumentu:** Approved — zatwierdzono przez właściciela 2026-11-13  
 **Gałąź sugerowana:** `feature/006-game-domain-model`  
 **Stan wykonania:** wszystkie zadania TODO; testy NOT_RUN.
 
