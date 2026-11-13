@@ -1,12 +1,12 @@
 # Multiplayer Tetris — dziennik postępów
 
 ## Stan projektu
-- **Ukończone lekcje:** 2/60
-- **Aktualna lekcja:** 03
+- **Ukończone lekcje:** 3/60
+- **Aktualna lekcja:** 04
 - **Etap:** M1 — Fundament inżynierski
-- **Ostatnia aktualizacja:** 2026-11-13 — zamknięcie lekcji 02
+- **Ostatnia aktualizacja:** 2026-11-13 — zamknięcie lekcji 03
 - **Repozytorium / gałąź:** `borys94/tetris-multiplayer` / `main`
-- **Środowiska:** lokalne — planowane; beta — nieuruchomione; produkcja — nieuruchomiona
+- **Środowiska:** lokalne — monorepo (`yarn install --immutable`, `yarn check`); aplikacje jeszcze nieuruchamialne; beta — nieuruchomione; produkcja — nieuruchomiona
 
 ## Statusy
 `Nie rozpoczęto` · `W trakcie` · `Zablokowane` · `Do przeglądu` · `Ukończono`
@@ -16,7 +16,7 @@
 |---|---|---|---|---|---|
 | 01 | Analiza wymagań, MVP i architektura docelowa | Ukończono | `specs/001-mvp-architecture/` (`requirements.md` v0.2, `spec.md` v0.3, `design.md` v0.2, `tasks.md` v0.4) | [Commit dokumentacji](https://github.com/borys94/tetris-multiplayer/commit/7c421bd0a2d381a788a008717f0ab689754c220c); review T-01–T-06: PASS | `Lesson 01: CLOSED` — decyzja właściciela 2026-11-12; bez testów aplikacji |
 | 02 | Test diagnostyczny i organizacja pracy z AI | Ukończono | `specs/002-ai-workflow/` (`requirements.md`, `spec.md`, `design.md`, `tasks.md` — `Approved`); [PR #1](https://github.com/borys94/tetris-multiplayer/pull/1) | Kontrole spójności ID R-01–R-05 / S-01–S-05 / T-01–T-06: PASS; symulacje S-01–S-05: PASS (S-02, S-03 dokumentacyjnie); testy/lint/typecheck: NOT_RUN (brak kodu aplikacji) | `Lesson 02: CLOSED` — decyzja właściciela 2026-11-13 po code review PR #1: PASS; „test diagnostyczny” nieobjęty specyfikacją 002 |
-| 03 | Monorepo, TypeScript, Yarn i Turborepo | Nie rozpoczęto | — | — | — |
+| 03 | Monorepo, TypeScript, Yarn i Turborepo | Ukończono | `specs/003-monorepo-tooling/` (`Approved`); [PR #2](https://github.com/borys94/tetris-multiplayer/pull/2) | S-01–S-05: PASS na świeżym klonie (`yarn check` 9/9, cache `FULL TURBO`, constraints i granice TS — scenariusze negatywne); CI: NOT_RUN (L05) | `Lesson 03: CLOSED` — merge PR #2 przez właściciela 2026-11-13 |
 | 04 | Dokumentacja, ADR, konwencje i szablony SDD | Nie rozpoczęto | — | — | — |
 | 05 | CI: lint, sprawdzanie typów, testy i kontrole PR | Nie rozpoczęto | — | — | — |
 | 06 | Model domenowy i stan gry | Nie rozpoczęto | — | — | — |
@@ -94,6 +94,14 @@ Dla każdej lekcji dopisz: datę, link do PR/commita, zmienione artefakty, wykon
 - **Testy:** `NOT_RUN` — brak kodu aplikacji; lint markdown i render Mermaid nie były uruchamiane automatycznie.
 - **Wnioski:** rozbieżności między dokumentami rozstrzygać przed implementacją (status Draft vs zatwierdzenie, stack w sylabusie); stany procesu muszą mieć zdefiniowane wyjścia; „test diagnostyczny” z tytułu lekcji pozostaje poza specyfikacją 002 (zob. ryzyka).
 
+### Lekcja 03 — 2026-11-13 — Ukończono
+- **Decyzja:** `Lesson 03: CLOSED` — zatwierdzenie SDD z decyzjami Q-01–Q-09 i merge PR #2 przez właściciela.
+- **Dowód Git:** [PR #2](https://github.com/borys94/tetris-multiplayer/pull/2) z gałęzi `feature/003-monorepo-tooling`; merge `7ff3954` w `main`.
+- **Artefakty:** `specs/003-monorepo-tooling/` (R-01–R-05, S-01–S-05, D-01–D-06, DEP-01–DEP-06, T-01–T-05 — `Approved`); Yarn 4.18.1 (`yarnPath`, `node-modules`), Node 26, Turborepo 2.11.11, TypeScript 7.0.2, Vitest 5.1.0; workspace'y `@tetris/game-engine`, `@tetris/server`, `@tetris/web` (szkielety); `yarn.config.cjs`; `README.md`.
+- **Weryfikacja:** świeży klon: `yarn install --immutable` = 0, `yarn check` = 0 (9/9 zadań, `^build` przed konsumentami), drugi przebieg `FULL TURBO`, selektywne unieważnianie cache; 6 naruszeń reguł zależności odrzuconych przez `yarn constraints`; API DOM/Node w silniku i głębokie importy odrzucone przez TS. Po merge `yarn check` na `main` = 0.
+- **Testy:** testy smoke Vitest w 3 workspace'ach — `PASS`; CI — `NOT_RUN` (L05).
+- **Wnioski:** Node ≥ 25 nie dołącza `corepack` — `yarnPath` usuwa ręczny krok; Vitest 5 wymaga `vite` jako peer w każdym workspace z testami; specyfikacja ma być zwięzła (5 wymagań / 5 scenariuszy / 5 zadań wystarczyło).
+
 ## Testy wiedzy (co 5 lekcji)
 | Lekcje | Data | Wynik | Mocne strony | Luki i działania |
 |---|---|---|---|---|
@@ -119,8 +127,9 @@ Dla każdej lekcji dopisz: datę, link do PR/commita, zmienione artefakty, wykon
 |---|---|---|---|---|
 | 2026-11-13 | „Test diagnostyczny” z tytułu lekcji 02 nie jest objęty `specs/002-ai-workflow/` | Niepełna realizacja tematu lekcji 02 | Zrealizować poza repozytorium albo uzasadnić pominięcie przed zamknięciem lekcji | Właściciel |
 | 2026-11-13 | Wymagania lekcji 02 zweryfikowane przez review i symulację, bez testów automatycznych (S-03) | Dowody mają charakter manualny | Jawnie odnotowane w PR #1; automatyczne kontrole od lekcji 05 (CI) | Właściciel |
+| 2026-11-13 | K-01: `specs/001-mvp-architecture/design.md` wymienia Fastify, a `AGENTS.md` — Express | Sprzeczne źródła prawdy dla backendu | Rozstrzygnąć w ADR w lekcji 04 | Właściciel |
+| 2026-11-13 | Importy niezadeklarowanych (wyhoistowanych) pakietów nie są wykrywane w monorepo | Ukryta zależność, np. silnika od pakietu aplikacji | Lint importów w lekcji 05 | Właściciel |
 
 ## Następne kroki
-1. Scalić [PR #1](https://github.com/borys94/tetris-multiplayer/pull/1) do `main` (decyzja właściciela).
-2. Rozpocząć lekcję 03 — Monorepo, TypeScript, Yarn i Turborepo — w osobnym czacie projektu.
-3. Odczytać aktualne `AGENTS.md`, `syllabus.md`, `progress.md` oraz specyfikacje w `specs/` przed pracą.
+1. Rozpocząć lekcję 04 — Dokumentacja, ADR, konwencje i szablony SDD — w osobnym czacie projektu; sformalizować ADR-001–ADR-005 oraz kandydatów z L03 (Yarn 4 + `node-modules`, Turborepo + pakiety kompilowane, egzekucja granic zależności) i rozstrzygnąć K-01.
+2. Odczytać aktualne `AGENTS.md`, `syllabus.md`, `progress.md` oraz specyfikacje w `specs/` przed pracą.
