@@ -2,10 +2,10 @@
 
 - **ID:** 003-monorepo-tooling
 - **Wersja:** 0.2
-- **Status:** Draft — do zatwierdzenia przez właściciela
+- **Status:** Approved — zatwierdzono przez właściciela 2026-11-13
 - **Gałąź:** `feature/003-monorepo-tooling`
 
-**Przed T-01:** zatwierdzenie SDD i decyzje Q-01–Q-09 (`design.md` §7). **Po T-05:** code review PR, zgoda właściciela, aktualizacja `progress.md`.
+**Przed T-01:** zatwierdzenie SDD i decyzje Q-01–Q-09 (`design.md` §7) — DONE. **Po T-05:** code review PR, zgoda właściciela, aktualizacja `progress.md`.
 
 Każde zadanie = osobny commit + dowód z uruchomionych poleceń. Status: `TODO` → `IN_PROGRESS` → `DONE` / `BLOCKED`.
 

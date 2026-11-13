@@ -2,7 +2,7 @@
 
 - **ID:** 003-monorepo-tooling
 - **Wersja:** 0.3
-- **Status:** Draft — do zatwierdzenia przez właściciela
+- **Status:** Approved — zatwierdzono przez właściciela 2026-11-13
 - **Uwaga:** konfiguracje poniżej to szkice; wersje narzędzi ustala i przypina T-01 na podstawie aktualnych wydań.
 
 ## 1. Decyzje
@@ -76,13 +76,13 @@ Narzędzia używane w skryptach workspace'u (`tsc`, `vitest`) są w jego `devDep
 
 Kandydaci na ADR (L04): Yarn 4 + `node-modules`; Turborepo + pakiety kompilowane; egzekucja granic zależności.
 
-## 7. Pytania otwarte
-- **Q-01:** Node 26 (rekomendacja) czy 24?
-- **Q-02:** `yarnPath` (rekomendacja) czy `corepack` z npm?
-- **Q-03:** Szkielety TS aplikacji (rekomendacja) czy od razu Vite/Express?
-- **Q-04:** `packages/contracts` w L26 (rekomendacja) czy teraz?
-- **Q-05:** Scope `@tetris/`?
-- **Q-06:** `exactOptionalPropertyTypes: true` (rekomendacja)?
-- **Q-07:** Wyłączyć telemetrię Yarn i Turborepo (rekomendacja)?
-- **Q-08:** K-01 — erratum w 001 teraz czy ADR w L04?
-- **Q-09:** Minimalny `README.md` w L03 (rekomendacja)?
+## 7. Decyzje właściciela (2026-11-13)
+- **Q-01:** Node 26.
+- **Q-02:** `yarnPath` + `packageManager`.
+- **Q-03:** szkielety TS aplikacji.
+- **Q-04:** `packages/contracts` w L26.
+- **Q-05:** scope `@tetris/`.
+- **Q-06:** `exactOptionalPropertyTypes: true`.
+- **Q-07:** telemetria wyłączona (`enableTelemetry: false`; `TURBO_TELEMETRY_DISABLED=1` w skryptach root).
+- **Q-08:** K-01 rozstrzygnąć w ADR w L04; `specs/001` bez zmian.
+- **Q-09:** minimalny `README.md` w L03.

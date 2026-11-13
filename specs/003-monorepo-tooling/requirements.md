@@ -2,7 +2,7 @@
 
 - **ID:** 003-monorepo-tooling
 - **Wersja:** 0.2
-- **Status:** Draft — do zatwierdzenia przez właściciela
+- **Status:** Approved — zatwierdzono przez właściciela 2026-11-13
 - **Zakres:** narzędzia monorepo i szkielety workspace'ów, bez funkcjonalności gry, UI ani API.
 - **Powiązania:** `AGENTS.md` (stack), `specs/001-mvp-architecture/` (NFR-02, S-19, §3), `specs/002-ai-workflow/` (proces SDD).
 

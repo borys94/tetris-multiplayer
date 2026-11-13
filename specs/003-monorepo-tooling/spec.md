@@ -2,7 +2,7 @@
 
 - **ID:** 003-monorepo-tooling
 - **Wersja:** 0.2
-- **Status:** Draft — do zatwierdzenia przez właściciela
+- **Status:** Approved — zatwierdzono przez właściciela 2026-11-13
 
 Polecenia uruchamiane są z katalogu głównego. „Czysty klon” = brak `node_modules`, `dist`, `.turbo`.
 
