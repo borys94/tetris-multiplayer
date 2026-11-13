@@ -2,18 +2,22 @@
 
 **Status dokumentu:** Approved — zatwierdzono przez właściciela 2026-11-13  
 **Gałąź sugerowana:** `feature/006-game-domain-model`  
-**Stan wykonania:** wszystkie zadania TODO; testy NOT_RUN.
+**Stan wykonania:** TASK-001 DONE; TASK-002–TASK-006 TODO.
 
 ## Zadania
 
 ### TASK-001 — Kontrakty domenowe
 
-- **Status:** TODO
+- **Status:** DONE (2026-11-13)
 - **Śledzenie:** REQ-001, REQ-002 → SPEC-001, SPEC-002 → AC-001, AC-002
 - Przejrzeć istniejące API `packages/game-engine` i konwencje repozytorium.
 - Uzgodnić minimalne, kompilowalne typy `GameConfig`, `GameStatus`, `GameState`, `Board`, `ActivePiece`.
 - Wyeksportować publiczne kontrakty bez zależności od UI i sieci.
-- **Dowód:** przegląd API, kompilacja TS. **Wynik:** NOT_RUN.
+- **Dowód:** przegląd API, kompilacja TS. **Wynik:** PASS lokalnie.
+  - Pliki: `piece.ts`, `board.ts`, `game-config.ts`, `game-state.ts`, eksporty typów w `index.ts`, `contracts.test.ts` (`expectTypeOf` + `@ts-expect-error`, wyłącznie przez `./index.js`).
+  - AC-001: importy w `src/` tylko względne (`vitest` wyłącznie w testach, poza buildem); brak `socketId`, `react`, `express`, `ws`, `node:`; brak `dependencies`/`peerDependencies`; `keyof GameState` = dokładnie 4 pola.
+  - AC-002: testy negatywne — usunięcie `readonly` z `score`, z `BoardRow`, z `Position.x` oraz dodanie `socketId` do `GameState` powodują błąd `yarn typecheck` (TS2578 / TS2344) w odpowiedniej asercji; po przywróceniu exit 0.
+  - `yarn install --immutable` = 0, `yarn check` = 0.
 
 ### TASK-002 — Walidacja GameConfig
 
@@ -61,8 +65,8 @@
 
 | AC | Zadania | Metoda | Wynik |
 |---|---|---|---|
-| AC-001 | TASK-001, TASK-006 | Review importów i API | NOT_RUN |
-| AC-002 | TASK-001, TASK-006 | Typecheck, review eksportów | NOT_RUN |
+| AC-001 | TASK-001, TASK-006 | Review importów i API | PASS lokalnie (TASK-001); CI — TASK-006 |
+| AC-002 | TASK-001, TASK-006 | Typecheck, review eksportów | PASS lokalnie (TASK-001); CI — TASK-006 |
 | AC-003 | TASK-003, TASK-004 | Vitest: stan początkowy i powtarzalność | NOT_RUN |
 | AC-004 | TASK-002, TASK-004 | Vitest: niepoprawne wymiary | NOT_RUN |
 | AC-005 | TASK-005, TASK-006 | Vitest, typecheck, review niemutowalności | NOT_RUN |
