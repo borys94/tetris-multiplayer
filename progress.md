@@ -1,10 +1,10 @@
 # Multiplayer Tetris — dziennik postępów
 
 ## Stan projektu
-- **Ukończone lekcje:** 3/60
-- **Aktualna lekcja:** 04
+- **Ukończone lekcje:** 4/60
+- **Aktualna lekcja:** 05
 - **Etap:** M1 — Fundament inżynierski
-- **Ostatnia aktualizacja:** 2026-11-13 — lekcja 04 do przeglądu (SDD i ADR-003 zatwierdzone, K-01 rozstrzygnięte)
+- **Ostatnia aktualizacja:** 2026-11-13 — zamknięcie lekcji 04
 - **Repozytorium / gałąź:** `borys94/tetris-multiplayer` / `main`
 - **Środowiska:** lokalne — monorepo (`yarn install --immutable`, `yarn check`); aplikacje jeszcze nieuruchamialne; beta — nieuruchomione; produkcja — nieuruchomiona
 
@@ -17,7 +17,7 @@
 | 01 | Analiza wymagań, MVP i architektura docelowa | Ukończono | `specs/001-mvp-architecture/` (`requirements.md` v0.2, `spec.md` v0.3, `design.md` v0.2, `tasks.md` v0.4) | [Commit dokumentacji](https://github.com/borys94/tetris-multiplayer/commit/7c421bd0a2d381a788a008717f0ab689754c220c); review T-01–T-06: PASS | `Lesson 01: CLOSED` — decyzja właściciela 2026-11-12; bez testów aplikacji |
 | 02 | Test diagnostyczny i organizacja pracy z AI | Ukończono | `specs/002-ai-workflow/` (`requirements.md`, `spec.md`, `design.md`, `tasks.md` — `Approved`); [PR #1](https://github.com/borys94/tetris-multiplayer/pull/1) | Kontrole spójności ID R-01–R-05 / S-01–S-05 / T-01–T-06: PASS; symulacje S-01–S-05: PASS (S-02, S-03 dokumentacyjnie); testy/lint/typecheck: NOT_RUN (brak kodu aplikacji) | `Lesson 02: CLOSED` — decyzja właściciela 2026-11-13 po code review PR #1: PASS; „test diagnostyczny” nieobjęty specyfikacją 002 |
 | 03 | Monorepo, TypeScript, Yarn i Turborepo | Ukończono | `specs/003-monorepo-tooling/` (`Approved`); [PR #2](https://github.com/borys94/tetris-multiplayer/pull/2) | S-01–S-05: PASS na świeżym klonie (`yarn check` 9/9, cache `FULL TURBO`, constraints i granice TS — scenariusze negatywne); CI: NOT_RUN (L05) | `Lesson 03: CLOSED` — merge PR #2 przez właściciela 2026-11-13 |
-| 04 | Dokumentacja, ADR, konwencje i szablony SDD | Do przeglądu | `specs/004-documentation-sdd/` (`Approved`); `docs/conventions.md`, `docs/templates/sdd/`, `docs/adr/`; gałąź `feature/004-documentation-sdd` (PR — oczekuje) | Linki (16) i kotwice: PASS; sekcje szablonów i ADR: PASS; traceability REQ-001–005 → SPEC → TASK → AC-001–006: PASS; zakres tylko dokumentacja: PASS; `yarn check` 9/9: PASS; lint Markdown: NOT_RUN (L05) | Od 004 schemat ID `REQ/SPEC/TASK/AC` (001–003 legacy); ADR-003 `Accepted`; K-01 → Express |
+| 04 | Dokumentacja, ADR, konwencje i szablony SDD | Ukończono | `specs/004-documentation-sdd/` (`Approved`); `docs/conventions.md`, `docs/templates/sdd/`, `docs/adr/`; [PR #4](https://github.com/borys94/tetris-multiplayer/pull/4) | Linki (16) i kotwice: PASS; sekcje szablonów i ADR: PASS; traceability REQ-001–005 → SPEC → TASK → AC-001–006: PASS; zakres tylko dokumentacja: PASS; `yarn check` 9/9: PASS; lint Markdown: NOT_RUN (L05) | Od 004 schemat ID `REQ/SPEC/TASK/AC` (001–003 legacy); ADR-003 `Accepted`; K-01 → Express; `Lesson 04: CLOSED` — merge PR #4 przez właściciela 2026-11-13 |
 | 05 | CI: lint, sprawdzanie typów, testy i kontrole PR | Nie rozpoczęto | — | — | — |
 | 06 | Model domenowy i stan gry | Nie rozpoczęto | — | — | — |
 | 07 | Plansza, tetromino i układ współrzędnych | Nie rozpoczęto | — | — | — |
@@ -102,6 +102,15 @@ Dla każdej lekcji dopisz: datę, link do PR/commita, zmienione artefakty, wykon
 - **Testy:** testy smoke Vitest w 3 workspace'ach — `PASS`; CI — `NOT_RUN` (L05).
 - **Wnioski:** Node ≥ 25 nie dołącza `corepack` — `yarnPath` usuwa ręczny krok; Vitest 5 wymaga `vite` jako peer w każdym workspace z testami; specyfikacja ma być zwięzła (5 wymagań / 5 scenariuszy / 5 zadań wystarczyło).
 
+### Lekcja 04 — 2026-11-13 — Ukończono
+- **Decyzja:** `Lesson 04: CLOSED` — zatwierdzenie SDD i ADR-003 oraz merge PR #4 przez właściciela.
+- **Dowód Git:** [PR #4](https://github.com/borys94/tetris-multiplayer/pull/4) z gałęzi `feature/004-documentation-sdd`; merge `715f112` w `main`.
+- **Artefakty:** `specs/004-documentation-sdd/` (REQ-001–005, SPEC-001–003, AC-001–006, D-001–005, TASK-001–006 — `Approved`); `docs/conventions.md`; szablony `docs/templates/sdd/` (requirements, spec, design, tasks); `docs/adr/ADR-003-server-authoritative-multiplayer.md` (`Accepted`).
+- **Decyzje:** schemat ID `REQ/SPEC/TASK/AC` od lekcji 004, `specs/001`–`003` bez migracji (legacy); numery ADR-001–005 zarezerwowane dla kandydatów z 001, nowe od ADR-006; K-01 rozstrzygnięte — Express (formalny ADR-006 do zapisania).
+- **Weryfikacja:** linki i kotwice (skrypt, 17 odnośników): `PASS`; wymagane sekcje szablonów i ADR: `PASS`; traceability REQ → SPEC → TASK → AC: `PASS`; zakres tylko dokumentacja: `PASS`.
+- **Testy:** `yarn check` 9/9 — `PASS` (bez zmian w kodzie); lint Markdown — `NOT_RUN` (L05).
+- **Wnioski:** draft `requirements.md` był kopią `spec.md` — kontrolować kompletność pakietu przed zatwierdzeniem; konflikty konwencji (ID, numeracja ADR, nazwa gałęzi) rozstrzygać przed pisaniem; status `Accepted` tylko po jawnej decyzji właściciela.
+
 ## Testy wiedzy (co 5 lekcji)
 | Lekcje | Data | Wynik | Mocne strony | Luki i działania |
 |---|---|---|---|---|
@@ -134,6 +143,6 @@ Dla każdej lekcji dopisz: datę, link do PR/commita, zmienione artefakty, wykon
 | 2026-11-13 | Importy niezadeklarowanych (wyhoistowanych) pakietów nie są wykrywane w monorepo | Ukryta zależność, np. silnika od pakietu aplikacji | Lint importów w lekcji 05 | Właściciel |
 
 ## Następne kroki
-1. Zamknąć lekcję 04: commit, PR z `feature/004-documentation-sdd`, code review, merge przez właściciela.
+1. Rozpocząć lekcję 05 — CI: lint, sprawdzanie typów, testy i kontrole PR — w osobnym czacie projektu, na podstawie szablonów z `docs/templates/sdd/`; uwzględnić lint Markdown/linków i lint importów (ryzyka z L03/L04).
 2. Osobna zmiana dokumentacyjna: ADR-006 (Express), formalizacja ADR-001, 002, 004, 005 i kandydatów z L03 (Yarn 4 + `node-modules`, Turborepo + pakiety kompilowane, egzekucja granic zależności) wg `docs/conventions.md`.
 3. Odczytać aktualne `AGENTS.md`, `syllabus.md`, `progress.md` oraz specyfikacje w `specs/` przed pracą.
