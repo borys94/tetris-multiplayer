@@ -1,0 +1,17 @@
+// markdownlint-cli2 — see specs/005-ci-quality-gates/design.md D-003.
+{
+  "config": {
+    "default": true,
+    // Polish prose and wide tables; line wrapping would hurt diffs and readability.
+    "MD013": false,
+    // Compact tables (`|---|`) are the repository convention.
+    "MD060": false,
+    // Bold ID labels (`**D-001 — …**`, `**SPEC-001 — …**`) are the SDD convention, not headings.
+    "MD036": false,
+    // `<nazwa>` is a placeholder in docs/templates/sdd/.
+    "MD033": { "allowed_elements": ["nazwa"] }
+  },
+  "globs": ["**/*.md"],
+  "ignores": ["**/node_modules/**", "**/dist/**", "**/.turbo/**", "**/coverage/**"],
+  "gitignore": true
+}

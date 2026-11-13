@@ -1,6 +1,6 @@
 {
   "$schema": "https://turborepo.com/schema.json",
-  "globalDependencies": ["tsconfig.base.json", ".nvmrc"],
+  "globalDependencies": ["tsconfig.base.json", ".nvmrc", "eslint.config.mjs"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -8,6 +8,9 @@
     },
     "typecheck": {
       "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "lint": {
       "outputs": []
     },
     "test": {
