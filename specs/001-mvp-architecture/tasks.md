@@ -19,6 +19,7 @@ Przed pracą odczytać `syllabus.md`, `progress.md` i cztery dokumenty SDD. Nie 
 ## 2. Zadania dla Claude Code
 
 ### T-01 — Weryfikacja punktu wyjścia
+
 - **Cel:** potwierdzić strukturę repozytorium, dostępność `syllabus.md`, `progress.md`, dokumentów SDD i stan Git.
 - **Warunek startu:** dostęp do plików lub jawne zgłoszenie braku dostępu.
 - **Wynik:** raport źródeł i punktu odniesienia; bez modyfikacji aplikacji.
@@ -28,6 +29,7 @@ Przed pracą odczytać `syllabus.md`, `progress.md` i cztery dokumenty SDD. Nie 
 - **Status wykonania:** NOT RUN.
 
 ### T-02 — Review wymagań i granic MVP
+
 - **Cel:** porównać M2/M3/M4 i zatwierdzone D-01–D-05; zachować FR-01–FR-10 oraz NFR-01–NFR-07.
 - **Warunek startu:** T-01 umożliwia odczyt źródeł.
 - **Wynik:** `requirements.md` v0.2, rejestr decyzji, zakres, wykluczenia i otwarte kontrakty.
@@ -37,6 +39,7 @@ Przed pracą odczytać `syllabus.md`, `progress.md` i cztery dokumenty SDD. Nie 
 - **Status wykonania:** NOT RUN.
 
 ### T-03 — Review scenariuszy i macierzy śledzenia
+
 - **Cel:** zweryfikować Given/When/Then, przypadki brzegowe, FR/NFR, D-01–D-05 i S-01–S-20.
 - **Warunek startu:** T-02 zakończone merytorycznie.
 - **Wynik:** `spec.md` v0.3 z macierzą, jawnymi odroczeniami i rozróżnieniem kryteriów L01 od przyszłych testów produktu.
@@ -46,6 +49,7 @@ Przed pracą odczytać `syllabus.md`, `progress.md` i cztery dokumenty SDD. Nie 
 - **Status wykonania:** NOT RUN.
 
 ### T-04 — Review projektu technicznego
+
 - **Cel:** sprawdzić granice modułów, źródło prawdy, przepływy i bezpieczeństwo względem S-01–S-20.
 - **Warunek startu:** T-03 zakończone merytorycznie.
 - **Wynik:** `design.md` v0.2 z alternatywami, ryzykami i kandydatami ADR-001–ADR-005 (bez tworzenia formalnych ADR w L01).
@@ -55,6 +59,7 @@ Przed pracą odczytać `syllabus.md`, `progress.md` i cztery dokumenty SDD. Nie 
 - **Status wykonania:** NOT RUN.
 
 ### T-05 — Kontrola spójności pakietu SDD
+
 - **Cel:** sprawdzić cztery dokumenty, statusy, identyfikatory, odwołania i decyzje.
 - **Warunek startu:** T-02–T-04 poddane review.
 - **Wynik:** raport spójności z klasyfikacją `Critical`/`Major`/`Minor`/`Suggestion`, lokalizacją, ryzykiem, poprawką i sposobem weryfikacji.
@@ -64,6 +69,7 @@ Przed pracą odczytać `syllabus.md`, `progress.md` i cztery dokumenty SDD. Nie 
 - **Status wykonania:** NOT RUN.
 
 ### T-06 — Raport gotowości do zamknięcia lekcji 01
+
 - **Cel:** zebrać dowody T-01–T-05, cztery akceptacje dokumentów przez właściciela, raport spójności oraz dowód zapisania właściwych wersji dokumentów w repozytorium; przedstawić właścicielowi raport gotowości do decyzji o zamknięciu.
 - **Warunek startu:** T-05 ma wynik PASS; komplet dowodów T-01–T-05.
 - **Wynik:** raport `Lesson 01 Completion Gate` z oceną gotowości do zamknięcia lekcji, bez przygotowywania ani zapisywania aktualizacji `progress.md`. Propozycja aktualizacji powstaje dopiero po decyzji `Lesson 01: CLOSED`, zgodnie z §6.
@@ -73,6 +79,7 @@ Przed pracą odczytać `syllabus.md`, `progress.md` i cztery dokumenty SDD. Nie 
 - **Status wykonania:** NOT RUN.
 
 ## 3. Macierz zadanie → kryterium
+
 | Zadanie | AC-01 | AC-02 | AC-03 | AC-04 | AC-05 | AC-06 |
 |---|---|---|---|---|---|---|
 | T-01 | | | | | | X |

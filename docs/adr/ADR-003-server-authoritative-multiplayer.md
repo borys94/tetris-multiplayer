@@ -32,10 +32,12 @@ Szczegóły protokołu, ticków i reconnect ustalą lekcje 26–30.
 ## Consequences
 
 **Pozytywne**
+
 - Mniejsza powierzchnia oszustw; jeden spójny wynik dla obu graczy.
 - Log intencji przetwarzanych przez serwer umożliwia replay i weryfikację determinizmu (L35).
 
 **Negatywne / koszty**
+
 - Serwer utrzymuje stan aktywnych meczów i zużywa CPU na symulację — wpływa na skalowanie i własność sesji (L54).
 - Opóźnienie sieci wymaga predykcji i reconciliation po stronie klienta (L30).
 - Awaria procesu serwera może przerwać mecz; polityka odzyskiwania wymaga osobnej decyzji (001 design §8).

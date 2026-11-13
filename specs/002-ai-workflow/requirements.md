@@ -4,6 +4,7 @@
 **Zakres:** proces współpracy człowiek–ChatGPT–Claude Code, bez implementacji funkcji gry.
 
 ## Cel
+
 Ustanowić powtarzalny, audytowalny proces Spec-Driven Development (SDD), w którym człowiek odpowiada za decyzje i akceptację, ChatGPT wspiera analizę i review, a Claude Code realizuje zatwierdzone zadania.
 
 ## Wymagania
@@ -17,9 +18,11 @@ Ustanowić powtarzalny, audytowalny proces Spec-Driven Development (SDD), w któ
 | R-05 | Przebieg i zakończenie pracy są odtwarzalne i udokumentowane. | Stosuje się preferowany workflow feature branch/PR, scenariusze S-01–S-05 można przećwiczyć bez kodu aplikacji, a `progress.md` aktualizuje się dopiero na podstawie zweryfikowanych dowodów. |
 
 ## Poza zakresem
+
 - Implementacja silnika Tetris, infrastruktury, API i CI.
 - Automatyczne zatwierdzanie PR, merge lub deployment.
 - Przyznawanie agentom uprawnień do sekretów i środowisk produkcyjnych.
 
 ## Kryterium zakończenia lekcji
+
 Wymagania R-01–R-05 są zweryfikowane dokumentacyjnie lub przez symulację, właściciel zatwierdza proces, a `progress.md` jest aktualizowany na podstawie faktycznych dowodów.

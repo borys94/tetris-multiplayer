@@ -2,7 +2,7 @@
 
 ## Repozytorium i źródło prawdy
 
-- Repozytorium GitHub: https://github.com/borys94/tetris-multiplayer
+- Repozytorium GitHub: <https://github.com/borys94/tetris-multiplayer>
 - Domyślna gałąź: `main`.
 - Kod, specyfikacje i dokumentacja w repozytorium stanowią źródło prawdy. Przed pracą sprawdź aktualne pliki i nie zakładaj, że plan odpowiada stanowi implementacji.
 - Plan kursu: `syllabus.md`; postępy: `progress.md`; specyfikacje funkcjonalności: `specs/`.

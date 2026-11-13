@@ -22,6 +22,7 @@
 | R-05 | T-02, T-04, T-05, T-06; przegląd dowodów i historii zmian. |
 
 ## Checklist review
+
 - [ ] Wszystkie wymagania mają scenariusz lub inną metodę weryfikacji.
 - [ ] Agent nie ma prawa samodzielnie rozszerzać zakresu.
 - [ ] Drobne poprawki w zatwierdzonym zakresie są jawnie dozwolone.

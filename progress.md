@@ -1,6 +1,7 @@
 # Multiplayer Tetris — dziennik postępów
 
 ## Stan projektu
+
 - **Ukończone lekcje:** 4/60
 - **Aktualna lekcja:** 05
 - **Etap:** M1 — Fundament inżynierski
@@ -9,9 +10,11 @@
 - **Środowiska:** lokalne — monorepo (`yarn install --immutable`, `yarn check`); aplikacje jeszcze nieuruchamialne; beta — nieuruchomione; produkcja — nieuruchomiona
 
 ## Statusy
+
 `Nie rozpoczęto` · `W trakcie` · `Zablokowane` · `Do przeglądu` · `Ukończono`
 
 ## Lista lekcji
+
 | Nr | Lekcja | Status | Specyfikacja / PR | Dowód weryfikacji | Uwagi |
 |---|---|---|---|---|---|
 | 01 | Analiza wymagań, MVP i architektura docelowa | Ukończono | `specs/001-mvp-architecture/` (`requirements.md` v0.2, `spec.md` v0.3, `design.md` v0.2, `tasks.md` v0.4) | [Commit dokumentacji](https://github.com/borys94/tetris-multiplayer/commit/7c421bd0a2d381a788a008717f0ab689754c220c); review T-01–T-06: PASS | `Lesson 01: CLOSED` — decyzja właściciela 2026-11-12; bez testów aplikacji |
@@ -76,9 +79,11 @@
 | 60 | Egzamin końcowy, dokumentacja i roadmapa v2 | Nie rozpoczęto | — | — | — |
 
 ## Historia ukończonych lekcji
+
 Dla każdej lekcji dopisz: datę, link do PR/commita, zmienione artefakty, wykonane testy, wynik review i wnioski.
 
 ### Lekcja 01 — 2026-11-12 — Ukończono
+
 - **Decyzja:** `Lesson 01: CLOSED` — jawne zatwierdzenie właściciela po raporcie `Lesson 01 Completion Gate`.
 - **Dowód Git:** [commit zatwierdzonych dokumentów](https://github.com/borys94/tetris-multiplayer/commit/7c421bd0a2d381a788a008717f0ab689754c220c) (`main`).
 - **Artefakty:** `specs/001-mvp-architecture/requirements.md` v0.2, `spec.md` v0.3, `design.md` v0.2, `tasks.md` v0.4 — wszystkie `Approved`.
@@ -87,6 +92,7 @@ Dla każdej lekcji dopisz: datę, link do PR/commita, zmienione artefakty, wykon
 - **Wnioski:** oddzielać zatwierdzenie merytoryczne od formalnego zamknięcia; dokumentować odroczenia (m.in. FR-10/S-17, reconnect, wejścia); kandydatów ADR-001–ADR-005 sformalizować w lekcji 04.
 
 ### Lekcja 02 — 2026-11-13 — Ukończono
+
 - **Decyzja:** `Lesson 02: CLOSED` — jawne zatwierdzenie właściciela po pozytywnym końcowym code review PR #1.
 - **Dowód Git:** [PR #1](https://github.com/borys94/tetris-multiplayer/pull/1) z gałęzi `feature/002-ai-workflow`; merge do `main` po stronie właściciela.
 - **Artefakty:** `specs/002-ai-workflow/requirements.md` (R-01–R-05), `spec.md` (S-01–S-05, stany pracy z wyjściem z `BLOCKED`), `design.md`, `tasks.md` (T-01–T-06) — wszystkie `Approved`; polityka scope change w `AGENTS.md` (reguła 5); `syllabus.md` ujednolicony z `AGENTS.md` (Express.js, Yarn Workspaces).
@@ -95,6 +101,7 @@ Dla każdej lekcji dopisz: datę, link do PR/commita, zmienione artefakty, wykon
 - **Wnioski:** rozbieżności między dokumentami rozstrzygać przed implementacją (status Draft vs zatwierdzenie, stack w sylabusie); stany procesu muszą mieć zdefiniowane wyjścia; „test diagnostyczny” z tytułu lekcji pozostaje poza specyfikacją 002 (zob. ryzyka).
 
 ### Lekcja 03 — 2026-11-13 — Ukończono
+
 - **Decyzja:** `Lesson 03: CLOSED` — zatwierdzenie SDD z decyzjami Q-01–Q-09 i merge PR #2 przez właściciela.
 - **Dowód Git:** [PR #2](https://github.com/borys94/tetris-multiplayer/pull/2) z gałęzi `feature/003-monorepo-tooling`; merge `7ff3954` w `main`.
 - **Artefakty:** `specs/003-monorepo-tooling/` (R-01–R-05, S-01–S-05, D-01–D-06, DEP-01–DEP-06, T-01–T-05 — `Approved`); Yarn 4.18.1 (`yarnPath`, `node-modules`), Node 26, Turborepo 2.11.11, TypeScript 7.0.2, Vitest 5.1.0; workspace'y `@tetris/game-engine`, `@tetris/server`, `@tetris/web` (szkielety); `yarn.config.cjs`; `README.md`.
@@ -103,6 +110,7 @@ Dla każdej lekcji dopisz: datę, link do PR/commita, zmienione artefakty, wykon
 - **Wnioski:** Node ≥ 25 nie dołącza `corepack` — `yarnPath` usuwa ręczny krok; Vitest 5 wymaga `vite` jako peer w każdym workspace z testami; specyfikacja ma być zwięzła (5 wymagań / 5 scenariuszy / 5 zadań wystarczyło).
 
 ### Lekcja 04 — 2026-11-13 — Ukończono
+
 - **Decyzja:** `Lesson 04: CLOSED` — zatwierdzenie SDD i ADR-003 oraz merge PR #4 przez właściciela.
 - **Dowód Git:** [PR #4](https://github.com/borys94/tetris-multiplayer/pull/4) z gałęzi `feature/004-documentation-sdd`; merge `715f112` w `main`.
 - **Artefakty:** `specs/004-documentation-sdd/` (REQ-001–005, SPEC-001–003, AC-001–006, D-001–005, TASK-001–006 — `Approved`); `docs/conventions.md`; szablony `docs/templates/sdd/` (requirements, spec, design, tasks); `docs/adr/ADR-003-server-authoritative-multiplayer.md` (`Accepted`).
@@ -112,6 +120,7 @@ Dla każdej lekcji dopisz: datę, link do PR/commita, zmienione artefakty, wykon
 - **Wnioski:** draft `requirements.md` był kopią `spec.md` — kontrolować kompletność pakietu przed zatwierdzeniem; konflikty konwencji (ID, numeracja ADR, nazwa gałęzi) rozstrzygać przed pisaniem; status `Accepted` tylko po jawnej decyzji właściciela.
 
 ## Testy wiedzy (co 5 lekcji)
+
 | Lekcje | Data | Wynik | Mocne strony | Luki i działania |
 |---|---|---|---|---|
 | 01–05 (przegląd po lekcji 5) | — | — | — | — |
@@ -128,6 +137,7 @@ Dla każdej lekcji dopisz: datę, link do PR/commita, zmienione artefakty, wykon
 | 01–60 (przegląd po lekcji 60) | — | — | — | — |
 
 ## Rejestr decyzji (ADR)
+
 | ID | Temat | Status | Link |
 |---|---|---|---|
 | ADR-003 | Server-authoritative multiplayer | Accepted (2026-11-13) | [`docs/adr/ADR-003-server-authoritative-multiplayer.md`](docs/adr/ADR-003-server-authoritative-multiplayer.md) |
@@ -135,6 +145,7 @@ Dla każdej lekcji dopisz: datę, link do PR/commita, zmienione artefakty, wykon
 | ADR-006 (planowany) | Backend: Express.js (rozstrzygnięcie K-01) | Decyzja właściciela 2026-11-13; ADR do zapisania | — |
 
 ## Ryzyka i blokery
+
 | Data | Ryzyko / bloker | Wpływ | Działanie | Właściciel |
 |---|---|---|---|---|
 | 2026-11-13 | „Test diagnostyczny” z tytułu lekcji 02 nie jest objęty `specs/002-ai-workflow/` | Niepełna realizacja tematu lekcji 02 | Zrealizować poza repozytorium albo uzasadnić pominięcie przed zamknięciem lekcji | Właściciel |
@@ -143,6 +154,7 @@ Dla każdej lekcji dopisz: datę, link do PR/commita, zmienione artefakty, wykon
 | 2026-11-13 | Importy niezadeklarowanych (wyhoistowanych) pakietów nie są wykrywane w monorepo | Ukryta zależność, np. silnika od pakietu aplikacji | Lint importów w lekcji 05 | Właściciel |
 
 ## Następne kroki
+
 1. Rozpocząć lekcję 05 — CI: lint, sprawdzanie typów, testy i kontrole PR — w osobnym czacie projektu, na podstawie szablonów z `docs/templates/sdd/`; uwzględnić lint Markdown/linków i lint importów (ryzyka z L03/L04).
 2. Osobna zmiana dokumentacyjna: ADR-006 (Express), formalizacja ADR-001, 002, 004, 005 i kandydatów z L03 (Yarn 4 + `node-modules`, Turborepo + pakiety kompilowane, egzekucja granic zależności) wg `docs/conventions.md`.
 3. Odczytać aktualne `AGENTS.md`, `syllabus.md`, `progress.md` oraz specyfikacje w `specs/` przed pracą.

@@ -23,16 +23,19 @@ Celem produktu jest umożliwienie dwóm graczom rozegrania przez przeglądarkę 
 ## 3. Zakres i granice wydań
 
 ### M2 — fundament single-player (do lekcji 25)
+
 - Grywalna aplikacja w przeglądarkach desktopowych, ze sterowaniem klawiaturą, renderowaniem Canvas i testami E2E.
 - Reguły gry w niezależnym, deterministycznym pakiecie.
 
 ### M3 — MVP multiplayer (do lekcji 30)
+
 - Pojedynek 1v1 przez WebSocket z autorytatywnym serwerem.
 - Prywatne pokoje dwuosobowe, zaproszenia kodem i linkiem korzystające z jednego mechanizmu, dostęp gościnny, rozpoczęcie meczu, przesyłanie wejść i rozstrzyganie wyniku knockout.
 - Reconnect w ciągu 30 sekund od wykrycia rozłączenia przez serwer, bez pauzowania symulacji, snapshoty i uzgadnianie stanu.
 - Podstawowe zabezpieczenia walidacyjne i obsługa błędnych komunikatów.
 
 ### Poza MVP M3
+
 - Ranking, rankingowy matchmaking, replay dostępny graczom i tryb obserwatora (M4).
 - Produkcyjne AWS, rozproszone skalowanie i pełne operacyjne SLO (M5–M6).
 - Rozbudowany system społecznościowy, turnieje, aplikacje natywne, zakupy w grze (poza planem 60 lekcji).
@@ -68,9 +71,11 @@ Celem produktu jest umożliwienie dwóm graczom rozegrania przez przeglądarkę 
 | NFR-07 | Dokumentacja wiąże wymagania z kryteriami akceptacji i dowodami | Macierz śledzenia |
 
 ### Parametry do późniejszej decyzji
+
 Docelowa częstotliwość ticków, limity opóźnień, częstotliwość snapshotów, limity ruchu, budżety wydajności i docelowa liczba równoczesnych meczów **nie są jeszcze zatwierdzone**. **Zatwierdzono 30-sekundowy timeout reconnect** liczony od wykrycia rozłączenia przez serwer (D-04). Pozostałe parametry wymagają osobnych pomiarów i specyfikacji. Nie należy interpretować ich braku jako zgody na dowolne zachowanie.
 
 ## 6. Założenia i zależności
+
 - Docelowy stack i kolejność lekcji wynikają z `syllabus.md`.
 - Jedna sesja MVP obejmuje maksymalnie dwóch aktywnych graczy.
 - Aktywny stan meczu w początkowej wersji jest przechowywany w pamięci procesu; utrata procesu może przerwać mecz.
@@ -118,4 +123,5 @@ Docelowa częstotliwość ticków, limity opóźnień, częstotliwość snapshot
 **Uwaga:** AC-REC dla powtarzanych rozłączeń i granicznego timeoutu oraz dokładny zakres AC-INPUT-01 pozostają niekompletne do czasu decyzji szczegółowych. Powyższa tabela to kandydaci do późniejszego review `spec.md`, nie dowody wykonanych testów.
 
 ## 8. Warunek zatwierdzenia
+
 Właściciel projektu zatwierdza zakres M3, wykluczenia, wymagania FR/NFR oraz jawnie akceptuje otwarte decyzje jako tematy do późniejszej specyfikacji. Samo zatwierdzenie tego dokumentu nie oznacza ukończenia lekcji 01.
