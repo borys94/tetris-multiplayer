@@ -41,7 +41,7 @@
 - **Śledzenie:** REQ-003, REQ-005 → SPEC-003, SPEC-004, SPEC-006 → AC-003, AC-004
 - Parametryzowane testy Vitest dla `0`, wartości ujemnych, ułamków, `NaN`, `Infinity` i wartości spoza safe integer.
 - Test równoważności stanów dla równoważnych konfiguracji.
-- **Dowód:** wynik Vitest. **Wynik:** PASS — `create-initial-state.test.ts`: 8 niepoprawnych wartości × 2 wymiary (dodatkowo `-Infinity`, `31`), granice `1` i `30`, `toEqual` dwóch wywołań, brak wywołań `Math.random`/`Date.now`.
+- **Dowód:** wynik Vitest. **Wynik:** PASS — `create-initial-state.test.ts`: 7 niepoprawnych wartości z AC-004 × 2 wymiary, nazwa pola w komunikacie, plansze 1 × 1 / 10 × 20 / 30 × 30 (granice), `toEqual` dwóch wywołań, brak wywołań `Math.random`/`Date.now`.
 
 ### TASK-005 — Testy niezmienników i niemutowalności
 
@@ -50,7 +50,7 @@
 - Sprawdzić `score = 0`, `status = idle`, `activePiece = null` i rozmiar pustej planszy.
 - Sprawdzić, że fabryka nie zmienia konfiguracji wejściowej; skontrolować `readonly` struktur zagnieżdżonych.
 - Nie tworzyć fikcyjnych przejść stanu tylko dla testów.
-- **Dowód:** Vitest, typecheck, review. **Wynik:** PASS — zamrożona (`Object.freeze`) konfiguracja przechodzi bez błędu i pozostaje równa kopii; stan nie trzyma referencji do konfiguracji; `readonly` zagnieżdżone — `contracts.test.ts`.
+- **Dowód:** Vitest, typecheck, review. **Wynik:** PASS — zamrożona (`Object.freeze`) konfiguracja przechodzi bez błędu i pozostaje niezmieniona; `readonly` zagnieżdżone — `contracts.test.ts`.
 
 ### TASK-006 — Kontrola jakości i PR
 
@@ -60,10 +60,10 @@
 - Sprawdzić zakres diffu, publiczne eksporty, brak zależności infrastrukturalnych i zgodność z AGENTS.md.
 - Przygotować PR; nie wykonywać merge bez zgody właściciela.
 - **Dowód:** logi kontroli i link do PR. **Wynik:** PASS.
-  - Lokalnie: `yarn install --immutable` = 0; `yarn check` = 0 (12/12 zadań, 34 pliki Markdown bez naruszeń); Vitest `game-engine` 31/31 (po odchudzeniu `contracts.test.ts`; wcześniej 34/34).
+  - Lokalnie: `yarn install --immutable` = 0; `yarn check` = 0 (12/12 zadań, 34 pliki Markdown bez naruszeń); Vitest `game-engine` 25/25 (po skróceniu testów 2026-11-13; wcześniej 34/34).
   - CI: [PR #8](https://github.com/borys94/tetris-multiplayer/pull/8), [run 43475535510](https://github.com/borys94/tetris-multiplayer/actions/runs/43475535510) dla `bfbbd18` — 6/6 checks `success`.
   - Zakres: zmiany wyłącznie w `packages/game-engine/src` i `specs/006-game-domain-model/`. Publiczne eksporty runtime: `ENGINE_API_VERSION`, `createInitialGameState`; walidator i limit wewnętrzne. Brak zależności runtime i odwołań do czasu, losowości, transportu (`grep` źródeł bez testów).
-  - Testy mutacyjne (ręczne, 10 defektów: limit ±1, akceptacja `0`, `isFinite` zamiast `isSafeInteger`, brak walidacji wysokości, `score` 1, status `playing`, współdzielony wiersz, zapis do konfiguracji, `Math.random`, zamiana wymiarów) — każdy wykryty przez co najmniej 1 test.
+  - Testy mutacyjne (ręczne, 10 defektów: limit ±1, akceptacja `0`, `isFinite` zamiast `isSafeInteger`, brak walidacji wysokości, `score` 1, status `playing`, współdzielony wiersz, zapis do konfiguracji, `Math.random`, zamiana wymiarów) — każdy wykryty przez co najmniej 1 test. Po skróceniu testów: 9/9 wykrytych; „współdzielony wiersz” celowo nietestowany (szczegół implementacji, nie kontrakt).
 
 ## Macierz weryfikacji
 
