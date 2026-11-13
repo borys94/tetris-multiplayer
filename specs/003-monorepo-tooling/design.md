@@ -41,7 +41,7 @@ Wszystkie workspace'y: scope `@tetris/`, `private: true`, `type: "module"`, skry
 | DEP-05 | Ta sama zależność zewnętrzna ma jeden zakres w całym repo. |
 | DEP-06 | Każdy workspace ma `private: true` i `type: "module"`. |
 
-Narzędzia używane w skryptach workspace'u (`tsc`, `vitest`) są w jego `devDependencies`; root ma tylko `turbo` i `@yarnpkg/types`. Brak niezadeklarowanych importów w kodzie egzekwuje lint w L05.
+Narzędzia używane w skryptach workspace'u (`tsc`, `vitest` i jego wymagany peer `vite`) są w jego `devDependencies`; root ma tylko `turbo` i `@yarnpkg/types`. Brak niezadeklarowanych importów w kodzie egzekwuje lint w L05. Wersje przypięte w T-01/T-02: Yarn 4.18.1, Turborepo 2.11.11, TypeScript 7.0.2, Vitest 5.1.0, Vite 8.3.8, `@types/node` 26.6.6.
 
 ## 4. Turborepo
 
