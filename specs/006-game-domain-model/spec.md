@@ -19,7 +19,7 @@ Dla poprawnej konfiguracji `createInitialGameState(config)` zwraca stan z `statu
 
 ### SPEC-004 — Walidacja konfiguracji (REQ-003)
 
-`GameConfig` zawiera `boardWidth` i `boardHeight`. Każdy wymiar musi być dodatnią bezpieczną liczbą całkowitą (`Number.isSafeInteger(value) && value > 0`). Dla `0`, liczb ujemnych, ułamków, `NaN`, `Infinity` i liczb spoza bezpiecznego zakresu fabryka zgłasza `RangeError`; nie dokonuje cichej korekty wartości.
+`GameConfig` zawiera `boardWidth` i `boardHeight`. Każdy wymiar musi być dodatnią bezpieczną liczbą całkowitą nie większą niż 30 (`Number.isSafeInteger(value) && value > 0 && value <= 30`; limit — decyzja właściciela 2026-11-13, design D-009). Dla `0`, liczb ujemnych, ułamków, `NaN`, `Infinity`, liczb spoza bezpiecznego zakresu i wartości powyżej 30 fabryka zgłasza `RangeError`; nie dokonuje cichej korekty wartości.
 
 ### SPEC-005 — Niemutowalność (REQ-004)
 
@@ -36,7 +36,7 @@ Testy sprawdzają: wynik początkowy równy zero, poprawny status początkowy, b
 | AC-001 | SPEC-001 | Przegląd zależności i importów modułu; brak `socketId` w publicznym stanie; `yarn check` |
 | AC-002 | SPEC-002 | Testy typów / kompilacja TS oraz przegląd eksportów `@tetris/game-engine` |
 | AC-003 | SPEC-003, SPEC-006 | Test: dwa wywołania dla tego samego config dają `toEqual`; test pól stanu początkowego |
-| AC-004 | SPEC-004, SPEC-006 | Parametryzowane testy `RangeError` dla `0`, `-10`, `1.5`, `NaN`, `Infinity`, `Number.MAX_SAFE_INTEGER + 1` |
+| AC-004 | SPEC-004, SPEC-006 | Parametryzowane testy `RangeError` dla `0`, `-10`, `1.5`, `NaN`, `Infinity`, `Number.MAX_SAFE_INTEGER + 1`, `31`; wartości graniczne `1` i `30` są poprawne |
 | AC-005 | SPEC-005, SPEC-006 | Test niemutowania wejściowej konfiguracji; statyczne `readonly`; test niemutowania stanu dla operacji, o ile powstaną w lekcji 06 |
 
 ## Warunki zakończenia

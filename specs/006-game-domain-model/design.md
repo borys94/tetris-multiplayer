@@ -42,6 +42,10 @@ Nie implementujemy ruchu, kolizji, obrotu, SRS, losowania 7-bag, ticków ani nal
 
 `GameStatus = 'idle' | 'playing' | 'paused' | 'game-over'` (decyzja właściciela 2026-11-13). `paused` dotyczy trybu single-player; multiplayer go nie używa. Przejścia między statusami — poza lekcją 06. Powiązanie: REQ-002, SPEC-002.
 
+### D-009 — Górny limit wymiarów planszy
+
+`boardWidth` i `boardHeight` mieszczą się w zakresie `1..30` (decyzja właściciela 2026-11-13). Limit chroni przed kosztowną alokacją przy niezaufanej konfiguracji; standardowa plansza 10 × 20 mieści się z zapasem. Stała `MAX_BOARD_DIMENSION` jest wewnętrzna (nie należy do publicznego API). Powiązanie: REQ-003, SPEC-004.
+
 ## Proponowany kontrakt (szkic, nie gotowy kod)
 
 ```ts
@@ -95,8 +99,9 @@ Struktura płaska (decyzja właściciela 2026-11-13): cały pakiet jest domeną,
 
 1. **Rozstrzygnięte (2026-11-13):** minimalny kształt `Board` i `ActivePiece` — D-006, D-007.
 2. **Rozstrzygnięte (2026-11-13):** `GameStatus` obejmuje `paused` i `game-over` — D-008.
-3. Rozsądny górny limit rozmiaru planszy (bezpieczeństwo alokacji): dodatnia bezpieczna liczba całkowita nie ogranicza kosztu pamięci. Nie dopisywać limitu bez decyzji produktowej.
+3. **Rozstrzygnięte (2026-11-13):** górny limit wymiaru planszy = 30 — D-009.
 4. Głębokie `readonly` w tablicach nie zabezpiecza przed mutacją runtime z użyciem `as`.
+5. Jeżeli w L07 `boardHeight` ma obejmować ukryty bufor nad widoczną planszą (np. 20 + 20), limit 30 będzie niewystarczający — wymaga ponownej decyzji w L07.
 
 ## Weryfikacja
 

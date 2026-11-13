@@ -23,7 +23,7 @@
 
 - **Status:** TODO
 - **Śledzenie:** REQ-003, REQ-005 → SPEC-004, SPEC-006 → AC-004
-- Walidować dodatnie bezpieczne liczby całkowite w fabryce.
+- Walidować dodatnie bezpieczne liczby całkowite w zakresie `1..30` (D-009) w fabryce.
 - Zwracać `RangeError` dla błędnych wymiarów; bez cichej korekty.
 - **Dowód:** testy przypadków poprawnych i brzegowych. **Wynik:** NOT_RUN.
 
