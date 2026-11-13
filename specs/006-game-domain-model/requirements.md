@@ -11,18 +11,23 @@ Ustanowić minimalny, niezależny od infrastruktury kontrakt stanu **jednej** gr
 ## Wymagania
 
 ### REQ-001 — Izolacja domeny
+
 `GameState` i jego publiczne API MUST być niezależne od Reacta, Canvas, Expressa, WebSocket oraz identyfikatorów połączeń (np. `socketId`).
 
 ### REQ-002 — Podstawowy model stanu
+
 `GameState` MUST reprezentować planszę (`board`), aktywną figurę (`activePiece`), wynik (`score`) i status (`status`) jednej gry. Szczegóły geometrii planszy i tetromino MAY zostać doprecyzowane w lekcji 07 bez implementowania mechaniki gry w lekcji 06.
 
 ### REQ-003 — Kontrolowana i deterministyczna inicjalizacja
+
 Publiczna fabryka `createInitialGameState(config)` MUST tworzyć równoważne wartości stanów dla równoważnej poprawnej konfiguracji, bez ukrytych odczytów czasu ani losowości. MUST walidować konfigurację przed utworzeniem stanu.
 
 ### REQ-004 — Niemutowalne API
+
 Publiczne kontrakty MUST chronić stan przed przypadkową mutacją na poziomie TypeScript. Każda publiczna operacja zmiany stanu, jeśli zostanie wprowadzona w tej lekcji, MUST pozostawić wejście bez zmian. Nie wymaga się implementowania przejść gry wykraczających poza zakres lekcji.
 
 ### REQ-005 — Testowalne niezmienniki
+
 Testy MUST weryfikować stan początkowy, poprawność walidacji, deterministyczność i niezmienniki ustalone w tej specyfikacji. Należy odróżniać gwarancje kompilatora od walidacji runtime.
 
 ## Granice zakresu i ryzyka

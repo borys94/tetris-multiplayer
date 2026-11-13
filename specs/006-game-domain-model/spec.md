@@ -6,21 +6,27 @@
 ## Kontrakty
 
 ### SPEC-001 — Niezależność modułu (REQ-001)
+
 Publiczne typy i fabryka w `@tetris/game-engine` nie importują warstw UI, serwera ani transportu. W `GameState` nie występuje `socketId`.
 
 ### SPEC-002 — Reprezentacja stanu (REQ-002)
+
 Publiczny `GameState` udostępnia co najmniej `readonly board`, `readonly activePiece`, `readonly score`, `readonly status`. `activePiece` dopuszcza `null`. `GameStatus` jawnie określa dopuszczone statusy: `idle`, `playing`, `paused`, `game-over` (roboczy zestaw — do potwierdzenia podczas przeglądu kontraktu). Typy `Board` i `ActivePiece` muszą być spójne i kompilowalne, bez implementowania zasad planszy i figur z lekcji 07.
 
 ### SPEC-003 — Stan początkowy (REQ-003)
+
 Dla poprawnej konfiguracji `createInitialGameState(config)` zwraca stan z `status = "idle"`, `score = 0`, `activePiece = null` i pustą planszą zgodną z przyjętym kontraktem. Dwa wywołania z równoważną konfiguracją zwracają głęboko równoważne wartości. Fabryka nie odczytuje czasu ani nie losuje figury.
 
 ### SPEC-004 — Walidacja konfiguracji (REQ-003)
+
 `GameConfig` zawiera `boardWidth` i `boardHeight`. Każdy wymiar musi być dodatnią bezpieczną liczbą całkowitą (`Number.isSafeInteger(value) && value > 0`). Dla `0`, liczb ujemnych, ułamków, `NaN`, `Infinity` i liczb spoza bezpiecznego zakresu fabryka zgłasza `RangeError`; nie dokonuje cichej korekty wartości.
 
 ### SPEC-005 — Niemutowalność (REQ-004)
+
 Kontrakty wykorzystują `readonly` również w strukturach zagnieżdżonych. Fabryka nie modyfikuje obiektu konfiguracji. Jeżeli zostaną dodane przejścia stanu, nie mogą mutować przekazanego stanu ani jego zagnieżdżonych danych. Sam operator spread nie wystarcza do ochrony zagnieżdżonych tablic.
 
 ### SPEC-006 — Niezmienniki i testy (REQ-005)
+
 Testy sprawdzają: wynik początkowy równy zero, poprawny status początkowy, brak aktywnej figury, poprawne wymiary pustej planszy, odrzucanie niepoprawnych wymiarów, powtarzalność inicjalizacji oraz brak mutacji konfiguracji. Nie testujemy niezaimplementowanych przejść gry.
 
 ## Kryteria akceptacji

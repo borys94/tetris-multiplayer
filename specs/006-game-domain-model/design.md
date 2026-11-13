@@ -11,18 +11,23 @@ Silnik jest czystą domeną TypeScript. React/Canvas wyświetlają stan, a przys
 ## Decyzje
 
 ### D-001 — Granica domeny
+
 `GameState` nie zawiera `socketId`, danych pokoju, komponentów UI ani połączeń. Domenę można importować i testować bez serwera. Powiązanie: REQ-001, SPEC-001.
 
 ### D-002 — Niemutowalny kontrakt
+
 Publiczne typy i kolekcje są `readonly`. Fabryka zwraca nową wartość; przyszłe przejścia mają postać `nextState = transition(previousState, action)`. `readonly` nie jest runtime deep-freeze — wymagana dyscyplina implementacji i testy. Powiązanie: REQ-004, SPEC-005.
 
 ### D-003 — Fabryka inicjalizacji
+
 `createInitialGameState(config: GameConfig): GameState` waliduje argument i zwraca `idle`, wynik `0`, brak figury i pustą planszę. Bez `Math.random()`, `Date.now()` i globalnego stanu. Powiązanie: REQ-003, SPEC-003.
 
 ### D-004 — Walidacja Fail Fast
+
 Walidacja wykonywana wewnątrz publicznej fabryki, opcjonalnie przez prywatne `validateGameConfig`. Niepoprawny wymiar powoduje `RangeError`. Nie udostępniamy osobnego `createGameConfig` bez potrzeby. Powiązanie: REQ-003, SPEC-004.
 
 ### D-005 — Zakres lekcji
+
 Nie implementujemy ruchu, kolizji, obrotu, SRS, losowania 7-bag, ticków ani naliczania punktów. Powiązanie: REQ-002, SPEC-002.
 
 ## Proponowany kontrakt (szkic, nie gotowy kod)
