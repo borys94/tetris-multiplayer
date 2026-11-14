@@ -10,6 +10,7 @@ COPY .yarn/releases .yarn/releases
 COPY apps/web/package.json apps/web/
 COPY apps/server/package.json apps/server/
 COPY packages/game-core/package.json packages/game-core/
+COPY packages/protocol/package.json packages/protocol/
 RUN node .yarn/releases/yarn-*.cjs install --immutable
 
 COPY . .
