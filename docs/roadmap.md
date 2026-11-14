@@ -1,6 +1,8 @@
 # Roadmapa
 
-> Status: zatwierdzona (2026-11-13) · Ostatnia aktualizacja: 2026-11-13
+> Status: zatwierdzona (2026-11-13) · Ostatnia aktualizacja: 2026-11-14
+>
+> **Postęp:** M1–M4 ukończone. v0.3 wydane 2026-11-14: Blockfall publicznie na `https://<IP>.sslip.io`, gra liczona przez serwer.
 > Estymacje zakładają pracę po godzinach (~10 h/tydzień). Daty są orientacyjne i aktualizujemy je po każdym milestonie.
 
 ## Oś czasu

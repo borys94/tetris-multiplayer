@@ -79,4 +79,4 @@ Poza zakresem: konta i zapis wyników (M5), metryki (M6), pokoje i wielu graczy 
 | T2  | `server`: `Session` z zegarem i buforem wejścia, `SessionStore` z TTL, endpoint `/ws` z limitami, Origin i heartbeatem; testy z prawdziwym `ws`  | R1, R2, R4, R5, S1, S3, S4 | ☑      |
 | T3  | `web`: `Connection` z reconnectem, `Predictor` z uzgadnianiem, `Game` gra przez serwer, status połączenia; testy przewidywania z symulowanym RTT | R3, R4, S1, S2, S4         | ☑      |
 | T4  | Zmiana nazwy na Blockfall (UI, `index.html`, README, realm bety)                                                                                 | R5                         | ☑      |
-| T5  | Helm: `ALLOWED_ORIGIN`, prod bez basic auth; runbook; roadmapa (M4 ✅, v0.3); weryfikacja S5 na AWS                                              | R5, S5                     | ☐      |
+| T5  | Helm: `ALLOWED_ORIGIN`, prod bez basic auth; runbook; roadmapa (M4 ✅, v0.3); weryfikacja S5 na AWS                                              | R5, S5                     | ☑      |
