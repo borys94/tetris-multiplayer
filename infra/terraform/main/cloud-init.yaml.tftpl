@@ -1,0 +1,66 @@
+#cloud-config
+# Bootstrap serwera: k3s z Traefikiem (ACME), pobieranie obrazów z ECR, helm i AWS CLI.
+# Zasoby aplikacji (namespace'y, quota, NetworkPolicy) instaluje chart przy deployu.
+
+package_update: true
+packages:
+  - curl
+  - apache2-utils # htpasswd do hasła basic auth (runbook)
+
+write_files:
+  # kubelet pobiera tokeny do ECR przez rolę instancji (tokeny ECR wygasają po 12 h).
+  - path: /var/lib/rancher/credentialprovider/config.yaml
+    content: |
+      apiVersion: kubelet.config.k8s.io/v1
+      kind: CredentialProviderConfig
+      providers:
+        - name: ecr-credential-provider
+          matchImages:
+            - "*.dkr.ecr.*.amazonaws.com"
+          defaultCacheDuration: "12h"
+          apiVersion: credentialprovider.kubelet.k8s.io/v1
+
+  # Certyfikaty Let's Encrypt przez wbudowany ACME Traefika; acme.json na trwałym wolumenie.
+  - path: /var/lib/rancher/k3s/server/manifests/traefik-config.yaml
+    content: |
+      apiVersion: helm.cattle.io/v1
+      kind: HelmChartConfig
+      metadata:
+        name: traefik
+        namespace: kube-system
+      spec:
+        valuesContent: |-
+          persistence:
+            enabled: true
+          deployment:
+            initContainers:
+              - name: volume-permissions
+                image: busybox:1.37
+                command: ["sh", "-c", "touch /data/acme.json && chown 65532:65532 /data/acme.json && chmod 600 /data/acme.json"]
+                securityContext:
+                  runAsUser: 0
+                  runAsNonRoot: false
+                volumeMounts:
+                  - name: data
+                    mountPath: /data
+          certificatesResolvers:
+            letsencrypt:
+              acme:
+                storage: /data/acme.json
+                httpChallenge:
+                  entryPoint: web
+          ports:
+            web:
+              redirections:
+                entryPoint:
+                  to: websecure
+                  scheme: https
+                  permanent: true
+
+runcmd:
+  - mkdir -p /var/lib/rancher/credentialprovider/bin
+  - curl -fsSL -o /var/lib/rancher/credentialprovider/bin/ecr-credential-provider https://artifacts.k8s.io/binaries/cloud-provider-aws/${ecr_credential_provider_version}/linux/arm64/ecr-credential-provider-linux-arm64
+  - chmod 755 /var/lib/rancher/credentialprovider/bin/ecr-credential-provider
+  - curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION='${k3s_version}' sh -s - server --write-kubeconfig-mode 0600
+  - curl -fsSL https://get.helm.sh/helm-${helm_version}-linux-arm64.tar.gz | tar -xz -C /usr/local/bin --strip-components=1 linux-arm64/helm
+  - snap install aws-cli --classic

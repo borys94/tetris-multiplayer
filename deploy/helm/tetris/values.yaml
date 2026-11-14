@@ -1,0 +1,30 @@
+# Środowisko: beta albo prod (nadpisywane przez values-<env>.yaml).
+environment: beta
+
+# Host ustawia skrypt deployu, np. beta.<IP>.sslip.io.
+host: ""
+
+image:
+  repository: ""
+  tag: ""
+
+replicas: 1
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    memory: 192Mi
+
+# Secret z kluczem `users` (format htpasswd), tworzony ręcznie według runbooka (ADR-0003).
+basicAuth:
+  enabled: true
+  secretName: basic-auth
+
+# Limity całego namespace'u (ADR-0002), żeby beta nie zabrała zasobów produ.
+quota:
+  requestsCpu: 500m
+  requestsMemory: 512Mi
+  limitsMemory: 768Mi
+  pods: 10

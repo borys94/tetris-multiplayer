@@ -1,0 +1,63 @@
+name: Infra power
+
+# Zatrzymanie lub uruchomienie serwera, żeby ograniczyć koszty (spec 003, S6).
+# Po zatrzymaniu zostają dysk i Elastic IP; po starcie aplikacja wraca sama.
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Akcja
+        type: choice
+        options: [status, stop, start]
+        default: status
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: eu-central-1
+
+jobs:
+  power:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: ${{ inputs.action }}
+        env:
+          ACTION: ${{ inputs.action }}
+        run: |
+          read -r instance_id state ip < <(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=tetris-k3s" "Name=instance-state-name,Values=pending,running,stopping,stopped" \
+            --query "Reservations[0].Instances[0].[InstanceId, State.Name, PublicIpAddress]" --output text)
+          if [[ -z "$instance_id" || "$instance_id" == "None" ]]; then
+            echo "::error::Brak serwera tetris-k3s (infrastruktura usunięta?)"
+            exit 1
+          fi
+
+          case "$ACTION" in
+            stop)
+              aws ec2 stop-instances --instance-ids "$instance_id" >/dev/null
+              aws ec2 wait instance-stopped --instance-ids "$instance_id"
+              ;;
+            start)
+              aws ec2 start-instances --instance-ids "$instance_id" >/dev/null
+              aws ec2 wait instance-running --instance-ids "$instance_id"
+              ;;
+          esac
+
+          read -r state ip < <(aws ec2 describe-instances --instance-ids "$instance_id" \
+            --query "Reservations[0].Instances[0].[State.Name, PublicIpAddress]" --output text)
+          {
+            echo "### Serwer $instance_id: $state"
+            if [[ "$state" == "running" ]]; then
+              echo "- Beta: https://beta.$ip.sslip.io"
+              echo "- Prod: https://$ip.sslip.io"
+              echo "Aplikacja startuje razem z k3s; pierwsze odpowiedzi mogą pojawić się po 1–2 minutach."
+            fi
+          } | tee -a "$GITHUB_STEP_SUMMARY"

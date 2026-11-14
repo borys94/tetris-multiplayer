@@ -1,0 +1,5 @@
+# Skopiuj jako backend.hcl (plik jest w .gitignore) i wstaw ID konta AWS.
+bucket       = "tetris-tofu-state-<ACCOUNT_ID>"
+region       = "eu-central-1"
+use_lockfile = true
+encrypt      = true
