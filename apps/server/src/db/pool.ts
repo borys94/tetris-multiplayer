@@ -1,4 +1,5 @@
 import pg from "pg";
+import { log } from "../observability/logger";
 import { MIGRATIONS } from "./migrations";
 
 export type Db = pg.Pool;
@@ -17,7 +18,7 @@ export function createPool(connectionString: string, applicationName = "blockfal
   // Bez tej obsługi zamknięcie bezczynnego połączenia przez bazę (np. restart Postgresa)
   // to nieobsłużone zdarzenie `error`, które kończy cały proces, a z nim trwające gry.
   // Pula sama odrzuca takie połączenie i przy następnym zapytaniu otwiera nowe.
-  pool.on("error", (error) => console.error("idle database connection lost", error.message));
+  pool.on("error", (error) => log.warn({ err: error }, "idle database connection lost"));
   return pool;
 }
 

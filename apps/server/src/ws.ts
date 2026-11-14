@@ -12,6 +12,7 @@ import { WebSocket, WebSocketServer, type RawData } from "ws";
 import { randomSeed, type SessionStore } from "./game/session-store";
 import type { Session } from "./game/session";
 import type { SessionUser } from "./db/sessions";
+import { log } from "./observability/logger";
 
 export interface WsOptions {
   store: SessionStore;
@@ -219,7 +220,7 @@ export function attachWebSocket(server: Server, options: WsOptions): () => void 
     };
     // Błąd bazy przy odczycie sesji nie blokuje gry: gracz gra wtedy jako gość.
     const user = await options.authenticate?.(req).catch((error: unknown) => {
-      console.error("WebSocket auth error", error);
+      log.error({ err: error }, "WebSocket auth error");
       return null;
     });
     if (socket.destroyed) return release();

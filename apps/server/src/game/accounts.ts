@@ -2,6 +2,7 @@ import type { IncomingMessage } from "node:http";
 import { SESSION_TTL_MS, hashToken, readSessionToken } from "../auth/session-cookie";
 import { insertGame } from "../db/games";
 import type { Db } from "../db/pool";
+import { log } from "../observability/logger";
 import { useSession, type SessionUser } from "../db/sessions";
 import type { GameOver, Session } from "./session";
 
@@ -22,7 +23,7 @@ export function saveGameResult(db: Db) {
     if (session.userId === null) return Promise.resolve();
     return insertGame(db, session.userId, result).then(
       () => undefined,
-      (error: unknown) => console.error("failed to save game", error),
+      (error: unknown) => log.error({ err: error, userId: session.userId }, "failed to save game"),
     );
   };
 }
