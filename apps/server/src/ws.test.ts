@@ -222,4 +222,9 @@ describe("WebSocket /ws", () => {
     for (let i = 0; i < 3; i++) await connect(headers);
     expect(await upgradeStatus("/ws", { origin: ORIGIN, ...headers })).toBe(429);
   });
+
+  it("does not limit connections per IP when the limit is 0", async () => {
+    await start({ maxConnectionsPerIp: 0 });
+    for (let i = 0; i < 6; i++) await connect();
+  });
 });

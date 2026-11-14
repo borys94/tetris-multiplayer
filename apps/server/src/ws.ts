@@ -18,6 +18,7 @@ export interface WsOptions {
   allowedOrigin?: string;
   /** Czy brać IP klienta z `X-Forwarded-For` (za Traefikiem). */
   trustProxy: boolean;
+  /** Limit połączeń z jednego IP; 0 wyłącza limit (np. gdy proxy nie przekazuje IP klienta). */
   maxConnectionsPerIp: number;
   /** Limit wiadomości: średnio na sekundę i maksymalny chwilowy zapas. */
   messagesPerSecond: number;
@@ -195,7 +196,9 @@ export function attachWebSocket(server: Server, options: WsOptions): () => void 
     }
     const ip = clientIp(req, options.trustProxy);
     const count = connectionsPerIp.get(ip) ?? 0;
-    if (count >= options.maxConnectionsPerIp) return reject(socket, 429, "Too Many Requests");
+    if (options.maxConnectionsPerIp > 0 && count >= options.maxConnectionsPerIp) {
+      return reject(socket, 429, "Too Many Requests");
+    }
 
     connectionsPerIp.set(ip, count + 1);
     wss.handleUpgrade(req, socket, head, (ws) => {
