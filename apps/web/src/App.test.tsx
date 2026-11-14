@@ -6,6 +6,7 @@ import { Session } from "../../server/src/game/session";
 import { App } from "./App";
 import type { ConnectFn } from "./components/Game";
 import { TICK_MS } from "./game/loop";
+import { GUEST, fakeApi } from "./test/fake-api";
 import type { ConnectionHandlers } from "./net/connection";
 
 let frameCallback: FrameRequestCallback | null = null;
@@ -85,7 +86,17 @@ beforeEach(() => {
   );
   vi.stubGlobal("cancelAnimationFrame", vi.fn());
   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+  window.location.hash = "";
+  fakeApi(GUEST);
 });
+
+/** Renderuje aplikację i czeka, aż sprawdzi konto i pokaże grę. */
+async function renderApp(connect: ConnectFn) {
+  render(<App connect={connect} />);
+  await screen.findByRole("img", { name: "Plansza" });
+  // findBy kończy się, gdy element jest w DOM; efekty ostatniego renderu (np. obsługa klawiszy) opróżniamy jawnie.
+  await act(() => Promise.resolve());
+}
 
 afterEach(() => {
   cleanup();
@@ -94,14 +105,14 @@ afterEach(() => {
 });
 
 describe("App", () => {
-  it("is called Blockfall", () => {
-    render(<App connect={inMemoryServer().connect} />);
+  it("is called Blockfall", async () => {
+    await renderApp(inMemoryServer().connect);
     expect(screen.getByRole("heading", { name: "Blockfall" })).toBeDefined();
   });
 
-  it("shows the start screen with the server's game and starts on Enter", () => {
+  it("shows the start screen with the server's game and starts on Enter", async () => {
     const server = inMemoryServer();
-    render(<App connect={server.connect} />);
+    await renderApp(server.connect);
     expect(screen.getByText("Naciśnij Enter, aby zacząć")).toBeDefined();
     expect(screen.getByRole("status").textContent).toBe("Połączono");
 
@@ -113,9 +124,9 @@ describe("App", () => {
     expect(server.sent).toEqual([{ type: "resume" }]);
   });
 
-  it("predicts input locally and sends only actions to the server (S1)", () => {
+  it("predicts input locally and sends only actions to the server (S1)", async () => {
     const server = inMemoryServer();
-    render(<App connect={server.connect} />);
+    await renderApp(server.connect);
     press("Enter");
 
     press("Space");
@@ -125,9 +136,9 @@ describe("App", () => {
     expect(server.sent.at(-1)).toEqual({ type: "input", seq: 1, tick: 0, actions: ["hardDrop"] });
   });
 
-  it("shows the final score sent by the server, not the local one (S1)", () => {
+  it("shows the final score sent by the server, not the local one (S1)", async () => {
     const server = inMemoryServer();
-    render(<App connect={server.connect} />);
+    await renderApp(server.connect);
     press("Enter");
 
     server.receive({ type: "over", score: 4321, lines: 3, level: 1 });
@@ -136,9 +147,9 @@ describe("App", () => {
     expect(screen.getByTestId("final-score").textContent).toBe("Wynik: 4321");
   });
 
-  it("starts a new game from the game-over screen", () => {
+  it("starts a new game from the game-over screen", async () => {
     const server = inMemoryServer();
-    render(<App connect={server.connect} />);
+    await renderApp(server.connect);
     press("Enter");
     server.receive({ type: "over", score: 1, lines: 0, level: 1 });
 
@@ -148,9 +159,9 @@ describe("App", () => {
     expect(screen.queryByText("Koniec gry")).toBeNull();
   });
 
-  it("pauses on the client's tick and resumes with P", () => {
+  it("pauses on the client's tick and resumes with P", async () => {
     const server = inMemoryServer();
-    render(<App connect={server.connect} />);
+    await renderApp(server.connect);
     press("Enter");
     advanceFrame(TICK_MS * 3 + 1);
 
@@ -162,9 +173,9 @@ describe("App", () => {
     expect(screen.queryByText("Pauza")).toBeNull();
   });
 
-  it("restarts from the pause screen with a fresh game", () => {
+  it("restarts from the pause screen with a fresh game", async () => {
     const server = inMemoryServer();
-    render(<App connect={server.connect} />);
+    await renderApp(server.connect);
     press("Enter");
     press("Space");
     advanceFrame(TICK_MS + 1);
@@ -176,9 +187,9 @@ describe("App", () => {
     expect(screen.getByTestId("score").textContent).toBe("0");
   });
 
-  it("pauses when the connection drops and resumes the same game after reconnecting (S4)", () => {
+  it("pauses when the connection drops and resumes the same game after reconnecting (S4)", async () => {
     const server = inMemoryServer();
-    render(<App connect={server.connect} />);
+    await renderApp(server.connect);
     press("Enter");
     press("Space");
     advanceFrame(TICK_MS + 1);

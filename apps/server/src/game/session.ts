@@ -3,6 +3,14 @@ import { SNAPSHOT_INTERVAL_TICKS, type ServerMessage } from "@tetris/protocol";
 
 export type Send = (msg: ServerMessage) => void;
 
+/** Wynik zakończonej gry, liczony przez serwer. */
+export interface GameOver {
+  score: number;
+  lines: number;
+  level: number;
+  ticks: number;
+}
+
 export interface SessionOptions {
   /** O ile ticków symulacja idzie za zegarem sesji (bufor wejścia, ADR-0006). */
   bufferTicks: number;
@@ -36,6 +44,10 @@ export class Session {
   private ackSeq = 0;
   private pending: PendingInput[] = [];
   private send: Send | null = null;
+  /** Konto, na które zapisujemy wynik; `null` to gość (spec 005). */
+  userId: number | null = null;
+  /** Wywoływane raz na koniec każdej gry. */
+  onOver: ((result: GameOver) => void) | null = null;
 
   constructor(
     readonly id: string,
@@ -140,6 +152,7 @@ export class Session {
       this.sendSnapshot();
       const { score, lines, level } = this.game;
       this.send?.({ type: "over", score, lines, level });
+      this.onOver?.({ score, lines, level, ticks: this.simTick });
     } else if (this.simTick % SNAPSHOT_INTERVAL_TICKS === 0) {
       this.sendSnapshot();
     }

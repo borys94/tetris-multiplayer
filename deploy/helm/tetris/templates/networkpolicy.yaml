@@ -1,4 +1,4 @@
-# Ruch przychodzący tylko od Traefika (kube-system) i z tego samego namespace'u;
+# Ruch do aplikacji tylko od Traefika (kube-system) i z tego samego namespace'u;
 # beta i prod nie widzą się nawzajem (ADR-0002).
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -7,7 +7,9 @@ metadata:
   labels:
     {{- include "tetris.labels" . | nindent 4 }}
 spec:
-  podSelector: {}
+  podSelector:
+    matchLabels:
+      {{- include "tetris.selectorLabels" . | nindent 6 }}
   policyTypes: ["Ingress"]
   ingress:
     - from:
@@ -15,3 +17,51 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: kube-system
+---
+# Do Postgresa łączą się tylko aplikacja i backup (ADR-0008).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-access
+  labels:
+    {{- include "tetris.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "tetris.postgresSelectorLabels" . | nindent 6 }}
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "tetris.selectorLabels" . | nindent 14 }}
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgres-backup
+      ports:
+        - port: 5432
+---
+# IMDS (169.254.169.254) daje uprawnienia roli serwera. Od M5 limit hopów IMDS to 2,
+# więc pody mogłyby go użyć: odcinamy go wszystkim podom poza backupem (ADR-0008).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: block-imds
+  labels:
+    {{- include "tetris.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: NotIn
+        values: ["postgres-backup"]
+  policyTypes: ["Egress"]
+  egress:
+    # Pody w klastrze (DNS, Postgres).
+    - to:
+        - namespaceSelector: {}
+    # Internet bez IMDS.
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except: ["169.254.169.254/32"]

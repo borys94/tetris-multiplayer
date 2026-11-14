@@ -26,6 +26,9 @@ if [ "$env" = beta ] && ! kubectl -n "$namespace" get secret basic-auth >/dev/nu
   exit 1
 fi
 
+# Bucket na backupy Postgresa z bootstrapu (ADR-0008) ma w nazwie id konta.
+account=$(aws sts get-caller-identity --query Account --output text)
+
 aws ecr get-login-password --region "$region" | helm registry login "$registry" --username AWS --password-stdin
 
 workdir=$(mktemp -d)
@@ -38,6 +41,7 @@ helm upgrade --install tetris "$workdir/tetris" \
   --set host="$host" \
   --set image.repository="$registry/tetris-app" \
   --set image.tag="$version" \
+  --set backup.bucket="tetris-backups-${account}" \
   --rollback-on-failure \
   --timeout 3m
 

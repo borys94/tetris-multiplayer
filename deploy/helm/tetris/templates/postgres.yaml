@@ -1,0 +1,121 @@
+# Postgres w namespace środowiska (ADR-0008): 1 instancja, dane na dysku serwera (local-path).
+{{- $secretName := "postgres" }}
+{{- $existing := lookup "v1" "Secret" .Release.Namespace $secretName }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $secretName }}
+  labels:
+    {{- include "tetris.labels" . | nindent 4 }}
+  annotations:
+    # Hasło generujemy raz; usunięcie release'u nie może go zgubić, bo dane w PVC zostają.
+    helm.sh/resource-policy: keep
+type: Opaque
+data:
+  {{- if $existing }}
+  password: {{ index $existing.data "password" }}
+  {{- else }}
+  password: {{ randAlphaNum 32 | b64enc }}
+  {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  labels:
+    {{- include "tetris.postgresLabels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "tetris.postgresSelectorLabels" . | nindent 4 }}
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  labels:
+    {{- include "tetris.postgresLabels" . | nindent 4 }}
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "tetris.postgresSelectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "tetris.postgresLabels" . | nindent 8 }}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        # Użytkownik postgres w obrazie alpine.
+        runAsNonRoot: true
+        runAsUser: 70
+        runAsGroup: 70
+        fsGroup: 70
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: postgres
+          image: {{ .Values.postgres.image | quote }}
+          args:
+            # Mały serwer (2 GB RAM na k3s, betę i prod): skromne bufory i mało połączeń.
+            - -c
+            - shared_buffers={{ .Values.postgres.sharedBuffers }}
+            - -c
+            - max_connections=20
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: blockfall
+            - name: POSTGRES_DB
+              value: blockfall
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: password
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "blockfall", "-d", "blockfall"]
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "blockfall", "-d", "blockfall"]
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          resources:
+            {{- toYaml .Values.postgres.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: run
+              mountPath: /var/run/postgresql
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: run
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: {{ .Values.postgres.storage }}

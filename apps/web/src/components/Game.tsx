@@ -82,7 +82,15 @@ const EMPTY_HUD: Hud = { score: 0, lines: 0, level: 1, hold: null, next: [] };
  * Gra liczona przez serwer (ADR-0006): klawisze → akcje przewidywane lokalnie
  * i wysyłane do serwera; wynik końcowy pochodzi z wiadomości `over`.
  */
-export function Game({ connect = connectToServer }: { connect?: ConnectFn }) {
+interface GameProps {
+  connect?: ConnectFn;
+  /** Widok gry jest widoczny; po przejściu do innego widoku gra się wstrzymuje. */
+  active?: boolean;
+  /** Gość: wynik nie trafia do rankingu, więc po grze proponujemy konto (spec 005). */
+  guest?: boolean;
+}
+
+export function Game({ connect = connectToServer, active = true, guest = false }: GameProps) {
   const [input] = useState(() => new InputController());
   const predictorRef = useRef<Predictor | null>(null);
   const serverRef = useRef<GameServer | null>(null);
@@ -213,7 +221,18 @@ export function Game({ connect = connectToServer }: { connect?: ConnectFn }) {
     }, refresh);
   }, [screen, refresh, input, send]);
 
+  // Przejście do innego widoku (zmiana hasha w URL) wstrzymuje grę, tak jak utrata fokusu.
   useEffect(() => {
+    if (!active) return;
+    const onLeave = () => {
+      if (screen === "playing") pause();
+    };
+    window.addEventListener("hashchange", onLeave);
+    return () => window.removeEventListener("hashchange", onLeave);
+  }, [active, screen, pause]);
+
+  useEffect(() => {
+    if (!active) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.code === "KeyP") {
         if (screen === "playing") pause();
@@ -242,7 +261,7 @@ export function Game({ connect = connectToServer }: { connect?: ConnectFn }) {
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onBlur);
     };
-  }, [screen, play, pause, newGame, input]);
+  }, [active, screen, play, pause, newGame, input]);
 
   const online = status === "online";
 
@@ -290,6 +309,11 @@ export function Game({ connect = connectToServer }: { connect?: ConnectFn }) {
                 <p className={styles.finalScore} data-testid="final-score">
                   Wynik: {result?.score ?? hud.score}
                 </p>
+                {guest && (
+                  <p className={styles.hint}>
+                    <a href="#/konto">Załóż konto</a>, aby zapisywać wyniki w rankingu
+                  </p>
+                )}
                 <button className={styles.button} onClick={newGame} disabled={!online}>
                   Zagraj ponownie
                 </button>

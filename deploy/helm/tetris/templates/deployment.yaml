@@ -29,6 +29,14 @@ spec:
           env:
             - name: APP_VERSION
               value: {{ .Values.image.tag | quote }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres
+                  key: password
+            # Kubernetes podstawia $(POSTGRES_PASSWORD) zdefiniowane wyżej (hasło jest alfanumeryczne).
+            - name: DATABASE_URL
+              value: "postgres://blockfall:$(POSTGRES_PASSWORD)@postgres:5432/blockfall"
             # WebSocket /ws przyjmuje połączenia tylko ze strony gry (spec 004).
             - name: ALLOWED_ORIGIN
               value: {{ printf "https://%s" .Values.host | quote }}

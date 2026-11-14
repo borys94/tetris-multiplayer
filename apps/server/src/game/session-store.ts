@@ -1,11 +1,13 @@
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { TICKS_PER_SECOND } from "@tetris/game-core";
-import { Session, type SessionOptions } from "./session";
+import { Session, type GameOver, type SessionOptions } from "./session";
 
 export interface SessionStoreOptions extends SessionOptions {
   maxSessions: number;
   /** Jak długo sesja bez połączenia czeka na wznowienie (ms). */
   ttlMs: number;
+  /** Koniec gry w dowolnej sesji (np. zapis wyniku zalogowanego gracza). */
+  onGameOver?: (session: Session, result: GameOver) => void;
 }
 
 const TICK_MS = 1000 / TICKS_PER_SECOND;
@@ -45,6 +47,8 @@ export class SessionStore {
     this.expire();
     if (this.sessions.size >= this.options.maxSessions) return null;
     const session = new Session(randomId(), randomId(), randomSeed(), this.options);
+    const { onGameOver } = this.options;
+    if (onGameOver) session.onOver = (result) => onGameOver(session, result);
     this.sessions.set(session.id, session);
     return session;
   }

@@ -18,6 +18,9 @@ resource "aws_instance" "server" {
 
   metadata_options {
     http_tokens = "required"
+    # 2 hopy: pod backupu (sieć poda to dodatkowy hop) dostaje uprawnienia roli serwera.
+    # Pozostałym podom IMDS odcina NetworkPolicy `block-imds` (ADR-0008).
+    http_put_response_hop_limit = 2
   }
 
   root_block_device {
