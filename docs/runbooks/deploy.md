@@ -2,12 +2,24 @@
 
 Infrastruktura i deploy z [spec 003](../specs/003-deploy-aws.md): serwer EC2 z k3s w eu-central-1, beta i prod w jednym klastrze, deploy przez SSM i Helm ([ADR-0005](../adr/0005-deploy-przez-ssm-i-helm.md)).
 
-Wszystkie komendy uruchamiamy z katalogu głównego repo.
+Wszystkie komendy uruchamiamy z katalogu głównego repo, z ustawionym regionem:
+
+```sh
+export AWS_PROFILE=tetris AWS_REGION=eu-central-1
+```
 
 ## Wymagania
 
 - `brew install awscli opentofu helm`
-- AWS CLI zalogowane na konto z uprawnieniami administratora: `aws sts get-caller-identity` zwraca konto.
+- AWS CLI zalogowane jako użytkownik IAM Identity Center z zestawem uprawnień `AdministratorAccess` (nie root), profil `tetris`:
+
+  ```sh
+  aws configure sso --profile tetris   # SSO start URL z IAM Identity Center, region eu-central-1
+  aws sso login --profile tetris       # gdy sesja (8 h) wygaśnie
+  export AWS_PROFILE=tetris
+  aws sts get-caller-identity          # Arn zawiera AWSReservedSSO_AdministratorAccess
+  ```
+
 - `gh` zalogowane do GitHuba z prawami admina repo.
 
 ## 1. Pierwsze uruchomienie

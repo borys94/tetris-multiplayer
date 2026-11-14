@@ -16,3 +16,4 @@ coverage/
 *.tfstate.*
 *.tfvars
 infra/terraform/backend.hcl
+*.tfplan
