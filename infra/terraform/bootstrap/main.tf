@@ -74,9 +74,9 @@ data "aws_iam_policy_document" "github_trust" {
       test     = "StringLike"
       variable = "${local.oidc_url}:sub"
       values = [
-        "repo:${var.github_repo}:ref:refs/heads/main",
-        "repo:${var.github_repo}:environment:beta",
-        "repo:${var.github_repo}:environment:production",
+        "${var.github_oidc_sub_prefix}:ref:refs/heads/main",
+        "${var.github_oidc_sub_prefix}:environment:beta",
+        "${var.github_oidc_sub_prefix}:environment:production",
       ]
     }
   }
