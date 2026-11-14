@@ -7,8 +7,18 @@ export type Db = pg.Pool;
 pg.types.setTypeParser(pg.types.builtins.INT8, Number);
 
 /** Pula połączeń; mała, bo serwer i baza dzielą jeden węzeł z 2 GB RAM (ADR-0008). */
-export function createPool(connectionString: string): Db {
-  return new pg.Pool({ connectionString, max: 5, idleTimeoutMillis: 30_000 });
+export function createPool(connectionString: string, applicationName = "blockfall"): Db {
+  const pool = new pg.Pool({
+    connectionString,
+    max: 5,
+    idleTimeoutMillis: 30_000,
+    application_name: applicationName,
+  });
+  // Bez tej obsługi zamknięcie bezczynnego połączenia przez bazę (np. restart Postgresa)
+  // to nieobsłużone zdarzenie `error`, które kończy cały proces, a z nim trwające gry.
+  // Pula sama odrzuca takie połączenie i przy następnym zapytaniu otwiera nowe.
+  pool.on("error", (error) => console.error("idle database connection lost", error.message));
+  return pool;
 }
 
 /** Dowolny numer blokady doradczej zarezerwowany na migracje. */

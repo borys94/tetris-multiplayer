@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { useTestDatabase } from "../../test/db";
 import { deleteGame, insertGame, leaderboard, userGames } from "./games";
 import { MIGRATIONS } from "./migrations";
-import { migrate } from "./pool";
+import { createPool, migrate } from "./pool";
 import { createSession, deleteExpiredSessions, deleteSession, useSession } from "./sessions";
 import {
   createUser,
@@ -35,6 +35,22 @@ describe("migrate", () => {
   it("runs safely when several processes migrate at once", async () => {
     const results = await Promise.all([migrate(ctx.db), migrate(ctx.db), migrate(ctx.db)]);
     expect(results.flat()).toEqual([]);
+  });
+});
+
+describe("pool", () => {
+  it("survives the database closing idle connections (e.g. a Postgres restart)", async () => {
+    const pool = createPool(ctx.url, "pool-test");
+    await pool.query("select 1"); // zostawia bezczynne połączenie w puli
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await ctx.db.query(
+      "select pg_terminate_backend(pid) from pg_stat_activity where datname = current_database() and pid <> pg_backend_pid() and application_name = 'pool-test'",
+    );
+    await vi.waitFor(() => expect(errors).toHaveBeenCalled());
+
+    expect((await pool.query<{ ok: number }>("select 1 as ok")).rows[0]?.ok).toBe(1);
+    await pool.end();
   });
 });
 
