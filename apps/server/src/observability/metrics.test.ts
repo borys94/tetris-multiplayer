@@ -10,6 +10,7 @@ import {
   createMetricsServer,
   gamesFinished,
   httpRequests,
+  registry,
   routeLabel,
   statusClass,
   tickDuration,
@@ -31,6 +32,15 @@ describe("labels", () => {
     expect(routeLabel("/health", 200)).toBe("/health");
     expect(statusClass(201)).toBe("2xx");
     expect(statusClass(503)).toBe("5xx");
+  });
+});
+
+describe("labelled counters", () => {
+  it("start at 0 so increase() counts the first event", async () => {
+    const text = await registry.metrics();
+    expect(text).toContain('blockfall_games_finished_total{player="guest"} 0');
+    expect(text).toContain('blockfall_logins_total{result="failure"} 0');
+    expect(text).toContain('blockfall_ws_rejected_total{reason="origin"} 0');
   });
 });
 

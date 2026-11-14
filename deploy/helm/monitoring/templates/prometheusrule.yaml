@@ -12,7 +12,7 @@ spec:
       rules:
         - alert: BlockfallDown
           expr: |
-            kube_deployment_status_replicas_available{namespace=~"{{ $ns }}", deployment="tetris"} < 1
+            max by (namespace) (kube_deployment_status_replicas_available{namespace=~"{{ $ns }}", deployment="tetris"}) < 1
           for: 2m
           labels:
             severity: critical
