@@ -12,8 +12,22 @@ describe("parseClientMessage", () => {
     [{ type: "input", seq: 1, tick: 0, actions: ["left", "hardDrop"] }],
     [{ type: "pause", tick: 120 }],
     [{ type: "resume" }],
+    [{ type: "watchRooms" }],
+    [{ type: "unwatchRooms" }],
+    [{ type: "createRoom", visibility: "public" }],
+    [{ type: "createRoom", visibility: "private" }],
+    [{ type: "joinRoom", code: "AB2CD9" }],
+    [{ type: "leaveRoom" }],
+    [{ type: "ready" }],
   ])("accepts %j", (msg) => {
     expect(parseClientMessage(JSON.stringify(msg))).toEqual(msg);
+  });
+
+  it("normalizes a room code to upper case", () => {
+    expect(parseClientMessage(JSON.stringify({ type: "joinRoom", code: "ab2cd9" }))).toEqual({
+      type: "joinRoom",
+      code: "AB2CD9",
+    });
   });
 
   it("drops unknown fields", () => {
@@ -44,6 +58,10 @@ describe("parseClientMessage", () => {
       "a short session id",
       JSON.stringify({ type: "hello", protocol: 1, resume: { sessionId: "x", token: ID } }),
     ],
+    ["an unknown visibility", JSON.stringify({ type: "createRoom", visibility: "secret" })],
+    ["a short room code", JSON.stringify({ type: "joinRoom", code: "AB2CD" })],
+    ["a room code with O and 0", JSON.stringify({ type: "joinRoom", code: "ABO0CD" })],
+    ["a numeric room code", JSON.stringify({ type: "joinRoom", code: 123456 })],
     ["a null resume", JSON.stringify({ type: "hello", protocol: 1, resume: null })],
     [
       "an oversized message",

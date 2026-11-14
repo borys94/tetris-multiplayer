@@ -6,6 +6,7 @@ import {
   lockPiece,
   type Board,
 } from "./board";
+import { attackLines, cancelGarbage, insertGarbage, type GarbageBatch } from "./garbage";
 import { spawnPiece, type Piece, type PieceType } from "./pieces";
 import { generateBag } from "./random";
 import { rotate } from "./rotation";
@@ -36,6 +37,10 @@ export interface GameState {
   readonly lockCounter: number;
   readonly lockResets: number;
   readonly lowestY: number;
+  /** Śmieci czekające na wstawienie przy następnym położeniu klocka bez czyszczenia linii. */
+  readonly garbage: readonly GarbageBatch[];
+  /** Linie śmieci wysłane przeciwnikom od początku gry (po skasowaniu własnej kolejki). */
+  readonly linesSent: number;
 }
 
 export const LOCK_DELAY_TICKS = 30;
@@ -94,17 +99,44 @@ function moveTo(state: GameState, active: Piece): GameState {
   return { ...state, active, lockCounter, lockResets, lowestY };
 }
 
+/**
+ * Kładzie klocek. Wyczyszczone linie najpierw kasują własną kolejkę śmieci, a reszta ataku
+ * trafia do `linesSent`; położenie bez czyszczenia wstawia całą kolejkę na planszę (spec 007).
+ */
 function lockActive(state: GameState): GameState {
-  const { board, cleared } = clearLines(lockPiece(state.board, state.active));
-  const lines = state.lines + cleared;
-  return spawnNext({
+  const cleared = clearLines(lockPiece(state.board, state.active));
+  let { board } = cleared;
+  let { garbage, linesSent } = state;
+  let toppedOut = false;
+  if (cleared.cleared > 0) {
+    const cancel = cancelGarbage(garbage, attackLines(cleared.cleared));
+    garbage = cancel.queue;
+    linesSent += cancel.remaining;
+  } else if (garbage.length > 0) {
+    const inserted = insertGarbage(board, garbage);
+    board = inserted.board;
+    toppedOut = inserted.toppedOut;
+    garbage = [];
+  }
+
+  const lines = state.lines + cleared.cleared;
+  const next = spawnNext({
     ...state,
     board,
-    score: state.score + lineClearScore(cleared, state.level),
+    garbage,
+    linesSent,
+    score: state.score + lineClearScore(cleared.cleared, state.level),
     lines,
     level: levelForLines(lines),
     canHold: true,
   });
+  return toppedOut ? { ...next, status: "over" } : next;
+}
+
+/** Dodaje paczkę śmieci od przeciwnika na koniec kolejki. */
+export function receiveGarbage(state: GameState, batch: GarbageBatch): GameState {
+  if (state.status === "over" || batch.lines <= 0) return state;
+  return { ...state, garbage: [...state.garbage, batch] };
 }
 
 export function createGame(seed: number): GameState {
@@ -125,6 +157,8 @@ export function createGame(seed: number): GameState {
     lockCounter: 0,
     lockResets: 0,
     lowestY: 0,
+    garbage: [],
+    linesSent: 0,
   });
 }
 

@@ -142,6 +142,9 @@ class Connection {
       case "resume":
         session.resume();
         return true;
+      default:
+        // Pokoje i mecze (spec 007) obsłużymy w T2.
+        return false;
     }
   }
 

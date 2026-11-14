@@ -1,4 +1,4 @@
-import type { ServerMessage } from "@tetris/protocol";
+import { PROTOCOL_VERSION, type ServerMessage } from "@tetris/protocol";
 import { describe, expect, it } from "vitest";
 import { Connection, type ConnectionStatus, type SocketLike } from "./connection";
 
@@ -59,7 +59,7 @@ describe("Connection", () => {
     sockets[0]!.open();
     sockets[0]!.receive(WELCOME);
 
-    expect(sockets[0]!.sent).toEqual([{ type: "hello", protocol: 1 }]);
+    expect(sockets[0]!.sent).toEqual([{ type: "hello", protocol: PROTOCOL_VERSION }]);
     expect(statuses).toEqual(["connecting", "online"]);
     expect(messages).toEqual([WELCOME]);
   });
@@ -80,7 +80,7 @@ describe("Connection", () => {
     expect(sockets[2]!.sent).toEqual([
       {
         type: "hello",
-        protocol: 1,
+        protocol: PROTOCOL_VERSION,
         resume: { sessionId: WELCOME.sessionId, token: WELCOME.token },
       },
     ]);
@@ -111,10 +111,10 @@ describe("Connection", () => {
     expect(sockets[1]!.sent).toEqual([
       {
         type: "hello",
-        protocol: 1,
+        protocol: PROTOCOL_VERSION,
         resume: { sessionId: WELCOME.sessionId, token: WELCOME.token },
       },
-      { type: "hello", protocol: 1 },
+      { type: "hello", protocol: PROTOCOL_VERSION },
     ]);
   });
 
