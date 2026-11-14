@@ -92,6 +92,10 @@ kube-prometheus-stack:
         disable_gravatar: true
       news:
         news_feed_enabled: false
+      # Grafana 12 pobiera przy starcie wtyczki (Drilldown, Loki Explore): zbędne dla nas,
+      # a ich instalacja przekraczała limit pamięci (OOMKilled, 2026-11-14).
+      plugins:
+        preinstall_disabled: true
     sidecar:
       dashboards:
         enabled: true
@@ -99,15 +103,15 @@ kube-prometheus-stack:
         labelValue: "1"
         searchNamespace: monitoring
         resources:
-          requests: { cpu: 10m, memory: 48Mi }
-          limits: { memory: 96Mi }
+          requests: { cpu: 10m, memory: 64Mi }
+          limits: { memory: 160Mi }
       datasources:
         resources:
-          requests: { cpu: 10m, memory: 48Mi }
-          limits: { memory: 96Mi }
+          requests: { cpu: 10m, memory: 64Mi }
+          limits: { memory: 160Mi }
     resources:
-      requests: { cpu: 50m, memory: 128Mi }
-      limits: { memory: 256Mi }
+      requests: { cpu: 50m, memory: 192Mi }
+      limits: { memory: 384Mi }
 
   kube-state-metrics:
     resources:
