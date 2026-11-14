@@ -2,7 +2,7 @@
 
 > Status: zatwierdzona (2026-11-13) · Ostatnia aktualizacja: 2026-11-14
 >
-> **Postęp:** M1–M5 ukończone. v0.3 wydane 2026-11-14: Blockfall publicznie na `https://<IP>.sslip.io`, gra liczona przez serwer. v0.4 wydane 2026-11-14: konta, ranking, historia gier i panel admina; Postgres z codziennym backupem do S3.
+> **Postęp:** M1–M6 ukończone. v0.3 wydane 2026-11-14: Blockfall publicznie na `https://<IP>.sslip.io`, gra liczona przez serwer. v0.4 wydane 2026-11-14: konta, ranking, historia gier i panel admina; Postgres z codziennym backupem do S3. M6 ukończone 2026-11-14: logi JSON, metryki serwera, Prometheus i Grafana (`https://grafana.<IP>.sslip.io`) z dashboardem i alertami dla bety i produ; serwer t4g.medium (ADR-0009).
 >
 > **Odstępstwo od ADR-0003:** beta jest tymczasowo bez hasła (`BASIC_AUTH=false` w środowisku GitHub `beta`), bo za basic auth przeglądarka nie łączyła się z WebSocketem gry. Przyczyna do wyjaśnienia.
 > Estymacje zakładają pracę po godzinach (~10 h/tydzień). Daty są orientacyjne i aktualizujemy je po każdym milestonie.

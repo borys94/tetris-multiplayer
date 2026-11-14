@@ -61,4 +61,4 @@ Poza zakresem: powiadomienia (e-mail, Discord, Slack), Loki i agregacja logów, 
 | T2  | Metryki w serwerze: rejestr, serwer metryk na 9464, metryki HTTP, WS, gry, logowań i `pg`; testy liczników                                     | R1, S1  | ☑      |
 | T3  | Infra: t4g.medium w OpenTofu (stop/start według runbooka); w chartcie `tetris` port `metrics`, `PodMonitor`, NetworkPolicy                     | R1, R3  | ☑      |
 | T4  | Chart `monitoring`: kube-prometheus-stack, Grafana z ingressem i Secretem, block-imds, `PrometheusRule`, dashboard; CI i workflow `Monitoring` | R3–R5   | ☑      |
-| T5  | Weryfikacja na AWS (S1–S5), runbook monitoringu (logowanie do Grafany, czytanie logów, alerty), roadmapa                                       | S1–S5   | ☐      |
+| T5  | Weryfikacja na AWS (S1–S5), runbook monitoringu (logowanie do Grafany, czytanie logów, alerty), roadmapa                                       | S1–S5   | ☑      |
