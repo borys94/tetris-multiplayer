@@ -6,6 +6,12 @@ metadata:
     {{- include "tetris.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicas }}
+  # Deploy bez przerywania meczów (spec 007): najpierw nowy pod, stary dogrywa mecze.
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
       {{- include "tetris.selectorLabels" . | nindent 6 }}
@@ -15,6 +21,8 @@ spec:
         {{- include "tetris.labels" . | nindent 8 }}
     spec:
       automountServiceAccountToken: false
+      # Stary pod czeka po SIGTERM na koniec trwających meczów (DRAIN_TIMEOUT_MS jest krótszy).
+      terminationGracePeriodSeconds: {{ .Values.drain.gracePeriodSeconds }}
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
@@ -56,6 +64,11 @@ spec:
               value: {{ .Values.game.maxSessions | quote }}
             - name: MAX_CONNECTIONS_PER_IP
               value: {{ .Values.game.maxConnectionsPerIp | quote }}
+            - name: MAX_ROOMS
+              value: {{ .Values.game.maxRooms | quote }}
+            # 20 s zapasu na zamknięcie serwera przed SIGKILL.
+            - name: DRAIN_TIMEOUT_MS
+              value: {{ mul (sub .Values.drain.gracePeriodSeconds 20) 1000 | quote }}
           # Serwer zaczyna nasłuchiwać po migracjach, a przy pierwszym deployu czeka na Postgresa
           # (do ok. 2 min): do tego czasu liveness nie może go restartować.
           startupProbe:
@@ -64,9 +77,10 @@ spec:
               port: http
             periodSeconds: 5
             failureThreshold: 30
+          # `/ready` zwraca 503, gdy pod dogrywa mecze przed zamknięciem; `/health` dalej 200.
           readinessProbe:
             httpGet:
-              path: /health
+              path: /ready
               port: http
             periodSeconds: 5
             failureThreshold: 3

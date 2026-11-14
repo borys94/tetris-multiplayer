@@ -13,6 +13,11 @@ export interface Config {
   maxSessions: number;
   /** Limit otwartych pokoi 1v1 (spec 007). */
   maxRooms: number;
+  /**
+   * Jak długo po SIGTERM pod dogrywa trwające mecze (spec 007); musi być krótszy niż
+   * `terminationGracePeriodSeconds`, żeby zdążyć zamknąć się samemu.
+   */
+  drainTimeoutMs: number;
   sessionTtlMs: number;
   /** 0 wyłącza limit połączeń na IP. */
   maxConnectionsPerIp: number;
@@ -53,6 +58,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
     bufferTicks: Math.round((bufferMs / 1000) * TICKS_PER_SECOND),
     maxSessions: positiveInt(env, "MAX_SESSIONS", 200),
     maxRooms: positiveInt(env, "MAX_ROOMS", 50),
+    drainTimeoutMs: positiveInt(env, "DRAIN_TIMEOUT_MS", 280_000),
     sessionTtlMs: positiveInt(env, "SESSION_TTL_MS", 60_000),
     maxConnectionsPerIp: positiveInt(env, "MAX_CONNECTIONS_PER_IP", 5),
     databaseUrl: required(env, "DATABASE_URL"),

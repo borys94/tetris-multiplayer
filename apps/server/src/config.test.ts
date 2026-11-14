@@ -13,6 +13,7 @@ describe("loadConfig", () => {
       bufferTicks: 9,
       maxSessions: 200,
       maxRooms: 50,
+      drainTimeoutMs: 280_000,
       sessionTtlMs: 60_000,
       maxConnectionsPerIp: 5,
       databaseUrl: DB,

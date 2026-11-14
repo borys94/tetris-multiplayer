@@ -4,11 +4,12 @@ import {
   ROOM_CODE_ALPHABET,
   ROOM_CODE_LENGTH,
   type ErrorCode,
+  type RoomState,
   type RoomSummary,
   type RoomVisibility,
 } from "@tetris/protocol";
 import type { Send } from "../game/session";
-import { startTickLoop } from "../game/tick-loop";
+import { roomTickDuration } from "../observability/metrics";
 import { Room, type MatchResult, type RoomInfo, type RoomMember, type RoomOptions } from "./room";
 
 export interface RoomStoreOptions extends RoomOptions {
@@ -21,6 +22,9 @@ export type RoomError = Extract<
   ErrorCode,
   "room_not_found" | "room_full" | "room_limit" | "login_required" | "server_full"
 >;
+
+const ROOM_STATES: readonly RoomState[] = ["waiting", "countdown", "playing", "finished"];
+const VISIBILITIES: readonly RoomVisibility[] = ["public", "private"];
 
 /** Nazwa gościa w pokoju: stała dla sesji gry, więc nie zmienia się po wznowieniu. */
 export function guestName(sessionId: string): string {
@@ -52,6 +56,7 @@ export class RoomStore {
   private readonly watchers = new Set<Send>();
   private lastList = "";
   private listDirty = false;
+  private draining = false;
 
   constructor(
     private readonly options: RoomStoreOptions,
@@ -67,8 +72,23 @@ export class RoomStore {
     return this.bySession.get(sessionId);
   }
 
+  /** Liczba trwających meczów (przy deployu czekamy, aż spadnie do zera). */
+  get playing(): number {
+    return [...this.rooms.values()].filter((room) => room.state === "playing").length;
+  }
+
+  /**
+   * Deploy (spec 007): stary pod nie przyjmuje nowych pokoi i graczy, zamyka pokoje bez
+   * trwającego meczu, a pokoje z meczem zamyka zaraz po jego końcu (bez rewanżu na starym podzie).
+   */
+  drain(): void {
+    this.draining = true;
+    this.closeIdleRooms();
+  }
+
   /** Nowy pokój z założycielem w środku albo kod błędu. */
   create(member: RoomMember, visibility: RoomVisibility, send: Send): RoomError | null {
+    if (this.draining) return "server_full";
     if (visibility === "private" && member.userId === null) return "login_required";
     if (this.bySession.has(member.sessionId) || this.byOwner.has(ownerKey(member))) {
       return "room_limit";
@@ -93,6 +113,7 @@ export class RoomStore {
   }
 
   join(member: RoomMember, code: string, send: Send): RoomError | null {
+    if (this.draining) return "server_full";
     if (this.bySession.has(member.sessionId)) return "room_limit";
     const room = this.rooms.get(code);
     if (!room || room.isClosed) return "room_not_found";
@@ -153,15 +174,31 @@ export class RoomStore {
   }
 
   advance(ticks: number): void {
+    const stopTimer = roomTickDuration.startTimer();
     for (const room of [...this.rooms.values()]) room.advance(ticks);
+    if (this.draining) this.closeIdleRooms();
     if (this.listDirty) this.publishList();
+    stopTimer();
   }
 
-  start(): () => void {
-    return startTickLoop(
-      () => performance.now(),
-      (ticks) => this.advance(ticks),
+  /** Liczba pokoi według stanu i widoczności (metryka `blockfall_rooms`). */
+  countByState(): { state: RoomState; visibility: RoomVisibility; count: number }[] {
+    const counts = new Map<string, number>();
+    for (const room of this.rooms.values()) {
+      const key = `${room.state}/${room.visibility}`;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return ROOM_STATES.flatMap((state) =>
+      VISIBILITIES.map((visibility) => ({
+        state,
+        visibility,
+        count: counts.get(`${state}/${visibility}`) ?? 0,
+      })),
     );
+  }
+
+  private closeIdleRooms(): void {
+    for (const room of [...this.rooms.values()]) if (room.state !== "playing") room.close();
   }
 
   private remove(room: Room): void {

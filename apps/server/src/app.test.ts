@@ -14,6 +14,20 @@ describe("GET /health", () => {
   });
 });
 
+describe("GET /ready", () => {
+  it("is ready by default and returns 503 while the pod drains matches (spec 007)", async () => {
+    let ready = true;
+    const app = createApp({ version: "dev", isReady: () => ready });
+
+    expect((await request(app).get("/ready")).status).toBe(200);
+    ready = false;
+    const res = await request(app).get("/ready");
+    expect(res.status).toBe(503);
+    expect(res.body).toEqual({ status: "draining" });
+    expect((await request(app).get("/health")).status).toBe(200);
+  });
+});
+
 describe("static frontend", () => {
   const staticDir = mkdtempSync(join(tmpdir(), "tetris-web-"));
   writeFileSync(join(staticDir, "index.html"), "<!doctype html><title>game</title>");

@@ -84,13 +84,18 @@ export class SessionStore {
     }
   }
 
-  /** Uruchamia pętlę czasu rzeczywistego; zwraca funkcję, która ją zatrzymuje. */
-  start(): () => void {
+  /**
+   * Uruchamia pętlę czasu rzeczywistego; `alsoAdvance` (np. pokoje 1v1) liczy się w tym samym
+   * obiegu, więc `blockfall_tick_duration_seconds` i alert wolnego ticka obejmują całą grę.
+   * Zwraca funkcję, która zatrzymuje pętlę.
+   */
+  start(alsoAdvance?: (ticks: number) => void): () => void {
     const stopLoop = startTickLoop(
       this.now,
       (ticks) => {
         const stopTimer = tickDuration.startTimer();
         this.advance(ticks);
+        alsoAdvance?.(ticks);
         stopTimer();
       },
       (dropped) => ticksDropped.inc(dropped),

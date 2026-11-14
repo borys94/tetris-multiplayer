@@ -3,10 +3,11 @@ import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { COUNTDOWN_MS, PROTOCOL_VERSION } from "@tetris/protocol";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { WebSocket } from "ws";
 import { connectClient, type TestClient } from "../test/ws-client";
 import { SessionStore } from "./game/session-store";
 import { RoomStore } from "./rooms/room-store";
-import { attachWebSocket } from "./ws";
+import { attachWebSocket, type WsHandle } from "./ws";
 
 const ORIGIN = "https://game.example";
 const USERS: Record<string, { id: number; username: string; role: null }> = {
@@ -16,7 +17,7 @@ const USERS: Record<string, { id: number; username: string; role: null }> = {
 
 let server: Server;
 let rooms: RoomStore;
-let close: () => void;
+let close: WsHandle;
 let now = 0;
 
 beforeEach(async () => {
@@ -115,6 +116,11 @@ describe("rooms over WebSocket (spec 007)", () => {
       reason: "left",
     });
     expect(await bob.next("roomClosed")).toEqual({ type: "roomClosed" });
+    // Ponowne wyjście (wyścig z zamknięciem pokoju) nie jest błędem protokołu.
+    bob.send({ type: "leaveRoom" });
+    bob.send({ type: "watchRooms" });
+    await bob.next("rooms");
+    expect(bob.messages.some((m) => m.type === "error")).toBe(false);
   });
 
   it("returns a reconnecting player to the running match (S4)", async () => {
@@ -139,5 +145,34 @@ describe("rooms over WebSocket (spec 007)", () => {
     const match = await again.next("match");
     expect(match.tick).toBeGreaterThan(50);
     expect((await again.next("room")).players.every((p) => p.connected)).toBe(true);
+  });
+});
+
+describe("deploy drain over WebSocket (spec 007, S6)", () => {
+  it("keeps players in a match, sends others to the new pod and refuses new connections", async () => {
+    const { ala, bob } = await startMatch();
+    await ala.next("match");
+    const { client: idle } = await hello();
+
+    close.drain();
+    const [code] = (await once(idle.ws, "close")) as [number];
+    expect(code).toBe(1012);
+    expect(ala.ws.readyState).toBe(ala.ws.OPEN);
+
+    const url = `ws://127.0.0.1:${(server.address() as AddressInfo).port}/ws`;
+    const rejected = new WebSocket(url, { headers: { origin: ORIGIN } });
+    const [, res] = (await once(rejected, "unexpected-response")) as [
+      unknown,
+      { statusCode: number },
+    ];
+    expect(res.statusCode).toBe(503);
+
+    bob.send({ type: "leaveRoom" });
+    await ala.next("result");
+    rooms.drain();
+    rooms.advance(1);
+    close.drain();
+    const [after] = (await once(ala.ws, "close")) as [number];
+    expect(after).toBe(1012);
   });
 });

@@ -22,6 +22,7 @@ import {
   wsErrors,
   wsMessages,
   wsRejected,
+  wsSentBytes,
 } from "./observability/metrics";
 
 export interface WsOptions {
@@ -49,6 +50,8 @@ const MAX_CONSECUTIVE_ERRORS = 3;
 const CLOSE_POLICY = 1008;
 const CLOSE_TRY_AGAIN = 1013;
 const CLOSE_GOING_AWAY = 1001;
+/** Serwer się restartuje (deploy): klient łączy się ponownie, już z nowym podem. */
+const CLOSE_SERVICE_RESTART = 1012;
 /** Sesję przejęło nowe połączenie (np. druga karta). */
 const CLOSE_REPLACED = 4000;
 
@@ -108,8 +111,17 @@ class Connection {
   }
 
   send = (msg: ServerMessage): void => {
-    if (this.ws.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify(msg));
+    if (this.ws.readyState !== WebSocket.OPEN) return;
+    const data = JSON.stringify(msg);
+    wsSentBytes.inc({ type: msg.type }, data.length);
+    this.ws.send(data);
   };
+
+  /** Czy gracz jest w trakcie meczu (takiego połączenia nie zamykamy przy deployu). */
+  get inMatch(): boolean {
+    const session = this.session;
+    return session !== null && this.options.rooms?.roomOf(session.id)?.state === "playing";
+  }
 
   receive(data: RawData, isBinary: boolean): void {
     wsMessages.inc();
@@ -176,7 +188,10 @@ class Connection {
         return true;
       }
       case "leaveRoom":
-        return rooms?.leave(session.id) ?? false;
+        // Wyjście z już zamkniętego pokoju (np. założyciel wyszedł chwilę wcześniej) to nie błąd.
+        if (!rooms) return false;
+        rooms.leave(session.id);
+        return true;
       case "ready":
         return rooms?.ready(session.id) ?? false;
     }
@@ -253,11 +268,21 @@ function rawToString(data: RawData): string {
   return Buffer.from(data as ArrayBuffer).toString("utf8");
 }
 
+/** Wywołanie zamyka wszystkie połączenia; `drain()` przygotowuje serwer do deployu. */
+export type WsHandle = (() => void) & {
+  /**
+   * Odrzuca nowe połączenia i zamyka te, które nie są w trwającym meczu (klient łączy się
+   * ponownie, już z nowym podem). Wołane wielokrotnie zamyka połączenia graczy po końcu meczu.
+   */
+  drain(): void;
+};
+
 /**
  * Podpina endpoint `/ws` pod serwer HTTP (ten sam port co Express, ADR-0007).
- * Zwraca funkcję zamykającą wszystkie połączenia (np. przy SIGTERM).
+ * Zwraca funkcję zamykającą wszystkie połączenia (np. przy SIGTERM) z metodą `drain`.
  */
-export function attachWebSocket(server: Server, options: WsOptions): () => void {
+export function attachWebSocket(server: Server, options: WsOptions): WsHandle {
+  let draining = false;
   const wss = new WebSocketServer({ noServer: true, maxPayload: MAX_MESSAGE_BYTES });
   const connectionsPerIp = new Map<string, number>();
   const sessionOwners = new Map<string, Connection>();
@@ -270,6 +295,10 @@ export function attachWebSocket(server: Server, options: WsOptions): () => void 
   async function upgrade(req: IncomingMessage, socket: Duplex, head: Buffer): Promise<void> {
     const path = new URL(req.url ?? "/", "http://localhost").pathname;
     if (path !== WS_PATH) return reject(socket, 404, "Not Found");
+    if (draining) {
+      wsRejected.inc({ reason: "draining" });
+      return reject(socket, 503, "Service Unavailable");
+    }
     if (options.allowedOrigin && req.headers.origin !== options.allowedOrigin) {
       wsRejected.inc({ reason: "origin" });
       return reject(socket, 403, "Forbidden");
@@ -328,9 +357,16 @@ export function attachWebSocket(server: Server, options: WsOptions): () => void 
     }
   }, options.heartbeatMs);
 
-  return () => {
+  const close = () => {
     clearInterval(heartbeat);
     for (const connection of connections) connection.ws.close(CLOSE_GOING_AWAY, "shutdown");
     wss.close();
   };
+  const drain = () => {
+    draining = true;
+    for (const connection of connections) {
+      if (!connection.inMatch) connection.ws.close(CLOSE_SERVICE_RESTART, "restart");
+    }
+  };
+  return Object.assign(close, { drain });
 }

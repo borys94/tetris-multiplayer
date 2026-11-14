@@ -11,15 +11,30 @@ export interface AppOptions {
   api?: Router;
   /** Logger dla logu dostępu; domyślnie logger procesu. */
   logger?: Logger;
+  /** Gotowość na nowy ruch (`/ready`); fałsz, gdy pod dogrywa mecze przed zamknięciem. */
+  isReady?: () => boolean;
 }
 
-export function createApp({ version, staticDir, api, logger = log }: AppOptions): Express {
+export function createApp({
+  version,
+  staticDir,
+  api,
+  logger = log,
+  isReady = () => true,
+}: AppOptions): Express {
   const app = express();
   app.disable("x-powered-by");
   app.use(observeHttp(logger));
 
   app.get("/health", (_req, res) => {
     res.json({ status: "ok", version });
+  });
+
+  // Readiness (spec 007): przy deployu stary pod przestaje dostawać nowy ruch, ale żyje
+  // (liveness na `/health`), dopóki nie skończą się trwające mecze.
+  app.get("/ready", (_req, res) => {
+    if (isReady()) res.json({ status: "ready" });
+    else res.status(503).json({ status: "draining" });
   });
 
   if (api) app.use("/api", api);

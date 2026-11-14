@@ -1,6 +1,8 @@
 import { COUNTDOWN_MS, type ServerMessage } from "@tetris/protocol";
 import { describe, expect, it, vi } from "vitest";
 import type { BufferedGame } from "../game/buffered-game";
+import { metricValue } from "../../test/metrics";
+import { garbageLines, matchesFinished } from "../observability/metrics";
 import type { MatchResult, RoomMember } from "./room";
 import { RoomStore, guestName } from "./room-store";
 
@@ -160,6 +162,7 @@ describe("joining rooms (S2)", () => {
 
     ctx.store.ready(b.sessionId);
     expect(a.last("room")).toMatchObject({ state: "countdown", startsAt: ctx.now + COUNTDOWN_MS });
+    expect(ctx.store.ready(b.sessionId)).toBe(true);
     ctx.advanceTime(COUNTDOWN_MS - 1);
     ctx.store.advance(1);
     expect(a.last("match")).toBeUndefined();
@@ -301,6 +304,8 @@ describe("match (S3, S4)", () => {
         match: null,
       }),
     ]);
+    expect(store.leave(a.sessionId)).toBe(true);
+    expect(store.leave(a.sessionId)).toBe(false);
   });
 
   it("reports the running match to the admin", () => {
@@ -318,5 +323,60 @@ describe("guestName", () => {
   it("is stable for a session", () => {
     expect(guestName("abc")).toBe(guestName("abc"));
     expect(guestName("abc")).toMatch(/^Gość-\d{4}$/);
+  });
+});
+
+describe("deploy drain (spec 007, S6)", () => {
+  it("closes idle rooms, refuses new ones and closes a playing room right after its match", () => {
+    const ctx = startedMatch();
+    const idleHost = player(3, "cid");
+    ctx.store.create(idleHost, "public", idleHost.send);
+    const newcomer = player(4);
+
+    ctx.store.drain();
+    expect(idleHost.last("roomClosed")).toBeDefined();
+    expect(ctx.store.playing).toBe(1);
+    expect(ctx.store.create(newcomer, "public", newcomer.send)).toBe("server_full");
+    expect(ctx.store.join(newcomer, "QWERT2", newcomer.send)).toBe("server_full");
+
+    ctx.store.advance(30);
+    expect(ctx.room.state).toBe("playing");
+    ctx.store.leave(ctx.b.sessionId);
+    ctx.store.advance(1);
+    expect(ctx.a.last("roomClosed")).toBeDefined();
+    expect(ctx.store.playing).toBe(0);
+    expect(ctx.store.size).toBe(0);
+  });
+
+  it("counts rooms by state and visibility for the rooms metric", () => {
+    const ctx = startedMatch();
+    const other = player(5);
+    ctx.store.create(other, "private", other.send);
+
+    const counts = ctx.store.countByState();
+    expect(counts).toHaveLength(8);
+    expect(counts).toContainEqual({ state: "playing", visibility: "public", count: 1 });
+    expect(counts).toContainEqual({ state: "waiting", visibility: "private", count: 1 });
+    expect(counts).toContainEqual({ state: "waiting", visibility: "public", count: 0 });
+  });
+
+  it("counts finished matches by reason and garbage lines sent", async () => {
+    const before = await metricValue(matchesFinished, { reason: "left" });
+    const garbageBefore = await metricValue(garbageLines);
+    const ctx = startedMatch();
+    const attacker = gameOf(ctx, 0);
+    attacker.game = {
+      ...attacker.game,
+      board: Array.from({ length: 22 }, (_, y) =>
+        Array.from({ length: 10 }, (_, x) => (y >= 20 && x !== 9 ? ("Z" as const) : null)),
+      ),
+      active: { type: "I", rotation: 1, x: 7, y: 0 },
+    };
+    ctx.store.input(ctx.a.sessionId, 1, 0, ["hardDrop"]);
+    ctx.store.advance(BUFFER + 2);
+    ctx.store.leave(ctx.b.sessionId);
+
+    expect(await metricValue(garbageLines)).toBe(garbageBefore + 1);
+    expect(await metricValue(matchesFinished, { reason: "left" })).toBe(before + 1);
   });
 });

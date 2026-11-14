@@ -8,7 +8,7 @@ image:
   repository: ""
   tag: ""
 
-# Sesje gry żyją w pamięci procesu (ADR-0006), więc zawsze 1 replika.
+# Sesje gry i pokoje żyją w pamięci procesu (ADR-0006, spec 007), więc zawsze 1 replika.
 replicas: 1
 
 game:
@@ -19,6 +19,13 @@ game:
   # Limit połączeń WebSocket z jednego IP; 0 = wyłączony. Wyłączony, bo Traefik w k3s
   # (externalTrafficPolicy: Cluster) widzi wszystkich klientów pod jednym adresem 10.42.0.1.
   maxConnectionsPerIp: 0
+  # Limit otwartych pokoi 1v1 (spec 007); gracze w pokojach liczą się też do maxSessions.
+  maxRooms: 50
+
+# Deploy (spec 007): stary pod dogrywa trwające mecze 1v1 najwyżej tyle sekund.
+# Przez ten czas w namespace działają dwa pody aplikacji, co musi zmieścić się w `quota`.
+drain:
+  gracePeriodSeconds: 300
 
 resources:
   requests:
@@ -66,6 +73,7 @@ basicAuth:
   secretName: basic-auth
 
 # Limity całego namespace'u (ADR-0002), żeby beta nie zabrała zasobów produ.
+# Przy deployu działają dwa pody aplikacji: 2 × 192Mi + Postgres 192Mi + backup 128Mi = 704Mi.
 quota:
   requestsCpu: 500m
   requestsMemory: 512Mi

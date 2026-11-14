@@ -16,6 +16,7 @@ import {
 } from "@tetris/protocol";
 import { BufferedGame } from "../game/buffered-game";
 import { randomSeed } from "../game/session-store";
+import { garbageLines, matchesFinished } from "../observability/metrics";
 import type { Send } from "../game/session";
 
 /** Gracz w pokoju: jego sesja gry (do wznowienia), konto i nazwa. */
@@ -181,7 +182,10 @@ export class Room {
   /** Gotowość do meczu lub rewanżu; `false`, gdy w tym stanie pokoju nie ma sensu (protokół). */
   ready(sessionId: string): boolean {
     const player = this.find(sessionId);
-    if (!player || (this._state !== "waiting" && this._state !== "finished")) return false;
+    if (!player) return false;
+    // Powtórzone „Gotowe” (zanim klient zobaczył odliczanie) nie łamie protokołu.
+    if (player.ready || this._state === "countdown") return true;
+    if (this._state !== "waiting" && this._state !== "finished") return false;
     player.ready = true;
     if (this.players.length === ROOM_CAPACITY && this.players.every((p) => p.ready)) {
       this._state = "countdown";
@@ -312,10 +316,12 @@ export class Room {
     this.holeRng = rng;
     target.game = receiveGarbage(target.game, { lines: sent, hole });
     player.delivered += sent;
+    garbageLines.inc(sent);
   }
 
   private finish(winner: Player, loser: Player, reason: MatchEndReason): void {
     this._state = "finished";
+    matchesFinished.inc({ reason });
     this.sendSnapshots();
     for (const player of this.players) {
       player.send?.({ type: "result", won: player === winner, winner: winner.name, reason });
