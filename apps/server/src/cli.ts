@@ -1,3 +1,4 @@
+import { normalizeUsername } from "./accounts/credentials";
 import type { Db } from "./db/pool";
 import { findUserByUsername, setRole } from "./db/users";
 
@@ -12,7 +13,7 @@ export async function runCli(db: Db, args: readonly string[]): Promise<number> {
     console.error("Użycie: node main.cjs promote <login>");
     return 2;
   }
-  const user = await findUserByUsername(db, username.toLowerCase());
+  const user = await findUserByUsername(db, normalizeUsername(username));
   if (!user) {
     console.error(`Nie ma konta ${username}`);
     return 1;

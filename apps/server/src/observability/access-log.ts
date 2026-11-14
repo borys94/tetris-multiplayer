@@ -1,6 +1,22 @@
 import type { RequestHandler } from "express";
 import type { Logger } from "./logger";
-import { httpDuration, httpRequests, routeLabel, statusClass } from "./metrics";
+import { httpDuration, httpRequests } from "./metrics";
+
+/** Klasa statusu HTTP (`2xx`…`5xx`) zamiast dokładnego kodu. */
+export function statusClass(status: number): string {
+  return `${Math.floor(status / 100)}xx`;
+}
+
+/**
+ * Trasa o małej liczności: `/api/...` z liczbami zamienionymi na `:id`, a 404 jako
+ * `unmatched`, żeby losowe ścieżki nie tworzyły nowych serii. Reszta to pliki gry.
+ */
+export function routeLabel(path: string, status: number): string {
+  if (path === "/health" || path === "/ready") return path;
+  if (!path.startsWith("/api/") && path !== "/api") return "static";
+  if (status === 404) return "unmatched";
+  return path.replace(/\/\d+(?=\/|$)/g, "/:id");
+}
 
 /** Sondy Kubernetesa co kilka sekund zaśmiecałyby log (metryki je liczą). */
 const UNLOGGED_PATHS = new Set(["/health"]);

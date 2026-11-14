@@ -5,7 +5,7 @@ export default defineProject({
     name: "server",
     environment: "node",
     // Postgres z Testcontainers (wymaga Dockera); start kontenera trwa kilka sekund.
-    globalSetup: ["./test/global-setup.ts"],
+    globalSetup: ["./tests/support/global-setup.ts"],
     hookTimeout: 60_000,
   },
 });

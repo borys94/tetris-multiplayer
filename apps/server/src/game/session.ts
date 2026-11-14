@@ -1,50 +1,46 @@
 import { createGame, type Action } from "@tetris/game-core";
-import { SNAPSHOT_INTERVAL_TICKS, type ServerMessage } from "@tetris/protocol";
+import { SNAPSHOT_INTERVAL_TICKS } from "@tetris/protocol";
+import { BufferedClock, type BufferedClockOptions } from "./buffered-clock";
 import { BufferedGame } from "./buffered-game";
-
-export type Send = (msg: ServerMessage) => void;
+import type { Send } from "./send";
 
 /** Wynik zakończonej gry, liczony przez serwer. */
-export interface GameOver {
+export interface GameResult {
   score: number;
   lines: number;
   level: number;
   ticks: number;
 }
 
-export interface SessionOptions {
-  /** O ile ticków symulacja idzie za zegarem sesji (bufor wejścia, ADR-0006). */
-  bufferTicks: number;
-  /** O ile ticków akcja klienta może wyprzedzać zegar serwera, zanim ją odrzucimy. */
-  maxAheadTicks: number;
-}
+export type SessionOptions = BufferedClockOptions;
 
 /**
  * Jedna gra jednego gracza liczona przez serwer (ADR-0006).
  *
- * Zegar (`clock`) liczy ticki czasu rzeczywistego, gdy gra nie jest wstrzymana.
+ * Zegar liczy ticki czasu rzeczywistego, gdy gra nie jest wstrzymana.
  * Symulacja (`simTick`) idzie `bufferTicks` za zegarem, więc akcja klienta z tickiem `t`
  * trafia dokładnie na `t`, jeśli dotrze w czasie bufora, a później na bieżący tick symulacji.
  * Klient nie może więc ani cofnąć czasu o więcej niż bufor, ani go zatrzymać.
  */
 export class Session {
   private readonly sim: BufferedGame;
-  private clock = 0;
+  private readonly clock: BufferedClock;
   private paused = true;
   private over = false;
   private send: Send | null = null;
   /** Konto, na które zapisujemy wynik; `null` to gość (spec 005). */
   userId: number | null = null;
   /** Wywoływane raz na koniec każdej gry. */
-  onOver: ((result: GameOver) => void) | null = null;
+  onOver: ((result: GameResult) => void) | null = null;
 
   constructor(
     readonly id: string,
     readonly token: string,
     seed: number,
-    private readonly options: SessionOptions,
+    options: SessionOptions,
   ) {
     this.sim = new BufferedGame(createGame(seed));
+    this.clock = new BufferedClock(options);
   }
 
   get connected(): boolean {
@@ -64,18 +60,18 @@ export class Session {
 
   /** Wstrzymuje grę na bieżącym ticku zegara (np. gdy gracz przechodzi do pokoju, spec 007). */
   suspend(): void {
-    this.pauseAt(this.clock);
+    this.pauseAt(this.clock.tick);
   }
 
   /** Odłącza połączenie; rozłączenie działa jak pauza na bieżącym ticku zegara. */
   detach(): void {
-    this.pauseAt(this.clock);
+    this.pauseAt(this.clock.tick);
     this.send = null;
   }
 
   newGame(seed: number): void {
     this.sim.reset(createGame(seed));
-    this.clock = 0;
+    this.clock.set(0);
     this.paused = true;
     this.over = false;
     this.sendGame();
@@ -85,16 +81,12 @@ export class Session {
   input(seq: number, clientTick: number, actions: readonly Action[]): boolean {
     if (this.over) return true; // klient nie wiedział jeszcze o końcu gry
     if (this.paused) return false;
-    return this.sim.accept(seq, clientTick, actions, this.clock + this.options.maxAheadTicks);
+    return this.sim.accept(seq, clientTick, actions, this.clock.maxInputTick);
   }
 
   /** Pauza na ticku klienta, ograniczonym do zakresu, którego klient nie może nadużyć. */
   pause(clientTick: number): void {
-    const target = Math.min(
-      Math.max(clientTick, this.sim.simTick),
-      this.clock + this.options.maxAheadTicks,
-    );
-    this.pauseAt(target);
+    this.pauseAt(Math.min(Math.max(clientTick, this.sim.simTick), this.clock.maxInputTick));
   }
 
   resume(): void {
@@ -104,16 +96,17 @@ export class Session {
   /** Przesuwa zegar sesji o `ticks` ticków czasu rzeczywistego. */
   advance(ticks: number): void {
     if (this.paused || this.over) return;
-    for (let i = 0; i < ticks; i++) {
-      this.clock++;
-      while (!this.over && this.sim.simTick < this.clock - this.options.bufferTicks) this.step();
-    }
+    this.clock.advance(ticks, (target) => this.catchUp(target));
+  }
+
+  private catchUp(target: number): void {
+    while (!this.over && this.sim.simTick < target) this.step();
   }
 
   private pauseAt(target: number): void {
     if (this.paused || this.over) return;
-    while (!this.over && this.sim.simTick < target) this.step();
-    this.clock = this.sim.simTick;
+    this.catchUp(target);
+    this.clock.set(this.sim.simTick);
     this.paused = true;
     if (!this.over) this.sendSnapshot();
   }

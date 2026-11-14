@@ -1,6 +1,5 @@
 import type { MatchEndReason } from "@tetris/protocol";
-import { LIST_LIMIT } from "./games";
-import type { Db } from "./pool";
+import { LIST_LIMIT, type Queryable } from "./pool";
 
 export interface MatchPlayerRecord {
   userId: number | null;
@@ -44,7 +43,7 @@ const COLUMNS = `id, winner_id as "winnerId", winner_name as "winnerName", loser
   loser_name as "loserName", reason, winner_lines_sent as "winnerLinesSent",
   loser_lines_sent as "loserLinesSent", ticks, ended_at as "endedAt"`;
 
-export async function insertMatch(db: Db, match: MatchRecord): Promise<number> {
+export async function insertMatch(db: Queryable, match: MatchRecord): Promise<number> {
   const { winner, loser } = match;
   const { rows } = await db.query<{ id: number }>(
     `insert into matches (winner_id, winner_name, loser_id, loser_name, reason,
@@ -65,7 +64,7 @@ export async function insertMatch(db: Db, match: MatchRecord): Promise<number> {
 }
 
 /** Ostatnie mecze gracza, od najnowszego. */
-export async function userMatches(db: Db, userId: number): Promise<PlayerMatch[]> {
+export async function userMatches(db: Queryable, userId: number): Promise<PlayerMatch[]> {
   const { rows } = await db.query<SavedMatch>(
     `select ${COLUMNS} from matches where winner_id = $1 or loser_id = $1
      order by id desc limit $2`,
@@ -91,7 +90,7 @@ export async function userMatches(db: Db, userId: number): Promise<PlayerMatch[]
  * meczu z poprzedniej strony, `query` filtruje po fragmencie nazwy gracza.
  */
 export async function listMatches(
-  db: Db,
+  db: Queryable,
   { query = "", before }: { query?: string; before?: number } = {},
 ): Promise<SavedMatch[]> {
   const pattern = `%${query.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;

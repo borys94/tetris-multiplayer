@@ -31,8 +31,11 @@ Singleplayer liczy serwer: przeglądarka wysyła tylko akcje gracza, a stan i wy
 ```
 packages/protocol/src/   # typy wiadomości, PROTOCOL_VERSION, parseClientMessage / parseServerMessage (bez zależności)
 apps/server/src/game/    # Session (zegar, bufor wejścia, pauza, snapshoty), SessionStore (TTL, limity)
-apps/server/src/ws.ts    # endpoint /ws na serwerze Express: upgrade, Origin, limity, heartbeat
-apps/web/src/net/        # Connection (reconnect z backoffem), Predictor (przewidywanie + uzgadnianie)
+apps/server/src/play/    # Players (sesja ↔ połączenie, wznawianie), wspólna pętla gry
+apps/server/src/ws/      # endpoint /ws na serwerze Express: upgrade, Origin, limity, heartbeat
+apps/web/src/net/        # Connection (reconnect z backoffem); ServerProvider w components/hooks (jedno połączenie dla widoków)
+apps/web/src/play/       # Predictor (przewidywanie + uzgadnianie), klawiatura, pętla, rysowanie planszy
+apps/web/src/state/      # SoloSession: ekrany gry, wiadomości serwera, pauza po rozłączeniu
 ```
 
 Protokół (JSON, pole `type`, wersja w `hello`):
