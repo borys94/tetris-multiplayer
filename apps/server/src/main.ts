@@ -6,9 +6,10 @@ import { runCli } from "./cli";
 import { loadConfig } from "./config";
 import { createPool, migrate, type Db } from "./db/pool";
 import { deleteExpiredSessions } from "./db/sessions";
-import { authenticateWebSocket, saveGameResult } from "./game/accounts";
+import { authenticateWebSocket, saveGameResult, saveMatchResult } from "./game/accounts";
 import { SessionStore } from "./game/session-store";
 import { log } from "./observability/logger";
+import { RoomStore } from "./rooms/room-store";
 import { createMetricsServer, trackGauge, trackPool } from "./observability/metrics";
 import { attachWebSocket } from "./ws";
 
@@ -44,8 +45,17 @@ async function main(): Promise<void> {
     process.exit(code);
   }
 
+  const saveMatch = saveMatchResult(db);
+  const rooms = new RoomStore({
+    bufferTicks: config.bufferTicks,
+    maxAheadTicks: TICKS_PER_SECOND,
+    ttlMs: config.sessionTtlMs,
+    maxRooms: config.maxRooms,
+    onMatchEnd: (result) => void saveMatch(result),
+  });
   const api = createApi({
     db,
+    rooms,
     ...(config.allowedOrigin ? { allowedOrigin: config.allowedOrigin } : {}),
     secureCookies: config.secureCookies,
   });
@@ -61,6 +71,7 @@ async function main(): Promise<void> {
     onGameOver: (session, result) => void saveResult(session, result),
   });
   const stopLoop = store.start();
+  const stopRooms = rooms.start();
   trackGauge(
     "blockfall_game_sessions",
     "Sesje gry w pamięci (także czekające na wznowienie)",
@@ -73,6 +84,7 @@ async function main(): Promise<void> {
   });
   const closeWs = attachWebSocket(server, {
     store,
+    rooms,
     ...(config.allowedOrigin ? { allowedOrigin: config.allowedOrigin } : {}),
     trustProxy: config.trustProxy,
     maxConnectionsPerIp: config.maxConnectionsPerIp,
@@ -102,6 +114,7 @@ async function main(): Promise<void> {
     process.on(signal, () => {
       clearInterval(cleanup);
       stopLoop();
+      stopRooms();
       closeWs();
       metricsServer?.close();
       server.close(() => {

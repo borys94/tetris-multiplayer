@@ -12,6 +12,8 @@ import { WebSocket, WebSocketServer, type RawData } from "ws";
 import { randomSeed, type SessionStore } from "./game/session-store";
 import type { Session } from "./game/session";
 import type { SessionUser } from "./db/sessions";
+import { guestName, type RoomStore } from "./rooms/room-store";
+import type { RoomMember } from "./rooms/room";
 import { log } from "./observability/logger";
 import {
   gamesStarted,
@@ -24,6 +26,8 @@ import {
 
 export interface WsOptions {
   store: SessionStore;
+  /** Pokoje 1v1 (spec 007); bez nich wiadomości pokoi są błędem protokołu. */
+  rooms?: RoomStore;
   /** Dozwolony nagłówek `Origin`, np. `https://example.com`; bez niego nie sprawdzamy (dev). */
   allowedOrigin?: string;
   /** Czy brać IP klienta z `X-Forwarded-For` (za Traefikiem). */
@@ -87,6 +91,7 @@ class RateLimiter {
 /** Jedno połączenie WebSocket: protokół, limity i przypięta sesja. */
 class Connection {
   private session: Session | null = null;
+  private watchingRooms = false;
   private errors = 0;
   private readonly limiter: RateLimiter;
   alive = true;
@@ -94,9 +99,9 @@ class Connection {
   constructor(
     readonly ws: WebSocket,
     /** Zalogowany gracz tego połączenia; `null` to gość. */
-    private readonly userId: number | null,
+    private readonly user: Pick<SessionUser, "id" | "username"> | null,
     private readonly store: SessionStore,
-    options: WsOptions,
+    private readonly options: WsOptions,
     private readonly sessionOwners: Map<string, Connection>,
   ) {
     this.limiter = new RateLimiter(options.messagesPerSecond, options.messageBurst);
@@ -114,12 +119,26 @@ class Connection {
     this.errors = 0;
   }
 
+  private get userId(): number | null {
+    return this.user?.id ?? null;
+  }
+
   close(): void {
+    if (this.watchingRooms) this.options.rooms?.unwatch(this.send);
     const session = this.session;
     if (!session || this.sessionOwners.get(session.id) !== this) return;
     this.sessionOwners.delete(session.id);
     session.detach();
     this.store.markDetached(session);
+    this.options.rooms?.detach(session.id);
+  }
+
+  private member(session: Session): RoomMember {
+    return {
+      sessionId: session.id,
+      userId: this.userId,
+      name: this.user?.username ?? guestName(session.id),
+    };
   }
 
   /** Obsługuje poprawną składniowo wiadomość; `false` oznacza złamanie protokołu. */
@@ -127,24 +146,55 @@ class Connection {
     if (msg.type === "hello") return this.hello(msg);
     const session = this.session;
     if (!session) return false;
+    const rooms = this.options.rooms;
+    const room = rooms?.roomOf(session.id);
 
+    switch (msg.type) {
+      case "input":
+        return room
+          ? rooms!.input(session.id, msg.seq, msg.tick, msg.actions)
+          : session.input(msg.seq, msg.tick, msg.actions);
+      case "watchRooms":
+        if (!rooms) return false;
+        this.watchingRooms = true;
+        rooms.watch(this.send);
+        return true;
+      case "unwatchRooms":
+        this.watchingRooms = false;
+        rooms?.unwatch(this.send);
+        return true;
+      case "createRoom":
+      case "joinRoom": {
+        if (!rooms) return false;
+        // Gra singleplayer czeka wstrzymana, aż gracz wróci z pokoju.
+        session.suspend();
+        const error =
+          msg.type === "createRoom"
+            ? rooms.create(this.member(session), msg.visibility, this.send)
+            : rooms.join(this.member(session), msg.code, this.send);
+        if (error) this.send({ type: "error", code: error });
+        return true;
+      }
+      case "leaveRoom":
+        return rooms?.leave(session.id) ?? false;
+      case "ready":
+        return rooms?.ready(session.id) ?? false;
+    }
+
+    // W pokoju nie ma singleplayera ani pauzy (spec 007).
+    if (room) return false;
     switch (msg.type) {
       case "newGame":
         session.userId = this.userId;
         session.newGame(randomSeed());
         gamesStarted.inc();
         return true;
-      case "input":
-        return session.input(msg.seq, msg.tick, msg.actions);
       case "pause":
         session.pause(msg.tick);
         return true;
       case "resume":
         session.resume();
         return true;
-      default:
-        // Pokoje i mecze (spec 007) obsłużymy w T2.
-        return false;
     }
   }
 
@@ -187,6 +237,7 @@ class Connection {
     this.store.markAttached(session);
     this.send({ type: "welcome", sessionId: session.id, token: session.token });
     session.attach(this.send);
+    this.options.rooms?.attach(session.id, this.send);
     return true;
   }
 
@@ -246,7 +297,7 @@ export function attachWebSocket(server: Server, options: WsOptions): () => void 
     wss.handleUpgrade(req, socket, head, (ws) => {
       const connection = new Connection(
         ws,
-        user?.id ?? null,
+        user ? { id: user.id, username: user.username } : null,
         options.store,
         options,
         sessionOwners,

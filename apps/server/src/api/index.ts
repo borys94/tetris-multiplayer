@@ -1,7 +1,7 @@
 import express, { Router } from "express";
 import { LoginLimiter } from "../auth/login-limiter";
 import type { Db } from "../db/pool";
-import { adminRouter } from "./admin";
+import { adminRouter, type RoomsSource } from "./admin";
 import { authRouter, meRouter } from "./auth";
 import { handleErrors, loadUser, protectMutations } from "./middleware";
 import { scoresRouter } from "./scores";
@@ -12,6 +12,8 @@ export interface ApiOptions {
   allowedOrigin?: string;
   secureCookies: boolean;
   limiter?: LoginLimiter;
+  /** Pokoje 1v1 do podglądu w panelu admina (spec 007). */
+  rooms?: RoomsSource;
 }
 
 /** API pod `/api` (spec 005). */
@@ -20,6 +22,7 @@ export function createApi({
   allowedOrigin,
   secureCookies,
   limiter = new LoginLimiter(),
+  rooms,
 }: ApiOptions): Router {
   const api = Router();
   api.use(protectMutations(allowedOrigin));
@@ -29,7 +32,7 @@ export function createApi({
   api.use("/auth", authRouter({ db, limiter, secureCookies }));
   api.use(scoresRouter(db));
   api.use("/me", meRouter(secureCookies));
-  api.use("/admin", adminRouter(db));
+  api.use("/admin", adminRouter(db, rooms));
 
   api.use((_req, res) => {
     res.status(404).json({ error: "not_found" });

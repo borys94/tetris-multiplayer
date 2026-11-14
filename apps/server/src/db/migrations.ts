@@ -42,4 +42,26 @@ export const MIGRATIONS: readonly { id: number; name: string; sql: string }[] = 
       create index games_user_score on games (user_id, score desc);
     `,
   },
+  {
+    id: 2,
+    name: "mecze 1v1",
+    sql: `
+      -- Każdy mecz 1v1 (spec 007), także z gośćmi: id konta puste, nazwa zawsze.
+      -- Usunięcie konta zostawia mecz z nazwą gracza z chwili meczu.
+      create table matches (
+        id bigint generated always as identity primary key,
+        winner_id bigint references users on delete set null,
+        winner_name text not null,
+        loser_id bigint references users on delete set null,
+        loser_name text not null,
+        reason text not null check (reason in ('topout', 'left', 'timeout')),
+        winner_lines_sent integer not null check (winner_lines_sent >= 0),
+        loser_lines_sent integer not null check (loser_lines_sent >= 0),
+        ticks integer not null check (ticks >= 0),
+        ended_at timestamptz not null default now()
+      );
+      create index matches_winner on matches (winner_id, id desc);
+      create index matches_loser on matches (loser_id, id desc);
+    `,
+  },
 ];

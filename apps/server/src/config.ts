@@ -11,6 +11,8 @@ export interface Config {
   /** Bufor wejścia w tickach (ADR-0006), liczony z `INPUT_BUFFER_MS`. */
   bufferTicks: number;
   maxSessions: number;
+  /** Limit otwartych pokoi 1v1 (spec 007). */
+  maxRooms: number;
   sessionTtlMs: number;
   /** 0 wyłącza limit połączeń na IP. */
   maxConnectionsPerIp: number;
@@ -50,6 +52,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
     trustProxy: env.TRUST_PROXY === "true",
     bufferTicks: Math.round((bufferMs / 1000) * TICKS_PER_SECOND),
     maxSessions: positiveInt(env, "MAX_SESSIONS", 200),
+    maxRooms: positiveInt(env, "MAX_ROOMS", 50),
     sessionTtlMs: positiveInt(env, "SESSION_TTL_MS", 60_000),
     maxConnectionsPerIp: positiveInt(env, "MAX_CONNECTIONS_PER_IP", 5),
     databaseUrl: required(env, "DATABASE_URL"),

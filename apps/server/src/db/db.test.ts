@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { useTestDatabase } from "../../test/db";
 import { log } from "../observability/logger";
 import { deleteGame, insertGame, leaderboard, userGames } from "./games";
+import { insertMatch, listMatches, userMatches } from "./matches";
 import { MIGRATIONS } from "./migrations";
 import { createPool, migrate } from "./pool";
 import { createSession, deleteExpiredSessions, deleteSession, useSession } from "./sessions";
@@ -174,5 +175,72 @@ describe("games", () => {
 
     expect(await deleteGame(ctx.db, id)).toBe(true);
     expect(await deleteGame(ctx.db, id)).toBe(false);
+  });
+});
+
+describe("matches (spec 007, R5)", () => {
+  it("saves matches with guests and shows them from each player's side", async () => {
+    const ala = await newUser("ala");
+    const bob = await newUser("bob");
+    await insertMatch(ctx.db, {
+      winner: { userId: ala.id, name: ala.username, linesSent: 7 },
+      loser: { userId: bob.id, name: bob.username, linesSent: 3 },
+      reason: "topout",
+      ticks: 3600,
+    });
+    await insertMatch(ctx.db, {
+      winner: { userId: null, name: "Gość-0042", linesSent: 1 },
+      loser: { userId: ala.id, name: ala.username, linesSent: 0 },
+      reason: "left",
+      ticks: 60,
+    });
+
+    expect(await userMatches(ctx.db, ala.id)).toEqual([
+      expect.objectContaining({ won: false, opponent: "Gość-0042", reason: "left", linesSent: 0 }),
+      expect.objectContaining({
+        won: true,
+        opponent: bob.username,
+        linesSent: 7,
+        linesReceived: 3,
+      }),
+    ]);
+    expect(await userMatches(ctx.db, bob.id)).toEqual([
+      expect.objectContaining({ won: false, opponent: ala.username, ticks: 3600 }),
+    ]);
+  });
+
+  it("lists all matches newest first, filtered by player name and paged by id", async () => {
+    for (const name of ["Gość-1111", "Gość-2222", "Gość-1111"]) {
+      await insertMatch(ctx.db, {
+        winner: { userId: null, name, linesSent: 0 },
+        loser: { userId: null, name: "Gość-9_99", linesSent: 0 },
+        reason: "timeout",
+        ticks: 1,
+      });
+    }
+
+    const filtered = await listMatches(ctx.db, { query: "1111" });
+    expect(filtered.map((m) => m.winnerName)).toEqual(["Gość-1111", "Gość-1111"]);
+    expect(await listMatches(ctx.db, { query: "1111", before: filtered[0]!.id })).toEqual([
+      filtered[1],
+    ]);
+    expect(await listMatches(ctx.db, { query: "9_99" })).toHaveLength(3);
+    expect(await listMatches(ctx.db, { query: "9x99" })).toEqual([]);
+  });
+
+  it("keeps a match when an account is deleted", async () => {
+    const gone = await newUser("gone");
+    await insertMatch(ctx.db, {
+      winner: { userId: gone.id, name: gone.username, linesSent: 0 },
+      loser: { userId: null, name: "Gość-0001", linesSent: 0 },
+      reason: "topout",
+      ticks: 1,
+    });
+    await ctx.db.query("delete from users where id = $1", [gone.id]);
+
+    expect((await listMatches(ctx.db, { query: gone.username }))[0]).toMatchObject({
+      winnerId: null,
+      winnerName: gone.username,
+    });
   });
 });

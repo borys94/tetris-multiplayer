@@ -1,10 +1,12 @@
 import type { IncomingMessage } from "node:http";
 import { SESSION_TTL_MS, hashToken, readSessionToken } from "../auth/session-cookie";
 import { insertGame } from "../db/games";
+import { insertMatch } from "../db/matches";
 import type { Db } from "../db/pool";
 import { log } from "../observability/logger";
 import { gameSaveErrors } from "../observability/metrics";
 import { useSession, type SessionUser } from "../db/sessions";
+import type { MatchResult } from "../rooms/room";
 import type { GameOver, Session } from "./session";
 
 /** Użytkownik z cookie przy upgrade WebSocketu; `null` to gość (spec 005). */
@@ -30,4 +32,29 @@ export function saveGameResult(db: Db) {
       },
     );
   };
+}
+
+/** Zapisuje każdy mecz 1v1, także gości (spec 007, R5); jak przy grach, poza pętlą ticków. */
+export function saveMatchResult(db: Db) {
+  return (result: MatchResult): Promise<void> =>
+    insertMatch(db, {
+      winner: {
+        userId: result.winner.userId,
+        name: result.winner.name,
+        linesSent: result.winnerLinesSent,
+      },
+      loser: {
+        userId: result.loser.userId,
+        name: result.loser.name,
+        linesSent: result.loserLinesSent,
+      },
+      reason: result.reason,
+      ticks: result.ticks,
+    }).then(
+      () => undefined,
+      (error: unknown) => {
+        gameSaveErrors.inc();
+        log.error({ err: error }, "failed to save match");
+      },
+    );
 }

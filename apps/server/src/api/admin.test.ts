@@ -4,6 +4,8 @@ import { useTestDatabase } from "../../test/db";
 import { createApp } from "../app";
 import { runCli } from "../cli";
 import { insertGame } from "../db/games";
+import { insertMatch } from "../db/matches";
+import type { RoomInfo } from "../rooms/room";
 import { createApi } from ".";
 
 const ORIGIN = "https://game.example";
@@ -45,12 +47,18 @@ function as(account: Account | null) {
 }
 
 let admin: Account;
+let rooms: RoomInfo[] = [];
 let player: Account;
 
 beforeAll(async () => {
   server = createApp({
     version: "test",
-    api: createApi({ db: ctx.db, allowedOrigin: ORIGIN, secureCookies: true }),
+    api: createApi({
+      db: ctx.db,
+      allowedOrigin: ORIGIN,
+      secureCookies: true,
+      rooms: { list: () => rooms },
+    }),
   });
   admin = await register("boss");
   player = await register("pawn");
@@ -176,5 +184,48 @@ describe("admin API (S4)", () => {
     ["a missing user", "/api/admin/users/999999", { disabled: true }, 404],
   ])("rejects %s", async (_name, path, body, status) => {
     expect((await as(admin).patch(path, body)).status).toBe(status);
+  });
+});
+
+describe("rooms and matches (spec 007, S5)", () => {
+  it("shows all rooms and running matches to the admin only", async () => {
+    rooms = [
+      {
+        code: "ABCDEF",
+        visibility: "private",
+        state: "playing",
+        host: "boss",
+        createdAt: 1,
+        players: [
+          { name: "boss", userId: admin.id, connected: true },
+          { name: "Gość-0007", userId: null, connected: false },
+        ],
+        match: { seconds: 12, players: [] },
+      },
+    ];
+
+    expect((await as(player).get("/api/admin/rooms")).status).toBe(403);
+    expect((await as(player).get("/api/admin/matches")).status).toBe(403);
+    expect((await as(admin).get("/api/admin/rooms")).body).toEqual({ rooms });
+  });
+
+  it("lists finished matches for the admin and own matches for the player", async () => {
+    await insertMatch(ctx.db, {
+      winner: { userId: player.id, name: "pawn", linesSent: 4 },
+      loser: { userId: null, name: "Gość-0007", linesSent: 1 },
+      reason: "topout",
+      ticks: 600,
+    });
+
+    const all = await as(admin).get("/api/admin/matches?q=0007");
+    expect(all.status).toBe(200);
+    expect((all.body as { matches: unknown[] }).matches).toEqual([
+      expect.objectContaining({ winnerName: "pawn", loserName: "Gość-0007", reason: "topout" }),
+    ]);
+    const mine = await as(player).get("/api/me/matches");
+    expect((mine.body as { matches: unknown[] }).matches).toEqual([
+      expect.objectContaining({ won: true, opponent: "Gość-0007", linesSent: 4 }),
+    ]);
+    expect((await as(null).get("/api/me/matches")).status).toBe(401);
   });
 });
