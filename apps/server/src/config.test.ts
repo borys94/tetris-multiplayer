@@ -7,6 +7,7 @@ describe("loadConfig", () => {
   it("uses a 150 ms input buffer (9 ticks) and safe defaults", () => {
     expect(loadConfig({ DATABASE_URL: DB })).toEqual({
       port: 3000,
+      metricsPort: 9464,
       version: "dev",
       trustProxy: false,
       bufferTicks: 9,

@@ -1,5 +1,5 @@
 import express, { type Express, type Router } from "express";
-import { accessLog } from "./observability/access-log";
+import { observeHttp } from "./observability/access-log";
 import { log, type Logger } from "./observability/logger";
 
 export interface AppOptions {
@@ -16,7 +16,7 @@ export interface AppOptions {
 export function createApp({ version, staticDir, api, logger = log }: AppOptions): Express {
   const app = express();
   app.disable("x-powered-by");
-  app.use(accessLog(logger));
+  app.use(observeHttp(logger));
 
   app.get("/health", (_req, res) => {
     res.json({ status: "ok", version });

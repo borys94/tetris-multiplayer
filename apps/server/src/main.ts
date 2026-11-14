@@ -9,6 +9,7 @@ import { deleteExpiredSessions } from "./db/sessions";
 import { authenticateWebSocket, saveGameResult } from "./game/accounts";
 import { SessionStore } from "./game/session-store";
 import { log } from "./observability/logger";
+import { createMetricsServer, trackGauge, trackPool } from "./observability/metrics";
 import { attachWebSocket } from "./ws";
 
 /** Przy pierwszym deployu Postgres może startować dłużej niż serwer: ponawiamy przez ok. 2 min. */
@@ -60,6 +61,16 @@ async function main(): Promise<void> {
     onGameOver: (session, result) => void saveResult(session, result),
   });
   const stopLoop = store.start();
+  trackGauge(
+    "blockfall_game_sessions",
+    "Sesje gry w pamięci (także czekające na wznowienie)",
+    () => store.size,
+  );
+  trackPool(db);
+  const metricsServer = config.metricsPort > 0 ? createMetricsServer() : null;
+  metricsServer?.listen(config.metricsPort, () => {
+    log.info({ port: config.metricsPort }, "metrics listening");
+  });
   const closeWs = attachWebSocket(server, {
     store,
     ...(config.allowedOrigin ? { allowedOrigin: config.allowedOrigin } : {}),
@@ -92,6 +103,7 @@ async function main(): Promise<void> {
       clearInterval(cleanup);
       stopLoop();
       closeWs();
+      metricsServer?.close();
       server.close(() => {
         void db.end().finally(() => process.exit(0));
       });

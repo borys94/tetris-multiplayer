@@ -3,6 +3,7 @@ import { SESSION_TTL_MS, hashToken, readSessionToken } from "../auth/session-coo
 import { insertGame } from "../db/games";
 import type { Db } from "../db/pool";
 import { log } from "../observability/logger";
+import { gameSaveErrors } from "../observability/metrics";
 import { useSession, type SessionUser } from "../db/sessions";
 import type { GameOver, Session } from "./session";
 
@@ -23,7 +24,10 @@ export function saveGameResult(db: Db) {
     if (session.userId === null) return Promise.resolve();
     return insertGame(db, session.userId, result).then(
       () => undefined,
-      (error: unknown) => log.error({ err: error, userId: session.userId }, "failed to save game"),
+      (error: unknown) => {
+        gameSaveErrors.inc();
+        log.error({ err: error, userId: session.userId }, "failed to save game");
+      },
     );
   };
 }
