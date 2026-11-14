@@ -1,8 +1,10 @@
 import express, { Router } from "express";
 import { LoginLimiter } from "../auth/login-limiter";
 import type { Db } from "../db/pool";
+import { adminRouter } from "./admin";
 import { authRouter, meRouter } from "./auth";
 import { handleErrors, loadUser, protectMutations } from "./middleware";
+import { scoresRouter } from "./scores";
 
 export interface ApiOptions {
   db: Db;
@@ -25,7 +27,9 @@ export function createApi({
   api.use(loadUser(db));
 
   api.use("/auth", authRouter({ db, limiter, secureCookies }));
+  api.use(scoresRouter(db));
   api.use("/me", meRouter(secureCookies));
+  api.use("/admin", adminRouter(db));
 
   api.use((_req, res) => {
     res.status(404).json({ error: "not_found" });

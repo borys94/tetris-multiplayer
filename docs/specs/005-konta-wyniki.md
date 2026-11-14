@@ -50,13 +50,13 @@ games    (id bigserial, user_id → users on delete cascade, score int, lines in
 
 API (JSON; każdy POST/PATCH/DELETE wymaga `Origin` równego `ALLOWED_ORIGIN`):
 
-| Endpoint                                                            | Dostęp | Opis                                                      |
-| ------------------------------------------------------------------- | ------ | --------------------------------------------------------- |
-| `POST /api/auth/register`, `/login`, `/logout`                      | każdy  | Konto i sesja                                             |
-| `GET /api/me`, `GET /api/me/games`                                  | gracz  | Profil i historia (ostatnie 50 gier)                      |
-| `GET /api/leaderboard`                                              | każdy  | Top 50, najlepszy wynik na gracza                         |
-| `GET /api/admin/users?q=`, `PATCH /api/admin/users/:id`             | admin  | Wyszukiwanie; zmiana `role` (`admin`/`null`) i `disabled` |
-| `POST /api/admin/users/:id/password`, `DELETE /api/admin/games/:id` | admin  | Hasło tymczasowe (pokazane raz); usunięcie wyniku         |
+| Endpoint                                                                                              | Dostęp | Opis                                                                            |
+| ----------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------- |
+| `POST /api/auth/register`, `/login`, `/logout`                                                        | każdy  | Konto i sesja                                                                   |
+| `GET /api/me`, `GET /api/me/games`                                                                    | gracz  | Profil i historia (ostatnie 50 gier)                                            |
+| `GET /api/leaderboard`                                                                                | każdy  | Top 50, najlepszy wynik na gracza (z `gameId`)                                  |
+| `GET /api/admin/users?q=`, `PATCH /api/admin/users/:id`                                               | admin  | Wyszukiwanie; zmiana `role` (`admin`/`null`) i `disabled`                       |
+| `POST /api/admin/users/:id/password`, `GET /api/admin/users/:id/games`, `DELETE /api/admin/games/:id` | admin  | Hasło tymczasowe (pokazane raz, wylogowuje konto); gry gracza; usunięcie wyniku |
 
 | Obszar        | Decyzja                                                                                                                                                                                                                                                                                                                                                       |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

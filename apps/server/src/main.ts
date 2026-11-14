@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 import { TICKS_PER_SECOND } from "@tetris/game-core";
 import { createApi } from "./api";
 import { createApp } from "./app";
+import { runCli } from "./cli";
 import { loadConfig } from "./config";
 import { createPool, migrate } from "./db/pool";
 import { deleteExpiredSessions } from "./db/sessions";
@@ -16,6 +17,14 @@ async function main(): Promise<void> {
   const db = createPool(config.databaseUrl);
   const migrated = await migrate(db);
   if (migrated.length > 0) console.log(`applied migrations: ${migrated.join(", ")}`);
+
+  // `node main.cjs <komenda>`: komenda administracyjna zamiast serwera.
+  const args = process.argv.slice(2);
+  if (args.length > 0) {
+    const code = await runCli(db, args);
+    await db.end();
+    process.exit(code);
+  }
 
   const api = createApi({
     db,

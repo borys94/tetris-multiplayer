@@ -44,6 +44,11 @@ export async function deleteSession(db: Db, tokenHash: Buffer): Promise<void> {
   await db.query("delete from sessions where id = $1", [tokenHash]);
 }
 
+/** Wylogowuje konto ze wszystkich urządzeń (np. po zmianie hasła przez admina). */
+export async function deleteUserSessions(db: Db, userId: number): Promise<void> {
+  await db.query("delete from sessions where user_id = $1", [userId]);
+}
+
 /** Usuwa wygasłe sesje; zwraca ich liczbę. */
 export async function deleteExpiredSessions(db: Db): Promise<number> {
   const { rowCount } = await db.query("delete from sessions where expires_at <= now()");

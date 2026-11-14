@@ -14,6 +14,8 @@ export interface SavedGame extends GameResult {
 
 export interface LeaderboardEntry {
   rank: number;
+  /** Id gry (np. do usunięcia wyniku przez admina). */
+  gameId: number;
   username: string;
   score: number;
   lines: number;
@@ -47,7 +49,7 @@ export async function userGames(db: Db, userId: number): Promise<SavedGame[]> {
  */
 export async function leaderboard(db: Db): Promise<LeaderboardEntry[]> {
   const { rows } = await db.query<Omit<LeaderboardEntry, "rank">>(
-    `select username, score, lines, level, "endedAt" from (
+    `select id as "gameId", username, score, lines, level, "endedAt" from (
        select distinct on (g.user_id) u.username, g.score, g.lines, g.level, g.ended_at as "endedAt", g.id
        from games g join users u on u.id = g.user_id
        where u.disabled_at is null
