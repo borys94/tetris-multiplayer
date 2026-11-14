@@ -82,4 +82,4 @@ Poza zakresem: e-mail, samodzielny reset hasła i logowanie przez zewnętrznych 
 | T2  | Konta: hasła, sesje i cookie, `/api/auth`, `/api/me`, Origin/CSRF, limit logowań; WebSocket z `userId` i zapis gier                                                        | R1, R2, S1–S3  | ☑      |
 | T3  | Ranking, historia, API admina z rolą admina i blokadą, komenda `promote`                                                                                                   | R3, R4, S2, S4 | ☑      |
 | T4  | Web: logowanie i rejestracja, menu konta, zachęta po grze gościa, ranking, historia, panel admina                                                                          | R1–R4, S1, S2  | ☑      |
-| T5  | Deploy: Postgres i Secret w chartcie, NetworkPolicy (IMDS), backup CronJob, bucket i IAM w OpenTofu, IMDS 2 hopy; runbook (admin, backup, odtworzenie); weryfikacja na AWS | R5, S5         | ☐      |
+| T5  | Deploy: Postgres i Secret w chartcie, NetworkPolicy (IMDS), backup CronJob, bucket i IAM w OpenTofu, IMDS 2 hopy; runbook (admin, backup, odtworzenie); weryfikacja na AWS | R5, S5         | ☑      |
