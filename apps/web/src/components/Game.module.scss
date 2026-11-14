@@ -84,3 +84,20 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+.status {
+  max-width: 120px;
+  margin: 8px 0 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-align: center;
+
+  &[data-status="online"] {
+    color: var(--accent);
+  }
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}

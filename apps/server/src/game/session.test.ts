@@ -157,3 +157,25 @@ describe("Session", () => {
     expect(session.input(1, 0, ["left"])).toBe(true);
   });
 });
+
+describe("Session re-attach", () => {
+  it("restarts input numbering after re-attach and drops inputs not yet applied (S4)", () => {
+    const { session } = createSession();
+    session.resume();
+    session.advance(20);
+    session.input(1, 70, ["hardDrop"]); // wyprzedza zegar: czeka w kolejce
+    session.detach();
+
+    const messages: ServerMessage[] = [];
+    session.attach((msg) => messages.push(msg));
+    session.resume();
+    expect(session.input(1, 20, ["left"])).toBe(true);
+    session.pause(80);
+
+    expect(messages.at(-1)).toMatchObject({
+      tick: 80,
+      ackSeq: 1,
+      state: replay(80, { 20: ["left"] }),
+    });
+  });
+});

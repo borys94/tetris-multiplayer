@@ -50,9 +50,14 @@ export class Session {
     return this.send !== null;
   }
 
-  /** Podłącza połączenie i wysyła mu bieżący stan; gra jest wtedy wstrzymana. */
+  /**
+   * Podłącza połączenie i wysyła mu bieżący stan; gra jest wtedy wstrzymana.
+   * Klient przyjmuje ten stan w całości, więc numeracja akcji zaczyna się od nowa,
+   * a akcje jeszcze niezastosowane (wyprzedzające zegar w chwili rozłączenia) przepadają.
+   */
   attach(send: Send): void {
     this.send = send;
+    this.resetInputs();
     this.sendGame();
   }
 
@@ -68,11 +73,15 @@ export class Session {
     this.clock = 0;
     this.paused = true;
     this.over = false;
+    this.resetInputs();
+    this.sendGame();
+  }
+
+  private resetInputs(): void {
     this.lastSeq = 0;
-    this.lastInputTick = 0;
+    this.lastInputTick = this.simTick;
     this.ackSeq = 0;
     this.pending = [];
-    this.sendGame();
   }
 
   /** Przyjmuje akcje klienta. Zwraca `false`, gdy wiadomość łamie protokół. */
