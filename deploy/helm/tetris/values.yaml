@@ -16,6 +16,9 @@ game:
   inputBufferMs: 150
   # Limit równoczesnych sesji, dopasowany do limitu pamięci poda.
   maxSessions: 200
+  # Limit połączeń WebSocket z jednego IP; 0 = wyłączony. Wyłączony, bo Traefik w k3s
+  # (externalTrafficPolicy: Cluster) widzi wszystkich klientów pod jednym adresem 10.42.0.1.
+  maxConnectionsPerIp: 0
 
 resources:
   requests:

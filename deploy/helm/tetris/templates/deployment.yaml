@@ -39,6 +39,8 @@ spec:
               value: {{ .Values.game.inputBufferMs | quote }}
             - name: MAX_SESSIONS
               value: {{ .Values.game.maxSessions | quote }}
+            - name: MAX_CONNECTIONS_PER_IP
+              value: {{ .Values.game.maxConnectionsPerIp | quote }}
           readinessProbe:
             httpGet:
               path: /health

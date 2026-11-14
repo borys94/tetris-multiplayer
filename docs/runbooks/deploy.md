@@ -162,7 +162,11 @@ curl -s -o /dev/null -w '%{http_code}\n' --http1.1 -H 'Connection: Upgrade' -H '
 
 Potem zagraj na `https://<IP>.sslip.io` w przeglądarce. Status w panelu powinien pokazywać „Połączono”.
 
-**Limit połączeń na IP** (5 na adres) działa tylko wtedy, gdy Traefik widzi prawdziwy adres klienta. Sprawdź to po pierwszym deployu: otwórz grę w 6 kartach. Szósta powinna dostać odmowę, a gra z innej sieci (np. z telefonu na LTE) w tym samym czasie powinna działać. Jeśli z innej sieci też nie działa, wszyscy klienci mają ten sam adres i trzeba ustawić `externalTrafficPolicy: Local` dla usługi Traefika.
+**Limit połączeń na IP jest wyłączony** (`game.maxConnectionsPerIp: 0`). Traefik w k3s ma `externalTrafficPolicy: Cluster` i widzi wszystkich klientów pod adresem `10.42.0.1` (sprawdzone 2026-11-14), więc limit objąłby wszystkich graczy naraz. Przed włączeniem limitu ustaw `externalTrafficPolicy: Local` w `HelmChartConfig` Traefika. Uwaga: zmiana szablonu cloud-init odtwarza serwer przy `tofu apply` (`user_data_replace_on_change`). Sprawdzenie, jaki adres widzi Traefik (przy otwartym połączeniu, np. `openssl s_client`):
+
+```sh
+deploy/scripts/ssm-run.sh 'nsenter -t "$(pgrep traefik | head -1)" -n ss -tn state established | grep 8443'
+```
 
 **Awaryjne zamknięcie prod** (np. przy incydencie) bez zmian w repo. Działa do następnego deployu prod. Najpierw utwórz Secret `basic-auth` w `tetris-prod` (komenda z 1.5 z `ns=tetris-prod`), potem:
 

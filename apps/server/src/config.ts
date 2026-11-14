@@ -10,6 +10,7 @@ export interface Config {
   bufferTicks: number;
   maxSessions: number;
   sessionTtlMs: number;
+  /** 0 wyłącza limit połączeń na IP. */
   maxConnectionsPerIp: number;
 }
 
