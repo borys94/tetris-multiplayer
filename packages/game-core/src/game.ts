@@ -232,7 +232,7 @@ export function tick(state: GameState): GameState {
 }
 
 /** Pozycja, w której klocek wylądowałby po hard dropie. */
-export function ghostPiece(state: GameState): Piece {
+export function ghostPiece(state: Pick<GameState, "board" | "active">): Piece {
   return { ...state.active, y: state.active.y + dropDistance(state.board, state.active) };
 }
 

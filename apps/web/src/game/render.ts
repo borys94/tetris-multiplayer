@@ -73,7 +73,10 @@ function drawGrid(ctx: CanvasRenderingContext2D) {
 }
 
 /** Rysuje widoczną część planszy (bez ukrytych wierszy), ghost piece i aktywny klocek. */
-export function drawBoard(ctx: CanvasRenderingContext2D, state: GameState): void {
+export function drawBoard(
+  ctx: CanvasRenderingContext2D,
+  state: Pick<GameState, "board" | "active" | "status">,
+): void {
   ctx.fillStyle = BOARD_BACKGROUND;
   ctx.fillRect(0, 0, BOARD_PIXEL_WIDTH, BOARD_PIXEL_HEIGHT);
   drawGrid(ctx);

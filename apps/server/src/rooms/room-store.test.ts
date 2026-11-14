@@ -134,6 +134,8 @@ describe("joining rooms (S2)", () => {
     expect(store.join(b, "ZZZZZZ", b.send)).toBe("room_not_found");
     expect(store.join(b, "QWERT2", b.send)).toBeNull();
     expect(a.last("room")?.players.map((p) => p.name)).toEqual(["ala", b.name]);
+    expect(a.last("room")?.you).toBe(0);
+    expect(b.last("room")?.you).toBe(1);
     expect(store.join(c, "QWERT2", c.send)).toBe("room_full");
     expect(store.join(b, "QWERT2", b.send)).toBe("room_limit");
   });

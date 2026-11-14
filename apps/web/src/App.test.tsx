@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // Serwer w pamięci: prawdziwa sesja z `apps/server`, bez sieci i bez opóźnień.
 import { Session } from "../../server/src/game/session";
 import { App } from "./App";
-import type { ConnectFn } from "./components/Game";
+import type { ConnectFn } from "./net/server";
 import { TICK_MS } from "./game/loop";
 import { GUEST, fakeApi } from "./test/fake-api";
 import type { ConnectionHandlers } from "./net/connection";

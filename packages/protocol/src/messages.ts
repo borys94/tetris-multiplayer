@@ -105,6 +105,8 @@ export type ServerMessage =
       visibility: RoomVisibility;
       state: RoomState;
       players: RoomPlayer[];
+      /** Indeks odbiorcy na liście `players`. */
+      you: number;
       startsAt?: number;
     }
   /** Gracz opuścił pokój albo pokój został zamknięty. */

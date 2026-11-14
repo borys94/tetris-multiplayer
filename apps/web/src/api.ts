@@ -31,6 +31,46 @@ export interface AdminUser extends Account {
   createdAt: string;
 }
 
+export type MatchEndReason = "topout" | "left" | "timeout";
+
+/** Mecz 1v1 z punktu widzenia gracza (spec 007). */
+export interface PlayerMatch {
+  id: number;
+  won: boolean;
+  opponent: string;
+  reason: MatchEndReason;
+  linesSent: number;
+  linesReceived: number;
+  ticks: number;
+  endedAt: string;
+}
+
+/** Zakończony mecz w panelu admina. */
+export interface AdminMatch {
+  id: number;
+  winnerName: string;
+  loserName: string;
+  reason: MatchEndReason;
+  winnerLinesSent: number;
+  loserLinesSent: number;
+  ticks: number;
+  endedAt: string;
+}
+
+/** Otwarty pokój w panelu admina (stan z pamięci serwera). */
+export interface AdminRoom {
+  code: string;
+  visibility: "public" | "private";
+  state: "waiting" | "countdown" | "playing" | "finished";
+  host: string;
+  createdAt: number;
+  players: { name: string; userId: number | null; connected: boolean }[];
+  match: {
+    seconds: number;
+    players: { name: string; score: number; lines: number; linesSent: number }[];
+  } | null;
+}
+
 export class ApiError extends Error {
   constructor(
     readonly status: number,
@@ -61,6 +101,7 @@ export const api = {
     call<{ user: Account }>("POST", "/auth/login", { username, password }).then((r) => r.user),
   logout: () => call<void>("POST", "/auth/logout"),
   myGames: () => call<{ games: SavedGame[] }>("GET", "/me/games").then((r) => r.games),
+  myMatches: () => call<{ matches: PlayerMatch[] }>("GET", "/me/matches").then((r) => r.matches),
   leaderboard: () =>
     call<{ entries: LeaderboardEntry[] }>("GET", "/leaderboard").then((r) => r.entries),
   admin: {
@@ -75,6 +116,12 @@ export const api = {
     games: (id: number) =>
       call<{ games: SavedGame[] }>("GET", `/admin/users/${id}/games`).then((r) => r.games),
     deleteGame: (id: number) => call<void>("DELETE", `/admin/games/${id}`),
+    rooms: () => call<{ rooms: AdminRoom[] }>("GET", "/admin/rooms").then((r) => r.rooms),
+    matches: (query: string, before?: number) =>
+      call<{ matches: AdminMatch[] }>(
+        "GET",
+        `/admin/matches?q=${encodeURIComponent(query)}${before ? `&before=${before}` : ""}`,
+      ).then((r) => r.matches),
   },
 };
 
@@ -97,4 +144,16 @@ export function errorMessage(error: unknown): string {
 /** Data i godzina w formacie polskim. */
 export function formatDate(iso: string): string {
   return new Date(iso).toLocaleString("pl-PL", { dateStyle: "short", timeStyle: "short" });
+}
+
+export const MATCH_END_LABELS: Readonly<Record<MatchEndReason, string>> = {
+  topout: "przepełnienie planszy",
+  left: "wyjście z meczu",
+  timeout: "brak powrotu po rozłączeniu",
+};
+
+/** Czas meczu z ticków (60/s) jako „m:ss”. */
+export function formatDuration(ticks: number): string {
+  const seconds = Math.floor(ticks / 60);
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }

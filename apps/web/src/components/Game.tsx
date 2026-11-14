@@ -1,32 +1,14 @@
 import { previewQueue, type GameState, type PieceType } from "@tetris/game-core";
-import type { ClientMessage, ErrorCode, ServerMessage } from "@tetris/protocol";
+import type { ErrorCode, ServerMessage } from "@tetris/protocol";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { InputController, isGameKey } from "../game/input";
 import { startLoop } from "../game/loop";
 import { BOARD_PIXEL_HEIGHT, BOARD_PIXEL_WIDTH, drawBoard } from "../game/render";
-import {
-  Connection,
-  defaultServerUrl,
-  type ConnectionHandlers,
-  type ConnectionStatus,
-} from "../net/connection";
+import type { ConnectionStatus } from "../net/connection";
 import { Predictor } from "../net/predictor";
+import { useServer, useServerMessages } from "../net/server";
 import styles from "./Game.module.scss";
 import { PiecePreview } from "./PiecePreview";
-
-/** Połączenie z serwerem gry widziane przez komponent (podmieniane w testach). */
-export interface GameServer {
-  send(msg: ClientMessage): boolean;
-  stop(): void;
-}
-
-export type ConnectFn = (handlers: ConnectionHandlers) => GameServer;
-
-export const connectToServer: ConnectFn = (handlers) => {
-  const connection = new Connection(defaultServerUrl(window.location), handlers);
-  connection.start();
-  return connection;
-};
 
 type Screen = "loading" | "ready" | "playing" | "paused" | "over";
 
@@ -44,7 +26,7 @@ interface Result {
   level: number;
 }
 
-const STATUS_LABELS: Readonly<Record<ConnectionStatus, string>> = {
+export const STATUS_LABELS: Readonly<Record<ConnectionStatus, string>> = {
   connecting: "Łączenie z serwerem…",
   online: "Połączono",
   offline: "Brak połączenia, ponawiam…",
@@ -83,23 +65,21 @@ const EMPTY_HUD: Hud = { score: 0, lines: 0, level: 1, hold: null, next: [] };
  * i wysyłane do serwera; wynik końcowy pochodzi z wiadomości `over`.
  */
 interface GameProps {
-  connect?: ConnectFn;
   /** Widok gry jest widoczny; po przejściu do innego widoku gra się wstrzymuje. */
   active?: boolean;
   /** Gość: wynik nie trafia do rankingu, więc po grze proponujemy konto (spec 005). */
   guest?: boolean;
 }
 
-export function Game({ connect = connectToServer, active = true, guest = false }: GameProps) {
+export function Game({ active = true, guest = false }: GameProps) {
+  const { status, send } = useServer();
   const [input] = useState(() => new InputController());
   const predictorRef = useRef<Predictor | null>(null);
-  const serverRef = useRef<GameServer | null>(null);
   const screenRef = useRef<Screen>("loading");
   /** Po `newGame` wznawiamy grę od razu, gdy serwer przyśle jej stan. */
   const startOnGameRef = useRef(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [screen, setScreenState] = useState<Screen>("loading");
-  const [status, setStatus] = useState<ConnectionStatus>("connecting");
   const [error, setError] = useState<ErrorCode | null>(null);
   const [hud, setHud] = useState<Hud>(EMPTY_HUD);
   const [result, setResult] = useState<Result | null>(null);
@@ -108,8 +88,6 @@ export function Game({ connect = connectToServer, active = true, guest = false }
     screenRef.current = next;
     setScreenState(next);
   }, []);
-
-  const send = useCallback((msg: ClientMessage) => serverRef.current?.send(msg) ?? false, []);
 
   const refresh = useCallback(() => {
     const predictor = predictorRef.current;
@@ -186,26 +164,15 @@ export function Game({ connect = connectToServer, active = true, guest = false }
     [play, refresh, setScreen],
   );
 
-  const handleStatus = useCallback(
-    (next: ConnectionStatus) => {
-      setStatus(next);
-      // Serwer wstrzymuje sesję po zerwaniu połączenia; klient robi to samo lokalnie.
-      if (next !== "online" && screenRef.current === "playing") {
-        input.reset();
-        setScreen("paused");
-      }
-    },
-    [input, setScreen],
-  );
+  useServerMessages(handleMessage);
 
+  // Serwer wstrzymuje sesję po zerwaniu połączenia; klient robi to samo lokalnie.
   useEffect(() => {
-    const server = connect({ onMessage: handleMessage, onStatus: handleStatus });
-    serverRef.current = server;
-    return () => {
-      server.stop();
-      serverRef.current = null;
-    };
-  }, [connect, handleMessage, handleStatus]);
+    if (status !== "online" && screenRef.current === "playing") {
+      input.reset();
+      setScreen("paused");
+    }
+  }, [status, input, setScreen]);
 
   // Pętla gry działa tylko na ekranie "playing".
   useEffect(() => {

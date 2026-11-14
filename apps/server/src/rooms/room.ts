@@ -372,13 +372,14 @@ export class Room {
       ready: p.ready,
       connected: p.send !== null,
     }));
-    for (const player of this.players) {
+    for (const [you, player] of this.players.entries()) {
       player.send?.({
         type: "room",
         code: this.code,
         visibility: this.visibility,
         state: this._state,
         players,
+        you,
         ...(this.startsAt !== null ? { startsAt: this.startsAt } : {}),
       });
     }
