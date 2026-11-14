@@ -47,6 +47,8 @@ gh variable set AWS_DEPLOY_ROLE_ARN --body "$(tofu output -raw github_deploy_rol
 cd -
 ```
 
+Repo wysyła token OIDC z niezmiennymi identyfikatorami (`repo:owner@id/repo@id:...`). Przy nowym repo ustaw `github_oidc_sub_prefix` na wynik `gh api repos/<owner>/<repo>/actions/oidc/customization/sub --jq .sub_claim_prefix`.
+
 Jeśli konto ma już providera OIDC dla GitHuba, `apply` zgłosi konflikt; wtedy uruchom `tofu apply -var create_github_oidc_provider=false`.
 
 ### 1.3. Środowiska GitHub

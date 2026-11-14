@@ -62,6 +62,6 @@ Poza zakresem: własna domena (przed M4), Terraform w CI, backupy (aplikacja jes
 | --- | ------------------------------------------------------------------------------------------------------------ | ---------------------- | ------ |
 | T1  | Dockerfile, bundling serwera z `game-core`, serwowanie frontendu, `/health` z wersją                         | R2                     | ☑      |
 | T2  | Terraform: bootstrap (stan, ECR, OIDC) i main (sieć, EC2, IAM, cloud-init z k3s)                             | R1, S1                 | ☑      |
-| T3  | Helm chart z values dla bety i produ, ingress z resolverem ACME, basic auth, quota, NetworkPolicy            | R3, R5, S4             | ☐      |
-| T4  | Workflowy `deploy.yml` (beta automatycznie, prod po akceptacji, OIDC + SSM) i `infra-power.yml` (stop/start) | R1, R4, S2, S3, S5, S6 | ☐      |
-| T5  | Runbook: pierwsze uruchomienie, hasło basic auth, rollback, stop/start, pełne usunięcie i odtworzenie        | R1, R5, S6             | ☐      |
+| T3  | Helm chart z values dla bety i produ, ingress z resolverem ACME, basic auth, quota, NetworkPolicy            | R3, R5, S4             | ☑      |
+| T4  | Workflowy `deploy.yml` (beta automatycznie, prod po akceptacji, OIDC + SSM) i `infra-power.yml` (stop/start) | R1, R4, S2, S3, S5, S6 | ☑      |
+| T5  | Runbook: pierwsze uruchomienie, hasło basic auth, rollback, stop/start, pełne usunięcie i odtworzenie        | R1, R5, S6             | ☑      |

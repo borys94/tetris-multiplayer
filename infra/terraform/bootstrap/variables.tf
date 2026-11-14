@@ -3,10 +3,14 @@ variable "region" {
   default = "eu-central-1"
 }
 
-variable "github_repo" {
-  description = "Repozytorium GitHub (owner/name), z którego workflowy mogą przejąć rolę deployu."
+variable "github_oidc_sub_prefix" {
+  description = <<-EOT
+    Prefiks pola `sub` w tokenie OIDC GitHuba. Repo używa niezmiennych identyfikatorów
+    (owner@id/repo@id), więc zmiana nazwy lub usunięcie repo nie przekaże dostępu innemu repo.
+    Odczyt: gh api repos/<owner>/<repo>/actions/oidc/customization/sub --jq .sub_claim_prefix
+  EOT
   type        = string
-  default     = "borys94/tetris-multiplayer"
+  default     = "repo:borys94@11800853/tetris-multiplayer@1455651954"
 }
 
 variable "create_github_oidc_provider" {
