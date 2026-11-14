@@ -94,6 +94,15 @@ htpasswd -nbB tetris "HASLO" | kubectl -n $ns create secret generic basic-auth \
   --from-file=users=/dev/stdin --dry-run=client -o yaml | kubectl apply -f -'
 ```
 
+**Przełącznik basic auth:** zmienna `BASIC_AUTH` środowiska GitHub (`beta` albo `production`) nadpisuje `basicAuth.enabled` z `values-<env>.yaml` przy każdym deployu: `true`, `false` albo brak zmiennej (wartość z chartu). Zmiana działa od następnego deployu danego środowiska:
+
+```sh
+gh variable set BASIC_AUTH --env beta --body false   # beta bez hasła
+gh variable delete BASIC_AUTH --env beta             # powrót do values (beta z hasłem)
+```
+
+Od 2026-11-14 beta jest tymczasowo bez hasła (`BASIC_AUTH=false`): przy basic auth przeglądarka nie łączyła się z WebSocketem gry na becie.
+
 Hasło trafia do historii komend SSM w koncie AWS (widocznej dla administratorów konta), ale nie do repo ani logów GitHuba. Zmiana hasła: uruchom tę samą komendę z nowym hasłem.
 
 ### 1.6. Pierwszy deploy
