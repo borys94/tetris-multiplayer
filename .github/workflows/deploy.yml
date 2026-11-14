@@ -82,5 +82,9 @@ jobs:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
+      # BASIC_AUTH to zmienna środowiska GitHub (beta/production): "true" albo "false"
+      # nadpisuje basicAuth.enabled z values-<env>.yaml; pusta zostawia wartość z chartu.
       - name: Deploy via SSM
-        run: deploy/scripts/ssm-deploy.sh "${{ inputs.environment || 'beta' }}" "${{ inputs.version || github.sha }}"
+        env:
+          BASIC_AUTH: ${{ vars.BASIC_AUTH }}
+        run: deploy/scripts/ssm-deploy.sh "${{ inputs.environment || 'beta' }}" "${{ inputs.version || github.sha }}" "$BASIC_AUTH"

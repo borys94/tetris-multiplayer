@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Uruchamiany NA SERWERZE przez SSM (ADR-0005): instaluje lub aktualizuje release Helm.
-# Użycie: node-deploy.sh <beta|prod> <sha> <rejestr ECR> <region>
+# Użycie: node-deploy.sh <beta|prod> <sha> <rejestr ECR> <region> [true|false]
 set -euo pipefail
 
-env="$1" version="$2" registry="$3" region="$4"
+env="$1" version="$2" registry="$3" region="$4" basic_auth="${5:-}"
 
 case "$env" in
   beta) namespace=tetris-beta host_prefix="beta." ;;
@@ -20,8 +20,18 @@ ip=$(curl -sf -H "X-aws-ec2-metadata-token: $token" http://169.254.169.254/lates
 host="${host_prefix}${ip}.sslip.io"
 
 kubectl create namespace "$namespace" --dry-run=client -o yaml | kubectl apply -f - >/dev/null
-# Basic auth ma tylko beta (prod jest publiczny od M4, ADR-0003).
-if [ "$env" = beta ] && ! kubectl -n "$namespace" get secret basic-auth >/dev/null 2>&1; then
+# Basic auth: domyślnie tylko beta (prod jest publiczny od M4, ADR-0003); zmienna BASIC_AUTH
+# środowiska GitHub może to nadpisać (np. tymczasowo wyłączyć na becie).
+auth_args=()
+if [ -n "$basic_auth" ]; then
+  auth_args=(--set "basicAuth.enabled=$basic_auth")
+  auth_enabled="$basic_auth"
+elif [ "$env" = beta ]; then
+  auth_enabled=true
+else
+  auth_enabled=false
+fi
+if [ "$auth_enabled" = true ] && ! kubectl -n "$namespace" get secret basic-auth >/dev/null 2>&1; then
   echo "Brak Secretu basic-auth w $namespace. Utwórz go według docs/runbooks/deploy.md." >&2
   exit 1
 fi
@@ -42,7 +52,8 @@ helm upgrade --install tetris "$workdir/tetris" \
   --set image.repository="$registry/tetris-app" \
   --set image.tag="$version" \
   --set backup.bucket="tetris-backups-${account}" \
+  "${auth_args[@]}" \
   --rollback-on-failure \
   --timeout 3m
 
-echo "Wdrożono $version na https://$host"
+echo "Wdrożono $version na https://$host (basic auth: $auth_enabled)"
