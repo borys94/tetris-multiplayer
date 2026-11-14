@@ -29,13 +29,15 @@ Gracz zakłada konto (login i hasło), a jego gry liczone przez serwer trafiają
 ## Design
 
 ```
-apps/server/src/db/          # pool `pg`, migracje (*.sql + runner z advisory lock), repozytoria: users, sessions, games
-apps/server/src/auth/        # hasła (scrypt), sesje i cookie, middleware: requireUser, requireAdmin, checkOrigin
-apps/server/src/api/         # routery Express: /api/auth, /api/me, /api/leaderboard, /api/admin
+apps/server/src/db/          # pool `pg`, migracje (w kodzie + runner z advisory lock), repozytoria: users, sessions, games
+apps/server/src/accounts/    # hasła (scrypt), sesje i cookie, uwierzytelnianie API i WS, operacje admina
+apps/server/src/http/api/    # routery Express: /api/auth, /api/me, /api/leaderboard, /api/admin; middleware
 apps/server/src/cli.ts       # `node main.cjs promote <login>` (pierwszy admin)
-apps/web/src/account/        # logowanie, rejestracja, menu konta, historia gier
-apps/web/src/leaderboard/    # ranking
-apps/web/src/admin/          # panel admina (widoczny tylko dla roli admin)
+apps/web/src/api/                   # klient API, typy odpowiedzi, komunikaty błędów
+apps/web/src/state/account.ts       # stan konta: sprawdzenie sesji, logowanie, rejestracja
+apps/web/src/components/account/    # logowanie, rejestracja, menu konta, historia gier
+apps/web/src/components/leaderboard/ # ranking
+apps/web/src/components/admin/      # panel admina (widoczny tylko dla roli admin)
 deploy/helm/tetris/templates/postgres.yaml, backup-cronjob.yaml
 ```
 
