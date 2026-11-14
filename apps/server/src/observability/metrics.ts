@@ -195,22 +195,6 @@ export function trackPool(pool: PoolStats): void {
   });
 }
 
-/** Klasa statusu HTTP (`2xx`…`5xx`) zamiast dokładnego kodu. */
-export function statusClass(status: number): string {
-  return `${Math.floor(status / 100)}xx`;
-}
-
-/**
- * Trasa o małej liczności: `/api/...` z liczbami zamienionymi na `:id`, a 404 jako
- * `unmatched`, żeby losowe ścieżki nie tworzyły nowych serii. Reszta to pliki gry.
- */
-export function routeLabel(path: string, status: number): string {
-  if (path === "/health" || path === "/ready") return path;
-  if (!path.startsWith("/api/") && path !== "/api") return "static";
-  if (status === 404) return "unmatched";
-  return path.replace(/\/\d+(?=\/|$)/g, "/:id");
-}
-
 /**
  * Osobny serwer HTTP tylko z `/metrics` (port 9464). Service i ingress aplikacji go
  * nie wystawiają, więc metryki nie są dostępne z internetu (spec 006).

@@ -1,4 +1,4 @@
-import type { Db } from "./pool";
+import { LIST_LIMIT, type Queryable } from "./pool";
 
 export type Role = "admin";
 
@@ -45,7 +45,7 @@ export function publicUser(user: UserWithPassword): User {
 
 /** Tworzy konto; zwraca `null`, gdy login jest zajęty. */
 export async function createUser(
-  db: Db,
+  db: Queryable,
   username: string,
   passwordHash: string,
 ): Promise<User | null> {
@@ -58,7 +58,7 @@ export async function createUser(
 }
 
 export async function findUserByUsername(
-  db: Db,
+  db: Queryable,
   username: string,
 ): Promise<UserWithPassword | null> {
   const { rows } = await db.query<UserRow>(`select ${COLUMNS} from users where username = $1`, [
@@ -67,47 +67,43 @@ export async function findUserByUsername(
   return rows[0] ? toUser(rows[0]) : null;
 }
 
-export async function findUserById(db: Db, id: number): Promise<User | null> {
+export async function findUserById(db: Queryable, id: number): Promise<User | null> {
   const { rows } = await db.query<UserRow>(`select ${COLUMNS} from users where id = $1`, [id]);
   return rows[0] ? publicUser(toUser(rows[0])) : null;
 }
 
-/** Konta, których login zawiera `query` (bez niego: najnowsze), maks. 50. */
-export async function searchUsers(db: Db, query: string): Promise<User[]> {
+/** Konta, których login zawiera `query` (bez niego: najnowsze), maks. `LIST_LIMIT`. */
+export async function searchUsers(db: Queryable, query: string): Promise<User[]> {
   const pattern = `%${query.replace(/[\\%_]/g, "\\$&")}%`;
   const { rows } = await db.query<UserRow>(
-    `select ${COLUMNS} from users where username like $1 order by created_at desc limit 50`,
-    [pattern],
+    `select ${COLUMNS} from users where username like $1 order by created_at desc limit $2`,
+    [pattern, LIST_LIMIT],
   );
   return rows.map((row) => publicUser(toUser(row)));
 }
 
-export async function setRole(db: Db, id: number, role: Role | null): Promise<boolean> {
+export async function setRole(db: Queryable, id: number, role: Role | null): Promise<boolean> {
   const { rowCount } = await db.query("update users set role = $2 where id = $1", [id, role]);
   return rowCount === 1;
 }
 
-/** Blokuje lub odblokowuje konto; blokada usuwa też wszystkie sesje konta. */
-export async function setDisabled(db: Db, id: number, disabled: boolean): Promise<boolean> {
-  const client = await db.connect();
-  try {
-    await client.query("begin");
-    const { rowCount } = await client.query(
-      "update users set disabled_at = case when $2 then coalesce(disabled_at, now()) end where id = $1",
-      [id, disabled],
-    );
-    if (disabled) await client.query("delete from sessions where user_id = $1", [id]);
-    await client.query("commit");
-    return rowCount === 1;
-  } catch (error) {
-    await client.query("rollback");
-    throw error;
-  } finally {
-    client.release();
-  }
+/**
+ * Blokuje lub odblokowuje konto. Sesji nie usuwa: `useSession` i tak pomija zablokowane
+ * konta, a wylogowanie ze wszystkich urządzeń to reguła warstwy kont (`accounts/admin`).
+ */
+export async function setDisabled(db: Queryable, id: number, disabled: boolean): Promise<boolean> {
+  const { rowCount } = await db.query(
+    "update users set disabled_at = case when $2 then coalesce(disabled_at, now()) end where id = $1",
+    [id, disabled],
+  );
+  return rowCount === 1;
 }
 
-export async function setPasswordHash(db: Db, id: number, passwordHash: string): Promise<boolean> {
+export async function setPasswordHash(
+  db: Queryable,
+  id: number,
+  passwordHash: string,
+): Promise<boolean> {
   const { rowCount } = await db.query("update users set password_hash = $2 where id = $1", [
     id,
     passwordHash,

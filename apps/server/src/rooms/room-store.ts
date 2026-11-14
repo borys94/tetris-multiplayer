@@ -8,8 +8,7 @@ import {
   type RoomSummary,
   type RoomVisibility,
 } from "@tetris/protocol";
-import type { Send } from "../game/session";
-import { roomTickDuration } from "../observability/metrics";
+import type { Send } from "../game/send";
 import { Room, type MatchResult, type RoomInfo, type RoomMember, type RoomOptions } from "./room";
 
 export interface RoomStoreOptions extends RoomOptions {
@@ -47,7 +46,7 @@ function ownerKey(member: RoomMember): string {
 
 /**
  * Pokoje w pamięci procesu (spec 007): zakładanie, dołączanie, lista publicznych
- * dla obserwujących i wspólna pętla 60 ticków/s.
+ * dla obserwujących. Czas przesuwa wspólna pętla gry (`play/loop`).
  */
 export class RoomStore {
   private readonly rooms = new Map<string, Room>();
@@ -174,11 +173,9 @@ export class RoomStore {
   }
 
   advance(ticks: number): void {
-    const stopTimer = roomTickDuration.startTimer();
     for (const room of [...this.rooms.values()]) room.advance(ticks);
     if (this.draining) this.closeIdleRooms();
     if (this.listDirty) this.publishList();
-    stopTimer();
   }
 
   /** Liczba pokoi według stanu i widoczności (metryka `blockfall_rooms`). */
