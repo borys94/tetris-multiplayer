@@ -62,7 +62,7 @@ spec:
         - name: postgres
           image: {{ .Values.postgres.image | quote }}
           args:
-            # Mały serwer (2 GB RAM na k3s, betę i prod): skromne bufory i mało połączeń.
+            # Mały serwer (4 GB RAM na k3s, betę, prod i monitoring): skromne bufory i mało połączeń.
             - -c
             - shared_buffers={{ .Values.postgres.sharedBuffers }}
             - -c

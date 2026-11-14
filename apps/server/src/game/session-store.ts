@@ -1,5 +1,6 @@
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { TICKS_PER_SECOND } from "@tetris/game-core";
+import { gamesFinished, tickDuration, ticksDropped } from "../observability/metrics";
 import { Session, type GameOver, type SessionOptions } from "./session";
 
 export interface SessionStoreOptions extends SessionOptions {
@@ -48,7 +49,10 @@ export class SessionStore {
     if (this.sessions.size >= this.options.maxSessions) return null;
     const session = new Session(randomId(), randomId(), randomSeed(), this.options);
     const { onGameOver } = this.options;
-    if (onGameOver) session.onOver = (result) => onGameOver(session, result);
+    session.onOver = (result) => {
+      gamesFinished.inc({ player: session.userId === null ? "guest" : "user" });
+      onGameOver?.(session, result);
+    };
     this.sessions.set(session.id, session);
     return session;
   }
@@ -94,7 +98,10 @@ export class SessionStore {
       last = now;
       const ticks = Math.floor(accumulator / TICK_MS);
       accumulator -= ticks * TICK_MS;
+      if (ticks > MAX_CATCH_UP_TICKS) ticksDropped.inc(ticks - MAX_CATCH_UP_TICKS);
+      const stopTimer = tickDuration.startTimer();
       this.advance(Math.min(ticks, MAX_CATCH_UP_TICKS));
+      stopTimer();
     }, TICK_MS / 2);
     const sweep = setInterval(() => this.expire(), 1000);
     return () => {

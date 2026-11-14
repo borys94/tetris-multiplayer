@@ -12,6 +12,15 @@ import { WebSocket, WebSocketServer, type RawData } from "ws";
 import { randomSeed, type SessionStore } from "./game/session-store";
 import type { Session } from "./game/session";
 import type { SessionUser } from "./db/sessions";
+import { log } from "./observability/logger";
+import {
+  gamesStarted,
+  serverFull,
+  wsConnections,
+  wsErrors,
+  wsMessages,
+  wsRejected,
+} from "./observability/metrics";
 
 export interface WsOptions {
   store: SessionStore;
@@ -98,6 +107,7 @@ class Connection {
   };
 
   receive(data: RawData, isBinary: boolean): void {
+    wsMessages.inc();
     if (!this.limiter.take()) return this.fail("rate_limited");
     const msg = isBinary ? null : parseClientMessage(rawToString(data));
     if (!msg || !this.handle(msg)) return this.fail("invalid");
@@ -122,6 +132,7 @@ class Connection {
       case "newGame":
         session.userId = this.userId;
         session.newGame(randomSeed());
+        gamesStarted.inc();
         return true;
       case "input":
         return session.input(msg.seq, msg.tick, msg.actions);
@@ -159,11 +170,13 @@ class Connection {
     } else {
       session = this.store.create();
       if (!session) {
+        serverFull.inc();
         this.send({ type: "error", code: "server_full" });
         this.ws.close(CLOSE_TRY_AGAIN, "server full");
         return true;
       }
       session.userId = this.userId;
+      gamesStarted.inc();
     }
 
     this.session = session;
@@ -175,6 +188,7 @@ class Connection {
   }
 
   private fail(code: ErrorCode): void {
+    wsErrors.inc({ code });
     this.send({ type: "error", code });
     if (++this.errors >= MAX_CONSECUTIVE_ERRORS) this.ws.close(CLOSE_POLICY, code);
   }
@@ -203,11 +217,13 @@ export function attachWebSocket(server: Server, options: WsOptions): () => void 
     const path = new URL(req.url ?? "/", "http://localhost").pathname;
     if (path !== WS_PATH) return reject(socket, 404, "Not Found");
     if (options.allowedOrigin && req.headers.origin !== options.allowedOrigin) {
+      wsRejected.inc({ reason: "origin" });
       return reject(socket, 403, "Forbidden");
     }
     const ip = clientIp(req, options.trustProxy);
     const count = connectionsPerIp.get(ip) ?? 0;
     if (options.maxConnectionsPerIp > 0 && count >= options.maxConnectionsPerIp) {
+      wsRejected.inc({ reason: "ip_limit" });
       return reject(socket, 429, "Too Many Requests");
     }
 
@@ -219,7 +235,7 @@ export function attachWebSocket(server: Server, options: WsOptions): () => void 
     };
     // Błąd bazy przy odczycie sesji nie blokuje gry: gracz gra wtedy jako gość.
     const user = await options.authenticate?.(req).catch((error: unknown) => {
-      console.error("WebSocket auth error", error);
+      log.error({ err: error }, "WebSocket auth error");
       return null;
     });
     if (socket.destroyed) return release();
@@ -233,11 +249,13 @@ export function attachWebSocket(server: Server, options: WsOptions): () => void 
         sessionOwners,
       );
       connections.add(connection);
+      wsConnections.inc();
       ws.on("message", (data, isBinary) => connection.receive(data, isBinary));
       ws.on("pong", () => (connection.alive = true));
       ws.on("error", () => ws.terminate());
       ws.on("close", () => {
         connections.delete(connection);
+        wsConnections.dec();
         connection.close();
         release();
       });

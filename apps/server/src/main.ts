@@ -8,6 +8,8 @@ import { createPool, migrate, type Db } from "./db/pool";
 import { deleteExpiredSessions } from "./db/sessions";
 import { authenticateWebSocket, saveGameResult } from "./game/accounts";
 import { SessionStore } from "./game/session-store";
+import { log } from "./observability/logger";
+import { createMetricsServer, trackGauge, trackPool } from "./observability/metrics";
 import { attachWebSocket } from "./ws";
 
 /** Przy pierwszym deployu Postgres może startować dłużej niż serwer: ponawiamy przez ok. 2 min. */
@@ -17,7 +19,10 @@ async function migrateWhenReady(db: Db): Promise<number[]> {
       return await migrate(db);
     } catch (error) {
       if (attempt >= 60) throw error;
-      console.log(`database not ready (attempt ${attempt}), retrying in 2 s`);
+      log.warn(
+        { attempt, error: error instanceof Error ? error.message : String(error) },
+        "database not ready, retrying in 2 s",
+      );
       await new Promise((resolve) => setTimeout(resolve, 2000));
     }
   }
@@ -29,7 +34,7 @@ async function main(): Promise<void> {
 
   const db = createPool(config.databaseUrl);
   const migrated = await migrateWhenReady(db);
-  if (migrated.length > 0) console.log(`applied migrations: ${migrated.join(", ")}`);
+  if (migrated.length > 0) log.info({ migrations: migrated }, "applied migrations");
 
   // `node main.cjs <komenda>`: komenda administracyjna zamiast serwera.
   const args = process.argv.slice(2);
@@ -56,6 +61,16 @@ async function main(): Promise<void> {
     onGameOver: (session, result) => void saveResult(session, result),
   });
   const stopLoop = store.start();
+  trackGauge(
+    "blockfall_game_sessions",
+    "Sesje gry w pamięci (także czekające na wznowienie)",
+    () => store.size,
+  );
+  trackPool(db);
+  const metricsServer = config.metricsPort > 0 ? createMetricsServer() : null;
+  metricsServer?.listen(config.metricsPort, () => {
+    log.info({ port: config.metricsPort }, "metrics listening");
+  });
   const closeWs = attachWebSocket(server, {
     store,
     ...(config.allowedOrigin ? { allowedOrigin: config.allowedOrigin } : {}),
@@ -71,16 +86,14 @@ async function main(): Promise<void> {
   const cleanup = setInterval(
     () => {
       deleteExpiredSessions(db).catch((error: unknown) =>
-        console.error("session cleanup failed", error),
+        log.error({ err: error }, "session cleanup failed"),
       );
     },
     60 * 60 * 1000,
   );
 
   server.listen(config.port, () => {
-    console.log(
-      `server ${version} listening on http://localhost:${config.port} (input buffer ${config.bufferTicks} ticks)`,
-    );
+    log.info({ port: config.port, bufferTicks: config.bufferTicks }, "server listening");
   });
 
   // Kubernetes wysyła SIGTERM przed zatrzymaniem poda: zamykamy WebSockety
@@ -90,6 +103,7 @@ async function main(): Promise<void> {
       clearInterval(cleanup);
       stopLoop();
       closeWs();
+      metricsServer?.close();
       server.close(() => {
         void db.end().finally(() => process.exit(0));
       });
@@ -98,6 +112,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: unknown) => {
-  console.error("server failed to start", error);
+  log.fatal({ err: error }, "server failed to start");
   process.exit(1);
 });

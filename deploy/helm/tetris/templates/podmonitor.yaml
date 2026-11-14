@@ -1,0 +1,20 @@
+{{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1/PodMonitor" }}
+# Prometheus (kube-prometheus-stack, spec 006) zbiera metryki aplikacji; etykieta `env` z values.
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    {{- include "tetris.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "tetris.selectorLabels" . | nindent 6 }}
+  podMetricsEndpoints:
+    - port: metrics
+      path: /metrics
+      interval: {{ .Values.metrics.interval }}
+      relabelings:
+        - targetLabel: env
+          replacement: {{ .Values.environment }}
+{{- end }}

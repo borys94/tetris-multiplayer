@@ -2,6 +2,8 @@ import { TICKS_PER_SECOND } from "@tetris/game-core";
 
 export interface Config {
   port: number;
+  /** Port serwera metryk Prometheusa (spec 006); 0 go wyłącza. */
+  metricsPort: number;
   version: string;
   staticDir?: string;
   allowedOrigin?: string;
@@ -41,6 +43,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
   const bufferMs = positiveInt(env, "INPUT_BUFFER_MS", DEFAULT_INPUT_BUFFER_MS);
   return {
     port: positiveInt(env, "PORT", 3000),
+    metricsPort: positiveInt(env, "METRICS_PORT", 9464),
     version: env.APP_VERSION ?? "dev",
     ...(env.STATIC_DIR ? { staticDir: env.STATIC_DIR } : {}),
     ...(env.ALLOWED_ORIGIN ? { allowedOrigin: env.ALLOWED_ORIGIN } : {}),

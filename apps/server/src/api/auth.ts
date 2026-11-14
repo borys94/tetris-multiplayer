@@ -1,5 +1,6 @@
 import { Router, type Response } from "express";
 import { LoginLimiter } from "../auth/login-limiter";
+import { logins, registrations } from "../observability/metrics";
 import {
   PASSWORD_MAX,
   PASSWORD_MIN,
@@ -77,6 +78,7 @@ export function authRouter({ db, limiter, secureCookies }: AuthOptions): Router 
       return;
     }
     await startSession(res, user.id);
+    registrations.inc();
     res.status(201).json({ user: profile(user) });
   });
 
@@ -90,6 +92,7 @@ export function authRouter({ db, limiter, secureCookies }: AuthOptions): Router 
     const retryAfter = limiter.retryAfterMs(username);
     if (retryAfter > 0) {
       res.setHeader("Retry-After", String(Math.ceil(retryAfter / 1000)));
+      logins.inc({ result: "locked" });
       res.status(429).json({ error: "too_many_attempts" });
       return;
     }
@@ -99,15 +102,18 @@ export function authRouter({ db, limiter, secureCookies }: AuthOptions): Router 
     const valid = await verifyPassword(password, user?.passwordHash ?? (await dummyHash()));
     if (!user || !valid) {
       limiter.fail(username);
+      logins.inc({ result: "failure" });
       res.status(401).json({ error: "invalid_credentials" });
       return;
     }
     limiter.succeed(username);
     if (user.disabled) {
+      logins.inc({ result: "disabled" });
       res.status(403).json({ error: "account_disabled" });
       return;
     }
     await startSession(res, user.id);
+    logins.inc({ result: "success" });
     res.json({ user: profile(publicUser(user)) });
   });
 

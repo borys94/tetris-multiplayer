@@ -1,5 +1,6 @@
 import type { ErrorRequestHandler, RequestHandler } from "express";
 import type { Db } from "../db/pool";
+import { log } from "../observability/logger";
 import { useSession, type SessionUser } from "../db/sessions";
 import { SESSION_TTL_MS, hashToken, readSessionToken } from "../auth/session-cookie";
 
@@ -75,7 +76,7 @@ export const requireAdmin: RequestHandler = (_req, res, next) => {
 export const handleErrors: ErrorRequestHandler = (error: unknown, _req, res, _next) => {
   const status =
     typeof error === "object" && error !== null && "status" in error ? Number(error.status) : 500;
-  if (status >= 500) console.error("API error", error);
+  if (status >= 500) log.error({ err: error }, "API error");
   res.status(status >= 400 && status < 600 ? status : 500).json({
     error: status === 400 ? "invalid" : status === 413 ? "too_large" : "internal",
   });

@@ -1,0 +1,50 @@
+# Hasło admina Grafany: generowane przy pierwszej instalacji i stałe między deployami
+# (`lookup`), odczyt według runbooka (spec 006).
+{{- $existing := lookup "v1" "Secret" .Release.Namespace "grafana-admin" }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-admin
+  annotations:
+    helm.sh/resource-policy: keep
+type: Opaque
+data:
+  admin-user: {{ "admin" | b64enc | quote }}
+  {{- if $existing }}
+  admin-password: {{ index $existing.data "admin-password" | quote }}
+  {{- else }}
+  admin-password: {{ randAlphaNum 32 | b64enc | quote }}
+  {{- end }}
+---
+# Grafana publicznie pod grafana.<IP>.sslip.io z certyfikatem Let's Encrypt (Traefik).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+spec:
+  rules:
+    - host: {{ required "host jest wymagany" .Values.host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 80
+---
+# Dashboard jako kod: sidecar Grafany wczytuje ConfigMapy z etykietą grafana_dashboard.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashboard-blockfall
+  labels:
+    grafana_dashboard: "1"
+data:
+  blockfall.json: |-
+{{ .Files.Get "dashboards/blockfall.json" | indent 4 }}

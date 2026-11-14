@@ -11,7 +11,7 @@ variable "availability_zone" {
 variable "instance_type" {
   description = "Typ instancji arm64 (Graviton); obraz aplikacji jest budowany pod arm64."
   type        = string
-  default     = "t4g.small"
+  default     = "t4g.medium"
 }
 
 variable "root_volume_gb" {

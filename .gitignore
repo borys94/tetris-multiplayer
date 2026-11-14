@@ -17,3 +17,6 @@ coverage/
 *.tfvars
 infra/terraform/backend.hcl
 *.tfplan
+
+# Zależności chartów Helm (pobierane przez helm dependency build)
+deploy/helm/*/charts/

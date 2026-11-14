@@ -1,0 +1,10 @@
+apiVersion: v2
+name: monitoring
+description: Prometheus i Grafana dla Blockfall (spec 006, ADR-0009)
+type: application
+# Wersję chartu nadpisuje CI przy pakowaniu (helm package --version).
+version: 0.0.0
+dependencies:
+  - name: kube-prometheus-stack
+    version: 93.2.2
+    repository: https://prometheus-community.github.io/helm-charts

@@ -1,0 +1,54 @@
+name: Monitoring
+
+# Chart monitoring (Prometheus, Grafana, alerty, dashboard; spec 006): pakowanie do ECR
+# i instalacja przez SSM. Jeden monitoring dla bety i produ, więc bez środowisk GitHub.
+on:
+  push:
+    branches: [main]
+    paths:
+      - deploy/helm/monitoring/**
+      - deploy/scripts/*monitoring-deploy.sh
+      - .github/workflows/monitoring.yml
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: eu-central-1
+
+concurrency:
+  group: monitoring
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - uses: azure/setup-helm@v5
+        with:
+          version: v4.3.2
+
+      - name: Package and push chart
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm dependency build deploy/helm/monitoring
+          helm package deploy/helm/monitoring --version "0.0.0-g$GITHUB_SHA"
+          helm push "monitoring-0.0.0-g$GITHUB_SHA.tgz" "oci://$REGISTRY/charts"
+
+      - name: Deploy via SSM
+        run: deploy/scripts/ssm-monitoring-deploy.sh "$GITHUB_SHA"

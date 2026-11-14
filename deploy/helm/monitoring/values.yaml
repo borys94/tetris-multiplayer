@@ -1,0 +1,124 @@
+# Host Grafany ustawia skrypt deployu, np. grafana.<IP>.sslip.io.
+host: ""
+
+# Namespace'y aplikacji: alerty i dashboard dotyczą tylko ich.
+appNamespaces: tetris-beta|tetris-prod
+
+# Progi alertów (spec 006, R5).
+alerts:
+  # Odsetek odpowiedzi 5xx i minimalny ruch (żądania/s), od którego go liczymy.
+  errorRatio: 0.05
+  minRequestRate: 0.05
+  # p99 czasu obiegu pętli gry; budżet ticka to 16,7 ms.
+  tickP99Seconds: 0.008
+  restartsPerHour: 3
+  memoryLimitRatio: 0.9
+  diskUsedRatio: 0.8
+  # Backup jest codziennie o 03:00, więc 26 h to jeden pominięty dzień z zapasem.
+  backupMaxAgeHours: 26
+
+kube-prometheus-stack:
+  fullnameOverride: kps
+  # Domyślne reguły i dashboardy zakładają pełny klaster (etcd, wiele węzłów): na jednym
+  # węźle k3s to głównie szum. Mamy własne reguły i dashboard.
+  defaultRules:
+    create: false
+  # Alerty widać tylko w Grafanie, bez powiadomień (ADR-0009).
+  alertmanager:
+    enabled: false
+  # k3s uruchamia te komponenty w jednym procesie i nie wystawia ich metryk.
+  kubeControllerManager:
+    enabled: false
+  kubeScheduler:
+    enabled: false
+  kubeProxy:
+    enabled: false
+  kubeEtcd:
+    enabled: false
+
+  prometheusOperator:
+    resources:
+      requests: { cpu: 20m, memory: 48Mi }
+      limits: { memory: 128Mi }
+
+  prometheus:
+    prometheusSpec:
+      scrapeInterval: 30s
+      evaluationInterval: 30s
+      retention: 15d
+      retentionSize: 3GB
+      # Zbieramy PodMonitory, ServiceMonitory i reguły z każdego namespace'u, nie tylko z etykietą release.
+      podMonitorSelectorNilUsesHelmValues: false
+      serviceMonitorSelectorNilUsesHelmValues: false
+      ruleSelectorNilUsesHelmValues: false
+      resources:
+        requests: { cpu: 100m, memory: 256Mi }
+        limits: { memory: 768Mi }
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: local-path
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 4Gi
+
+  grafana:
+    fullnameOverride: grafana
+    defaultDashboardsEnabled: false
+    # Hasło admina w Secrecie generowanym przez ten chart (templates/grafana-secret.yaml).
+    admin:
+      existingSecret: grafana-admin
+      userKey: admin-user
+      passwordKey: admin-password
+    # Ingress tworzy ten chart (templates/ingress.yaml), tak jak w chartcie tetris.
+    ingress:
+      enabled: false
+    # Bez trwałego wolumenu: dashboard i źródło danych pochodzą z provisioningu,
+    # a zmiany w UI nie są trwałe (spec 006).
+    persistence:
+      enabled: false
+    grafana.ini:
+      analytics:
+        reporting_enabled: false
+        check_for_updates: false
+        check_for_plugin_updates: false
+      users:
+        allow_sign_up: false
+      auth.anonymous:
+        enabled: false
+      security:
+        cookie_secure: true
+        disable_gravatar: true
+      news:
+        news_feed_enabled: false
+      # Grafana 12 pobiera przy starcie wtyczki (Drilldown, Loki Explore): zbędne dla nas,
+      # a ich instalacja przekraczała limit pamięci (OOMKilled, 2026-11-14).
+      plugins:
+        preinstall_disabled: true
+    sidecar:
+      dashboards:
+        enabled: true
+        label: grafana_dashboard
+        labelValue: "1"
+        searchNamespace: monitoring
+        resources:
+          requests: { cpu: 10m, memory: 64Mi }
+          limits: { memory: 160Mi }
+      datasources:
+        resources:
+          requests: { cpu: 10m, memory: 64Mi }
+          limits: { memory: 160Mi }
+    resources:
+      requests: { cpu: 50m, memory: 192Mi }
+      limits: { memory: 384Mi }
+
+  kube-state-metrics:
+    resources:
+      requests: { cpu: 10m, memory: 32Mi }
+      limits: { memory: 96Mi }
+
+  prometheus-node-exporter:
+    resources:
+      requests: { cpu: 10m, memory: 16Mi }
+      limits: { memory: 64Mi }
