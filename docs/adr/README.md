@@ -29,3 +29,4 @@ Pozostałe decyzje (np. menedżer pakietów, konfiguracja lintera) zapisujemy w 
 | [0005](0005-deploy-przez-ssm-i-helm.md)            | Wdrażaj na k3s przez AWS SSM i Helm, bez wystawiania API Kubernetesa     | Accepted | M3–M7      |
 | [0006](0006-serwer-zrodlem-prawdy.md)              | Licz grę na serwerze, a klientowi pozwól tylko przewidywać               | Accepted | M4, M5, M7 |
 | [0007](0007-websocket-ws-i-protokol-json.md)       | Używaj biblioteki `ws` i typowanego protokołu JSON                       | Accepted | M4, M7     |
+| [0008](0008-postgres-w-klastrze.md)                | Trzymaj dane w Postgresie uruchomionym w klastrze k3s                    | Accepted | M5, M7     |
