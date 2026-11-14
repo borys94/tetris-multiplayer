@@ -103,6 +103,16 @@ export const registrations = new Counter({
   registers,
 });
 
+/**
+ * Serie z etykietami powstają przy pierwszym `inc`, więc Prometheus nie widzi ich
+ * wartości 0 i `increase()` gubi pierwsze zdarzenie (np. pierwszą grę po starcie).
+ * Znane wartości etykiet zakładamy od razu z zerem.
+ */
+for (const player of ["guest", "user"]) gamesFinished.inc({ player }, 0);
+for (const result of ["success", "failure", "locked", "disabled"]) logins.inc({ result }, 0);
+for (const code of ["invalid", "rate_limited"]) wsErrors.inc({ code }, 0);
+for (const reason of ["origin", "ip_limit"]) wsRejected.inc({ reason }, 0);
+
 /** Liczniki, których wartość odczytujemy w chwili zbierania metryk. */
 export function trackGauge(name: string, help: string, read: () => number): void {
   registry.removeSingleMetric(name);
