@@ -1,0 +1,34 @@
+# Grafana jest publiczna, a IMDS (169.254.169.254) daje uprawnienia roli serwera:
+# odcinamy go wszystkim podom w monitoringu (spec 006, jak block-imds w chartcie tetris).
+# Node-exporter działa w sieci hosta, więc ta polityka go nie dotyczy (nie łączy się z IMDS).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: block-imds
+spec:
+  podSelector: {}
+  policyTypes: ["Egress"]
+  egress:
+    # Pody w klastrze (DNS, metryki aplikacji).
+    - to:
+        - namespaceSelector: {}
+    # Węzeł (kubelet, API Kubernetesa) i internet (wtyczki Grafany) bez IMDS.
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except: ["169.254.169.254/32"]
+---
+# Metryki Traefika (port 9100 `metrics` w k3s): ruch HTTP na wejściu do klastra.
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: traefik
+  podMetricsEndpoints:
+    - port: metrics
+      path: /metrics
+      interval: 30s

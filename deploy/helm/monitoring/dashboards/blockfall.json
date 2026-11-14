@@ -1,0 +1,1314 @@
+{
+  "uid": "blockfall",
+  "title": "Blockfall",
+  "description": "Beta i prod: gra, HTTP, zasoby, baza i alerty (spec 006). Źródło: deploy/helm/monitoring/dashboards/blockfall.json",
+  "tags": ["blockfall"],
+  "timezone": "browser",
+  "editable": false,
+  "refresh": "1m",
+  "schemaVersion": 39,
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "env",
+        "label": "Środowisko",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": {
+          "query": "label_values(blockfall_http_requests_total, env)",
+          "refId": "env"
+        },
+        "definition": "label_values(blockfall_http_requests_total, env)",
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": false,
+        "multi": false,
+        "current": {
+          "text": "prod",
+          "value": "prod"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Przegląd",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Pody aplikacji",
+      "description": "Działające pody aplikacji (oczekiwany 1)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(kube_deployment_status_replicas_available{namespace=\"tetris-$env\", deployment=\"tetris\"})",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Sesje gry",
+      "description": "Sesje w pamięci, także czekające na wznowienie",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(blockfall_game_sessions{env=\"$env\"})",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Połączenia WS",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(blockfall_ws_connections{env=\"$env\"})",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Gry w ostatniej godzinie",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(blockfall_games_finished_total{env=\"$env\"}[1h]))",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Tick p99",
+      "description": "Budżet ticka: 16,7 ms; alert powyżej 8 ms",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(blockfall_tick_duration_seconds_bucket{env=\"$env\"}[5m])))",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.008
+              },
+              {
+                "color": "red",
+                "value": 0.0167
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "Odpowiedzi 5xx (5 min)",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(blockfall_http_requests_total{env=\"$env\", status=\"5xx\"}[5m])) / sum(rate(blockfall_http_requests_total{env=\"$env\"}[5m]))",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0.05
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 8,
+      "type": "table",
+      "title": "Aktywne alerty",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Alerty z Prometheusa (wszystkie środowiska). Reguły: deploy/helm/monitoring/templates/prometheusrule.yaml",
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 6
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "ALERTS{alertstate=~\"firing|pending\"}",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value": true,
+              "__name__": true
+            },
+            "indexByName": {
+              "alertname": 0,
+              "alertstate": 1,
+              "severity": 2
+            }
+          }
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    },
+    {
+      "id": 9,
+      "type": "row",
+      "title": "Gra",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 11,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Czas obiegu pętli gry",
+      "description": "Jeden obieg przesuwa wszystkie sesje; przerywana linia to budżet ticka (16,7 ms)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(blockfall_tick_duration_seconds_bucket{env=\"$env\"}[5m])))",
+          "legendFormat": "p50",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(blockfall_tick_duration_seconds_bucket{env=\"$env\"}[5m])))",
+          "legendFormat": "p99",
+          "refId": "B"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0.0167
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Pętla zdarzeń Node.js",
+      "description": "Opóźnienie pętli zdarzeń (s) i ticki pominięte, gdy serwer nie nadążał",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 12,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "max(blockfall_nodejs_eventloop_lag_p99_seconds{env=\"$env\"})",
+          "legendFormat": "opóźnienie p99",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(blockfall_ticks_dropped_total{env=\"$env\"}[5m]))",
+          "legendFormat": "pominięte ticki (5 min)",
+          "refId": "B"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "none"
+            }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Sesje i połączenia",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 12,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(blockfall_game_sessions{env=\"$env\"})",
+          "legendFormat": "sesje",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(blockfall_ws_connections{env=\"$env\"})",
+          "legendFormat": "połączenia WS",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(blockfall_server_full_total{env=\"$env\"}[5m]))",
+          "legendFormat": "odmowy: serwer pełny (5 min)",
+          "refId": "C"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "none"
+            }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Gry na godzinę",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(blockfall_games_started_total{env=\"$env\"}[15m])) * 3600",
+          "legendFormat": "rozpoczęte",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (player) (rate(blockfall_games_finished_total{env=\"$env\"}[15m])) * 3600",
+          "legendFormat": "zakończone: {{player}}",
+          "refId": "B"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "none"
+            }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "Wiadomości WebSocket",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 20,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(blockfall_ws_messages_total{env=\"$env\"}[5m]))",
+          "legendFormat": "odebrane / s",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (code) (rate(blockfall_ws_errors_total{env=\"$env\"}[5m]))",
+          "legendFormat": "błąd: {{code}}",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (reason) (rate(blockfall_ws_rejected_total{env=\"$env\"}[5m]))",
+          "legendFormat": "odrzucone: {{reason}}",
+          "refId": "C"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "none"
+            }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "Logowania i rejestracje (na godzinę)",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 20,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (result) (rate(blockfall_logins_total{env=\"$env\"}[15m])) * 3600",
+          "legendFormat": "logowanie: {{result}}",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(blockfall_registrations_total{env=\"$env\"}[15m])) * 3600",
+          "legendFormat": "rejestracje",
+          "refId": "B"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "none"
+            }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 16,
+      "type": "row",
+      "title": "HTTP",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 28,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 17,
+      "type": "timeseries",
+      "title": "Żądania HTTP według statusu",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 29,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (status) (rate(blockfall_http_requests_total{env=\"$env\"}[5m]))",
+          "legendFormat": "{{status}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 18,
+      "type": "timeseries",
+      "title": "Czas odpowiedzi API p95",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 29,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le, route) (rate(blockfall_http_request_duration_seconds_bucket{env=\"$env\", route=~\"/api.*\"}[5m])))",
+          "legendFormat": "{{route}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "none"
+            }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 19,
+      "type": "row",
+      "title": "Zasoby i baza",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 37,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 20,
+      "type": "timeseries",
+      "title": "Pamięć podów",
+      "description": "Working set; limity: values.yaml chartu tetris",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 38,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (pod) (container_memory_working_set_bytes{namespace=\"tetris-$env\", container!=\"\"})",
+          "legendFormat": "{{pod}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "none"
+            }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "CPU podów",
+      "description": "Rdzenie CPU",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 38,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=\"tetris-$env\", container!=\"\"}[5m]))",
+          "legendFormat": "{{pod}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "none"
+            }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 22,
+      "type": "timeseries",
+      "title": "Pula połączeń Postgresa",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 38,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (state) (blockfall_db_pool_connections{env=\"$env\"})",
+          "legendFormat": "{{state}}",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(blockfall_game_save_errors_total{env=\"$env\"}[5m]))",
+          "legendFormat": "nieudane zapisy gier (5 min)",
+          "refId": "B"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "none"
+            }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 23,
+      "type": "stat",
+      "title": "Ostatni udany backup",
+      "description": "Czas od ostatniego udanego backupu do S3; alert po 26 h",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 46,
+        "w": 6,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "time() - max(kube_cronjob_status_last_successful_time{namespace=\"tetris-$env\", cronjob=\"postgres-backup\"})",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 93600
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 24,
+      "type": "stat",
+      "title": "Dysk serwera",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 46,
+        "w": 6,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "1 - node_filesystem_avail_bytes{mountpoint=\"/\", fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{mountpoint=\"/\", fstype!~\"tmpfs|overlay\"}",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.7
+              },
+              {
+                "color": "red",
+                "value": 0.8
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 25,
+      "type": "timeseries",
+      "title": "Pamięć serwera",
+      "description": "Cały węzeł: k3s, beta, prod i monitoring",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 46,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes",
+          "legendFormat": "zajęta",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "node_memory_MemTotal_bytes",
+          "legendFormat": "całkowita",
+          "refId": "B"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "none"
+            }
+          }
+        },
+        "overrides": []
+      }
+    }
+  ]
+}

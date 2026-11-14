@@ -1,0 +1,94 @@
+# Alerty jako kod (spec 006, R5). Bez Alertmanagera: widać je w Grafanie
+# (Alerting → Alert rules) i w panelu „Aktywne alerty” na dashboardzie.
+{{- $ns := .Values.appNamespaces }}
+{{- $a := .Values.alerts }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: blockfall
+spec:
+  groups:
+    - name: blockfall.app
+      rules:
+        - alert: BlockfallDown
+          expr: |
+            kube_deployment_status_replicas_available{namespace=~"{{ $ns }}", deployment="tetris"} < 1
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: {{`"Aplikacja w {{ $labels.namespace }} nie ma działającego poda"`}}
+        - alert: BlockfallMetricsDown
+          expr: |
+            up{namespace=~"{{ $ns }}"} == 0
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: {{`"Prometheus nie zbiera metryk z {{ $labels.namespace }}/{{ $labels.pod }}"`}}
+        - alert: BlockfallHighErrorRate
+          expr: |
+            (
+              sum by (env) (rate(blockfall_http_requests_total{status="5xx"}[5m]))
+                / sum by (env) (rate(blockfall_http_requests_total[5m]))
+            ) > {{ $a.errorRatio }}
+            and sum by (env) (rate(blockfall_http_requests_total[5m])) > {{ $a.minRequestRate }}
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: {{`"Ponad {{ $value | humanizePercentage }} odpowiedzi 5xx w {{ $labels.env }}"`}}
+        - alert: BlockfallSlowTick
+          expr: |
+            histogram_quantile(0.99, sum by (env, le) (rate(blockfall_tick_duration_seconds_bucket[5m])))
+              > {{ $a.tickP99Seconds }}
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: {{`"p99 obiegu pętli gry w {{ $labels.env }} to {{ $value | humanizeDuration }}"`}}
+        - alert: BlockfallTicksDropped
+          expr: |
+            sum by (env) (increase(blockfall_ticks_dropped_total[10m])) > 0
+          labels:
+            severity: warning
+          annotations:
+            summary: {{`"Pętla gry w {{ $labels.env }} nie nadążała i pominęła ticki"`}}
+
+    - name: blockfall.platform
+      rules:
+        - alert: PodRestarting
+          expr: |
+            increase(kube_pod_container_status_restarts_total{namespace=~"{{ $ns }}|monitoring"}[1h]) > {{ $a.restartsPerHour }}
+          labels:
+            severity: warning
+          annotations:
+            summary: {{`"{{ $labels.namespace }}/{{ $labels.pod }} restartował się ponad 3 razy w godzinę"`}}
+        - alert: PodMemoryNearLimit
+          expr: |
+            max by (namespace, pod, container) (container_memory_working_set_bytes{namespace=~"{{ $ns }}|monitoring", container!=""})
+              / max by (namespace, pod, container) (kube_pod_container_resource_limits{resource="memory"})
+              > {{ $a.memoryLimitRatio }}
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: {{`"{{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) używa {{ $value | humanizePercentage }} limitu pamięci"`}}
+        - alert: DiskAlmostFull
+          expr: |
+            1 - node_filesystem_avail_bytes{mountpoint="/", fstype!~"tmpfs|overlay"}
+              / node_filesystem_size_bytes{mountpoint="/", fstype!~"tmpfs|overlay"}
+              > {{ $a.diskUsedRatio }}
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: {{`"Dysk serwera zajęty w {{ $value | humanizePercentage }}"`}}
+        - alert: BackupMissing
+          expr: |
+            time() - max by (namespace) (kube_cronjob_status_last_successful_time{namespace=~"{{ $ns }}", cronjob="postgres-backup"})
+              > {{ $a.backupMaxAgeHours }} * 3600
+          labels:
+            severity: critical
+          annotations:
+            summary: {{`"Ostatni udany backup Postgresa w {{ $labels.namespace }} był {{ $value | humanizeDuration }} temu"`}}

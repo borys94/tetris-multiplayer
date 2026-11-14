@@ -16,7 +16,7 @@ locals {
 # --- ECR -------------------------------------------------------------------
 
 resource "aws_ecr_repository" "this" {
-  for_each = toset(["tetris-app", "charts/tetris"])
+  for_each = toset(["tetris-app", "charts/tetris", "charts/monitoring"])
 
   name                 = each.key
   image_tag_mutability = "IMMUTABLE"
