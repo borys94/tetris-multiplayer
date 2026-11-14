@@ -7,7 +7,7 @@
 
 ```mermaid
 gantt
-    title Tetris Multiplayer – roadmapa
+    title Blockfall – roadmapa
     dateFormat YYYY-MM-DD
     axisFormat %d.%m
 

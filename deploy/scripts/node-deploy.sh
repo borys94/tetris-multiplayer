@@ -20,7 +20,8 @@ ip=$(curl -sf -H "X-aws-ec2-metadata-token: $token" http://169.254.169.254/lates
 host="${host_prefix}${ip}.sslip.io"
 
 kubectl create namespace "$namespace" --dry-run=client -o yaml | kubectl apply -f - >/dev/null
-if ! kubectl -n "$namespace" get secret basic-auth >/dev/null 2>&1; then
+# Basic auth ma tylko beta (prod jest publiczny od M4, ADR-0003).
+if [ "$env" = beta ] && ! kubectl -n "$namespace" get secret basic-auth >/dev/null 2>&1; then
   echo "Brak Secretu basic-auth w $namespace. Utwórz go według docs/runbooks/deploy.md." >&2
   exit 1
 fi

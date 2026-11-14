@@ -29,6 +29,16 @@ spec:
           env:
             - name: APP_VERSION
               value: {{ .Values.image.tag | quote }}
+            # WebSocket /ws przyjmuje połączenia tylko ze strony gry (spec 004).
+            - name: ALLOWED_ORIGIN
+              value: {{ printf "https://%s" .Values.host | quote }}
+            # IP klienta z X-Forwarded-For dopisywanego przez Traefika (limit połączeń na IP).
+            - name: TRUST_PROXY
+              value: "true"
+            - name: INPUT_BUFFER_MS
+              value: {{ .Values.game.inputBufferMs | quote }}
+            - name: MAX_SESSIONS
+              value: {{ .Values.game.maxSessions | quote }}
           readinessProbe:
             httpGet:
               path: /health

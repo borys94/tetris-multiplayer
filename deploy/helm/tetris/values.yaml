@@ -8,7 +8,14 @@ image:
   repository: ""
   tag: ""
 
+# Sesje gry żyją w pamięci procesu (ADR-0006), więc zawsze 1 replika.
 replicas: 1
+
+game:
+  # Bufor wejścia (ADR-0006): domyślnie 150 ms, do rewizji po M6 na podstawie wahań opóźnienia.
+  inputBufferMs: 150
+  # Limit równoczesnych sesji, dopasowany do limitu pamięci poda.
+  maxSessions: 200
 
 resources:
   requests:

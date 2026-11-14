@@ -1,19 +1,34 @@
-import {
-  applyAction,
-  createGame,
-  previewQueue,
-  tick,
-  type GameState,
-  type PieceType,
-} from "@tetris/game-core";
+import { previewQueue, type GameState, type PieceType } from "@tetris/game-core";
+import type { ClientMessage, ErrorCode, ServerMessage } from "@tetris/protocol";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { InputController, isGameKey } from "../game/input";
 import { startLoop } from "../game/loop";
 import { BOARD_PIXEL_HEIGHT, BOARD_PIXEL_WIDTH, drawBoard } from "../game/render";
+import {
+  Connection,
+  defaultServerUrl,
+  type ConnectionHandlers,
+  type ConnectionStatus,
+} from "../net/connection";
+import { Predictor } from "../net/predictor";
 import styles from "./Game.module.scss";
 import { PiecePreview } from "./PiecePreview";
 
-type Screen = "ready" | "playing" | "paused" | "over";
+/** Połączenie z serwerem gry widziane przez komponent (podmieniane w testach). */
+export interface GameServer {
+  send(msg: ClientMessage): boolean;
+  stop(): void;
+}
+
+export type ConnectFn = (handlers: ConnectionHandlers) => GameServer;
+
+export const connectToServer: ConnectFn = (handlers) => {
+  const connection = new Connection(defaultServerUrl(window.location), handlers);
+  connection.start();
+  return connection;
+};
+
+type Screen = "loading" | "ready" | "playing" | "paused" | "over";
 
 interface Hud {
   score: number;
@@ -23,9 +38,23 @@ interface Hud {
   next: readonly PieceType[];
 }
 
-function randomSeed(): number {
-  return crypto.getRandomValues(new Uint32Array(1))[0] ?? 0;
+interface Result {
+  score: number;
+  lines: number;
+  level: number;
 }
+
+const STATUS_LABELS: Readonly<Record<ConnectionStatus, string>> = {
+  connecting: "Łączenie z serwerem…",
+  online: "Połączono",
+  offline: "Brak połączenia, ponawiam…",
+  closed: "Rozłączono (gra otwarta w innej karcie?)",
+};
+
+const ERROR_LABELS: Partial<Readonly<Record<ErrorCode, string>>> = {
+  server_full: "Serwer jest pełny, spróbuj za chwilę",
+  version: "Nowa wersja gry: odśwież stronę",
+};
 
 function hudOf(state: GameState): Hud {
   return {
@@ -47,62 +76,153 @@ function sameHud(a: Hud, b: Hud): boolean {
   );
 }
 
-export function Game() {
-  const [initialGame] = useState(() => createGame(randomSeed()));
-  const [input] = useState(() => new InputController());
-  const gameRef = useRef(initialGame);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [screen, setScreen] = useState<Screen>("ready");
-  const [hud, setHud] = useState(() => hudOf(initialGame));
+const EMPTY_HUD: Hud = { score: 0, lines: 0, level: 1, hold: null, next: [] };
 
-  const draw = useCallback(() => {
-    const ctx = canvasRef.current?.getContext("2d");
-    if (ctx) drawBoard(ctx, gameRef.current);
+/**
+ * Gra liczona przez serwer (ADR-0006): klawisze → akcje przewidywane lokalnie
+ * i wysyłane do serwera; wynik końcowy pochodzi z wiadomości `over`.
+ */
+export function Game({ connect = connectToServer }: { connect?: ConnectFn }) {
+  const [input] = useState(() => new InputController());
+  const predictorRef = useRef<Predictor | null>(null);
+  const serverRef = useRef<GameServer | null>(null);
+  const screenRef = useRef<Screen>("loading");
+  /** Po `newGame` wznawiamy grę od razu, gdy serwer przyśle jej stan. */
+  const startOnGameRef = useRef(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [screen, setScreenState] = useState<Screen>("loading");
+  const [status, setStatus] = useState<ConnectionStatus>("connecting");
+  const [error, setError] = useState<ErrorCode | null>(null);
+  const [hud, setHud] = useState<Hud>(EMPTY_HUD);
+  const [result, setResult] = useState<Result | null>(null);
+
+  const setScreen = useCallback((next: Screen) => {
+    screenRef.current = next;
+    setScreenState(next);
   }, []);
 
-  const start = useCallback(() => {
-    const game = createGame(randomSeed());
-    gameRef.current = game;
-    input.reset();
-    setHud(hudOf(game));
-    setScreen("playing");
-  }, [input]);
+  const send = useCallback((msg: ClientMessage) => serverRef.current?.send(msg) ?? false, []);
+
+  const refresh = useCallback(() => {
+    const predictor = predictorRef.current;
+    if (!predictor) return;
+    const ctx = canvasRef.current?.getContext("2d");
+    if (ctx) drawBoard(ctx, predictor.state);
+    const next = hudOf(predictor.state);
+    setHud((prev) => (sameHud(prev, next) ? prev : next));
+  }, []);
+
+  const play = useCallback(() => {
+    if (send({ type: "resume" })) setScreen("playing");
+  }, [send, setScreen]);
 
   const pause = useCallback(() => {
     input.reset();
+    const predictor = predictorRef.current;
+    if (predictor) send({ type: "pause", tick: predictor.tick });
     setScreen("paused");
-  }, [input]);
+  }, [input, send, setScreen]);
 
-  // Pętla gry działa tylko na ekranie "playing"; na pozostałych rysujemy stan raz.
+  const newGame = useCallback(() => {
+    startOnGameRef.current = true;
+    if (!send({ type: "newGame" })) {
+      startOnGameRef.current = false;
+      return;
+    }
+    input.reset();
+    setResult(null);
+    if (screenRef.current !== "playing") setScreen("loading");
+  }, [input, send, setScreen]);
+
+  const handleMessage = useCallback(
+    (msg: ServerMessage) => {
+      switch (msg.type) {
+        case "game": {
+          predictorRef.current = new Predictor(msg.state, msg.tick);
+          refresh();
+          if (msg.state.status === "over") {
+            const { score, lines, level } = msg.state;
+            setResult({ score, lines, level });
+            setScreen("over");
+          } else if (startOnGameRef.current) {
+            startOnGameRef.current = false;
+            play();
+          } else {
+            // Nierozpoczęta gra zostaje na ekranie startu; wznowiona po rozłączeniu jest wstrzymana.
+            const notStarted = screenRef.current === "loading" || screenRef.current === "ready";
+            setScreen(notStarted && msg.tick === 0 ? "ready" : "paused");
+          }
+          break;
+        }
+        case "snapshot": {
+          const predictor = predictorRef.current;
+          if (!predictor) break;
+          if (screenRef.current === "playing") predictor.reconcile(msg.tick, msg.ackSeq, msg.state);
+          else if (screenRef.current === "paused") predictor.adopt(msg.state, msg.tick);
+          else break;
+          refresh();
+          break;
+        }
+        case "over":
+          setResult({ score: msg.score, lines: msg.lines, level: msg.level });
+          setScreen("over");
+          break;
+        case "error":
+          setError(msg.code);
+          break;
+        case "welcome":
+          setError(null);
+          break;
+      }
+    },
+    [play, refresh, setScreen],
+  );
+
+  const handleStatus = useCallback(
+    (next: ConnectionStatus) => {
+      setStatus(next);
+      // Serwer wstrzymuje sesję po zerwaniu połączenia; klient robi to samo lokalnie.
+      if (next !== "online" && screenRef.current === "playing") {
+        input.reset();
+        setScreen("paused");
+      }
+    },
+    [input, setScreen],
+  );
+
   useEffect(() => {
-    draw();
+    const server = connect({ onMessage: handleMessage, onStatus: handleStatus });
+    serverRef.current = server;
+    return () => {
+      server.stop();
+      serverRef.current = null;
+    };
+  }, [connect, handleMessage, handleStatus]);
+
+  // Pętla gry działa tylko na ekranie "playing".
+  useEffect(() => {
+    refresh();
     if (screen !== "playing") return;
 
-    return startLoop(
-      () => {
-        let game = gameRef.current;
-        for (const action of input.update()) game = applyAction(game, action);
-        gameRef.current = tick(game);
-      },
-      () => {
-        const game = gameRef.current;
-        draw();
-        const next = hudOf(game);
-        setHud((prev) => (sameHud(prev, next) ? prev : next));
-        if (game.status === "over") setScreen("over");
-      },
-    );
-  }, [screen, draw, input]);
+    return startLoop(() => {
+      const predictor = predictorRef.current;
+      if (!predictor) return;
+      const record = predictor.step(input.update());
+      if (record)
+        send({ type: "input", seq: record.seq, tick: record.tick, actions: [...record.actions] });
+    }, refresh);
+  }, [screen, refresh, input, send]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.code === "KeyP") {
         if (screen === "playing") pause();
-        else if (screen === "paused") setScreen("playing");
+        else if (screen === "paused") play();
         return;
       }
-      if (event.code === "Enter" && (screen === "ready" || screen === "over")) {
-        start();
+      if (event.code === "Enter") {
+        if (screen === "ready") play();
+        else if (screen === "over") newGame();
         return;
       }
       if (screen !== "playing" || !isGameKey(event.code)) return;
@@ -122,7 +242,9 @@ export function Game() {
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onBlur);
     };
-  }, [screen, start, pause, input]);
+  }, [screen, play, pause, newGame, input]);
+
+  const online = status === "online";
 
   return (
     <div className={styles.game}>
@@ -141,10 +263,11 @@ export function Game() {
         />
         {screen !== "playing" && (
           <div className={styles.overlay}>
+            {screen === "loading" && <p>{STATUS_LABELS[status]}</p>}
             {screen === "ready" && (
               <>
                 <p>Naciśnij Enter, aby zacząć</p>
-                <button className={styles.button} onClick={start}>
+                <button className={styles.button} onClick={play} disabled={!online}>
                   Start
                 </button>
               </>
@@ -152,10 +275,11 @@ export function Game() {
             {screen === "paused" && (
               <>
                 <p>Pauza</p>
-                <button className={styles.button} onClick={() => setScreen("playing")}>
+                {!online && <p className={styles.finalScore}>{STATUS_LABELS[status]}</p>}
+                <button className={styles.button} onClick={play} disabled={!online}>
                   Wznów
                 </button>
-                <button className={styles.button} onClick={start}>
+                <button className={styles.button} onClick={newGame} disabled={!online}>
                   Restart
                 </button>
               </>
@@ -163,8 +287,10 @@ export function Game() {
             {screen === "over" && (
               <>
                 <p>Koniec gry</p>
-                <p className={styles.finalScore}>Wynik: {hud.score}</p>
-                <button className={styles.button} onClick={start}>
+                <p className={styles.finalScore} data-testid="final-score">
+                  Wynik: {result?.score ?? hud.score}
+                </p>
+                <button className={styles.button} onClick={newGame} disabled={!online}>
                   Zagraj ponownie
                 </button>
               </>
@@ -186,6 +312,9 @@ export function Game() {
           <dt>Linie</dt>
           <dd data-testid="lines">{hud.lines}</dd>
         </dl>
+        <p className={styles.status} data-status={status} role="status">
+          {(error && ERROR_LABELS[error]) ?? STATUS_LABELS[status]}
+        </p>
       </aside>
     </div>
   );

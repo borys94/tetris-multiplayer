@@ -1,6 +1,8 @@
-# Tetris Multiplayer
+# Blockfall
 
-Gra Tetris w przeglądarce: singleplayer, 1v1 i battle royale do 16 graczy.
+Gra w spadające klocki w przeglądarce: singleplayer, 1v1 i battle royale do 16 graczy. Stan i wynik gry liczy serwer.
+
+> Repo, pakiety (`@tetris/*`), chart i namespace'y zachowują roboczą nazwę `tetris`; gracz widzi wyłącznie nazwę Blockfall.
 
 - [Roadmapa](docs/roadmap.md)
 - [Decyzje architektoniczne (ADR)](docs/adr/README.md)
@@ -8,11 +10,12 @@ Gra Tetris w przeglądarce: singleplayer, 1v1 i battle royale do 16 graczy.
 
 ## Struktura
 
-| Ścieżka              | Pakiet              | Opis                            |
-| -------------------- | ------------------- | ------------------------------- |
-| `apps/web`           | `@tetris/web`       | Frontend: React + Vite          |
-| `apps/server`        | `@tetris/server`    | Backend: Express                |
-| `packages/game-core` | `@tetris/game-core` | Silnik gry w czystym TypeScript |
+| Ścieżka              | Pakiet              | Opis                             |
+| -------------------- | ------------------- | -------------------------------- |
+| `apps/web`           | `@tetris/web`       | Frontend: React + Vite           |
+| `apps/server`        | `@tetris/server`    | Backend: Express + WebSocket     |
+| `packages/game-core` | `@tetris/game-core` | Silnik gry w czystym TypeScript  |
+| `packages/protocol`  | `@tetris/protocol`  | Protokół WebSocket klient–serwer |
 
 ## Jak zacząć
 
@@ -20,8 +23,8 @@ Wymagania: Node w wersji z [`.nvmrc`](.nvmrc) i dowolny Yarn (wersja 4 jest przy
 
 ```sh
 yarn install                       # instaluje zależności i hook pre-commit
-yarn workspace @tetris/web dev     # frontend na http://localhost:5173
-yarn workspace @tetris/server dev  # serwer na http://localhost:3000/health
+yarn workspace @tetris/server dev  # serwer gry na http://localhost:3000 (/health, /ws)
+yarn workspace @tetris/web dev     # frontend na http://localhost:5173 (proxy /ws do serwera)
 ```
 
 ## Komendy

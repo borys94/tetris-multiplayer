@@ -1,5 +1,9 @@
 environment: prod
 
+# Prod jest publiczny od M4 (ADR-0003): gra liczona przez serwer. Beta zostaje za basic auth.
+basicAuth:
+  enabled: false
+
 quota:
   requestsCpu: "1"
   requestsMemory: 768Mi

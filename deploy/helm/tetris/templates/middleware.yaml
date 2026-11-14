@@ -8,5 +8,5 @@ metadata:
 spec:
   basicAuth:
     secret: {{ .Values.basicAuth.secretName }}
-    realm: Tetris {{ .Values.environment }}
+    realm: Blockfall {{ .Values.environment }}
 {{- end }}
