@@ -132,6 +132,10 @@ aws ec2 stop-instances --instance-ids "$ID"    # albo start-instances
 
 Po starcie adresy, certyfikaty i wdrożona wersja zostają bez zmian; aplikacja odpowiada po 1–2 minutach. Deploy przy zatrzymanym serwerze kończy się błędem: uruchom serwer i ponów job.
 
+### Zmiana typu instancji
+
+Od M6 serwer to t4g.medium (4 GB, ADR-0009). Zmiana typu: `instance_type` w `infra/terraform/main/variables.tf`, potem `tofu plan` (musi pokazać `update in-place`, nie `replace`) i `tofu apply`. OpenTofu zatrzymuje i uruchamia instancję: dysk, Elastic IP i certyfikaty zostają, beta i prod nie działają przez ok. 1–2 minuty (2026-11-14: t4g.small → t4g.medium).
+
 ### Pełne usunięcie (< 1 USD/mies.)
 
 ```sh

@@ -27,6 +27,13 @@ resources:
   limits:
     memory: 192Mi
 
+# Metryki Prometheusa (spec 006). PodMonitor powstaje tylko, gdy klaster ma CRD
+# kube-prometheus-stack, więc deploy aplikacji nie zależy od monitoringu.
+metrics:
+  port: 9464
+  namespace: monitoring
+  interval: 30s
+
 # Postgres w namespace środowiska (ADR-0008); hasło generuje chart przy pierwszej instalacji.
 postgres:
   image: postgres:17-alpine
