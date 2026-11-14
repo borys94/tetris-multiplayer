@@ -1,9 +1,10 @@
 import { Router } from "express";
 import { leaderboard, userGames } from "../db/games";
+import { userMatches } from "../db/matches";
 import type { Db } from "../db/pool";
 import { requireUser } from "./middleware";
 
-/** Ranking (publiczny) i historia gier zalogowanego gracza (R3). */
+/** Ranking (publiczny), historia gier (spec 005, R3) i meczów 1v1 (spec 007, R5) zalogowanego gracza. */
 export function scoresRouter(db: Db): Router {
   const router = Router();
 
@@ -13,6 +14,10 @@ export function scoresRouter(db: Db): Router {
 
   router.get("/me/games", requireUser, async (_req, res) => {
     res.json({ games: await userGames(db, res.locals.user!.id) });
+  });
+
+  router.get("/me/matches", requireUser, async (_req, res) => {
+    res.json({ matches: await userMatches(db, res.locals.user!.id) });
   });
 
   return router;

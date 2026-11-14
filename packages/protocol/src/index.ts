@@ -1,11 +1,20 @@
 export {
   ACTIONS,
+  COUNTDOWN_MS,
   MAX_ACTIONS_PER_INPUT,
   MAX_MESSAGE_BYTES,
   PROTOCOL_VERSION,
+  ROOM_CODE_ALPHABET,
+  ROOM_CODE_LENGTH,
   SNAPSHOT_INTERVAL_TICKS,
   type ClientMessage,
   type ErrorCode,
+  type MatchEndReason,
+  type OpponentView,
+  type RoomPlayer,
+  type RoomState,
+  type RoomSummary,
+  type RoomVisibility,
   type ServerMessage,
 } from "./messages";
 export { parseClientMessage, parseServerMessage } from "./parse";

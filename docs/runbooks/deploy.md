@@ -157,7 +157,13 @@ deploy/scripts/ssm-run.sh 'kubectl -n kube-system logs deploy/traefik | grep -i 
 
 Certyfikat Let's Encrypt pojawia się przy pierwszym wejściu na nowy host i wymaga otwartego portu 80 (wyzwanie HTTP-01).
 
-Sesje gry żyją w pamięci poda ([ADR-0006](../adr/0006-serwer-zrodlem-prawdy.md)): każdy deploy i restart poda kończy trwające gry. Klienci łączą się ponownie sami i zaczynają nową grę.
+Sesje gry i pokoje 1v1 żyją w pamięci poda ([ADR-0006](../adr/0006-serwer-zrodlem-prawdy.md), [spec 007](../specs/007-1v1.md)). Deploy dogrywa trwające mecze: nowy pod startuje obok starego (`maxSurge: 1`), a stary po `SIGTERM` przestaje być `ready` (`/ready` → 503), zamyka pokoje bez meczu, rozłącza graczy spoza meczów (łączą się ponownie, już z nowym podem) i czeka na koniec meczów najwyżej 280 s (`terminationGracePeriodSeconds: 300`). Gry singleplayer i pokoje bez meczu przepadają jak wcześniej: klient zaczyna od nowa. Przebieg widać w logu starego poda (`draining`, potem `drained, shutting down` z liczbą niedokończonych meczów):
+
+```sh
+deploy/scripts/ssm-run.sh 'kubectl -n tetris-prod get pods; kubectl -n tetris-prod logs <stary-pod> | grep drain'
+```
+
+Restart poda bez deployu (awaria, OOM) kończy także trwające mecze.
 
 ## 5. Publiczny prod (M4)
 

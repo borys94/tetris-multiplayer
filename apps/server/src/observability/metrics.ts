@@ -90,6 +90,34 @@ export const ticksDropped = new Counter({
   registers,
 });
 
+/** Część obiegu pętli przypadająca na pokoje 1v1 (spec 007); całość mierzy `tickDuration`. */
+export const roomTickDuration = new Histogram({
+  name: "blockfall_room_tick_seconds",
+  help: "Czas przesunięcia wszystkich pokoi w jednym obiegu pętli gry",
+  buckets: [0.0005, 0.001, 0.002, 0.004, 0.008, 0.0167, 0.033, 0.1],
+  registers,
+});
+
+export const matchesFinished = new Counter({
+  name: "blockfall_matches_finished_total",
+  help: "Zakończone mecze 1v1 według powodu przegranej",
+  labelNames: ["reason"] as const,
+  registers,
+});
+
+export const garbageLines = new Counter({
+  name: "blockfall_garbage_lines_total",
+  help: "Linie śmieci wysłane przeciwnikom w meczach 1v1",
+  registers,
+});
+
+export const wsSentBytes = new Counter({
+  name: "blockfall_ws_sent_bytes_total",
+  help: "Bajty wysłane przez WebSocket według typu wiadomości",
+  labelNames: ["type"] as const,
+  registers,
+});
+
 export const logins = new Counter({
   name: "blockfall_logins_total",
   help: "Próby logowania według wyniku",
@@ -111,7 +139,8 @@ export const registrations = new Counter({
 for (const player of ["guest", "user"]) gamesFinished.inc({ player }, 0);
 for (const result of ["success", "failure", "locked", "disabled"]) logins.inc({ result }, 0);
 for (const code of ["invalid", "rate_limited"]) wsErrors.inc({ code }, 0);
-for (const reason of ["origin", "ip_limit"]) wsRejected.inc({ reason }, 0);
+for (const reason of ["origin", "ip_limit", "draining"]) wsRejected.inc({ reason }, 0);
+for (const reason of ["topout", "left", "timeout"]) matchesFinished.inc({ reason }, 0);
 
 /** Liczniki, których wartość odczytujemy w chwili zbierania metryk. */
 export function trackGauge(name: string, help: string, read: () => number): void {
@@ -122,6 +151,23 @@ export function trackGauge(name: string, help: string, read: () => number): void
     registers,
     collect() {
       this.set(read());
+    },
+  });
+}
+
+/** Liczba pokoi 1v1 według stanu i widoczności (spec 007), odczytywana przy zbieraniu metryk. */
+export function trackRooms(
+  read: () => { state: string; visibility: string; count: number }[],
+): void {
+  const name = "blockfall_rooms";
+  registry.removeSingleMetric(name);
+  new Gauge({
+    name,
+    help: "Otwarte pokoje 1v1 według stanu i widoczności",
+    labelNames: ["state", "visibility"] as const,
+    registers,
+    collect() {
+      for (const { state, visibility, count } of read()) this.set({ state, visibility }, count);
     },
   });
 }
@@ -159,7 +205,7 @@ export function statusClass(status: number): string {
  * `unmatched`, żeby losowe ścieżki nie tworzyły nowych serii. Reszta to pliki gry.
  */
 export function routeLabel(path: string, status: number): string {
-  if (path === "/health") return "/health";
+  if (path === "/health" || path === "/ready") return path;
   if (!path.startsWith("/api/") && path !== "/api") return "static";
   if (status === 404) return "unmatched";
   return path.replace(/\/\d+(?=\/|$)/g, "/:id");

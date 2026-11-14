@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { hashPassword, temporaryPassword } from "../auth/passwords";
 import { deleteGame, userGames } from "../db/games";
+import { listMatches } from "../db/matches";
 import type { Db } from "../db/pool";
 import { deleteUserSessions } from "../db/sessions";
 import {
@@ -11,6 +12,7 @@ import {
   setRole,
   type Role,
 } from "../db/users";
+import type { RoomInfo } from "../rooms/room";
 import { requireAdmin } from "./middleware";
 
 const MAX_QUERY = 20;
@@ -43,8 +45,13 @@ function readChanges(body: unknown): UserChanges | null {
   return Object.keys(changes).length > 0 ? changes : null;
 }
 
-/** Panel admina (R4); dostęp tylko z rolą `admin`, sprawdzaną na serwerze. */
-export function adminRouter(db: Db): Router {
+/** Źródło pokoi w pamięci serwera (spec 007); bez niego lista jest pusta. */
+export interface RoomsSource {
+  list(): RoomInfo[];
+}
+
+/** Panel admina (spec 005 R4, spec 007 R5); dostęp tylko z rolą `admin`, sprawdzaną na serwerze. */
+export function adminRouter(db: Db, rooms?: RoomsSource): Router {
   const router = Router();
   router.use(requireAdmin);
 
@@ -93,6 +100,20 @@ export function adminRouter(db: Db): Router {
     const id = idParam(req, res);
     if (id === null) return;
     res.json({ games: await userGames(db, id) });
+  });
+
+  router.get("/rooms", (_req, res) => {
+    res.json({ rooms: rooms?.list() ?? [] });
+  });
+
+  router.get("/matches", async (req, res) => {
+    const query = typeof req.query.q === "string" ? req.query.q.trim().slice(0, MAX_QUERY) : "";
+    const before = Number(req.query.before);
+    const matches = await listMatches(db, {
+      query,
+      ...(Number.isSafeInteger(before) && before > 0 ? { before } : {}),
+    });
+    res.json({ matches });
   });
 
   router.delete("/games/:id", async (req, res) => {

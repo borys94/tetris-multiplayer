@@ -5,6 +5,7 @@ import {
   ghostPiece,
   pieceCells,
   shapeCells,
+  type Cell,
   type GameState,
   type PieceType,
 } from "@tetris/game-core";
@@ -26,6 +27,9 @@ export const PIECE_COLORS: Readonly<Record<PieceType, string>> = {
   J: "#2dd4bf",
   L: "#f87171",
 };
+
+/** Kolory komórek planszy: klocki i szare linie śmieci (spec 007). */
+const CELL_COLORS: Readonly<Record<NonNullable<Cell>, string>> = { ...PIECE_COLORS, G: "#6b7280" };
 
 const BOARD_BACKGROUND = "#111827";
 const GRID_COLOR = "#1f2937";
@@ -69,7 +73,10 @@ function drawGrid(ctx: CanvasRenderingContext2D) {
 }
 
 /** Rysuje widoczną część planszy (bez ukrytych wierszy), ghost piece i aktywny klocek. */
-export function drawBoard(ctx: CanvasRenderingContext2D, state: GameState): void {
+export function drawBoard(
+  ctx: CanvasRenderingContext2D,
+  state: Pick<GameState, "board" | "active" | "status">,
+): void {
   ctx.fillStyle = BOARD_BACKGROUND;
   ctx.fillRect(0, 0, BOARD_PIXEL_WIDTH, BOARD_PIXEL_HEIGHT);
   drawGrid(ctx);
@@ -77,7 +84,7 @@ export function drawBoard(ctx: CanvasRenderingContext2D, state: GameState): void
   state.board.forEach((row, y) => {
     if (y < HIDDEN_ROWS) return;
     row.forEach((cell, x) => {
-      if (cell) drawCell(ctx, x, y - HIDDEN_ROWS, CELL_SIZE, PIECE_COLORS[cell]);
+      if (cell) drawCell(ctx, x, y - HIDDEN_ROWS, CELL_SIZE, CELL_COLORS[cell]);
     });
   });
 

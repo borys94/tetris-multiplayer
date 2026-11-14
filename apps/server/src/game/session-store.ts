@@ -1,7 +1,7 @@
 import { randomBytes, timingSafeEqual } from "node:crypto";
-import { TICKS_PER_SECOND } from "@tetris/game-core";
 import { gamesFinished, tickDuration, ticksDropped } from "../observability/metrics";
 import { Session, type GameOver, type SessionOptions } from "./session";
+import { startTickLoop } from "./tick-loop";
 
 export interface SessionStoreOptions extends SessionOptions {
   maxSessions: number;
@@ -10,10 +10,6 @@ export interface SessionStoreOptions extends SessionOptions {
   /** Koniec gry w dowolnej sesji (np. zapis wyniku zalogowanego gracza). */
   onGameOver?: (session: Session, result: GameOver) => void;
 }
-
-const TICK_MS = 1000 / TICKS_PER_SECOND;
-/** Limit nadrabiania ticków po przycięciu pętli zdarzeń, żeby nie przewinąć gier. */
-const MAX_CATCH_UP_TICKS = 30;
 
 function randomId(): string {
   return randomBytes(16).toString("base64url");
@@ -88,24 +84,25 @@ export class SessionStore {
     }
   }
 
-  /** Uruchamia pętlę czasu rzeczywistego; zwraca funkcję, która ją zatrzymuje. */
-  start(): () => void {
-    let last = this.now();
-    let accumulator = 0;
-    const loop = setInterval(() => {
-      const now = this.now();
-      accumulator += now - last;
-      last = now;
-      const ticks = Math.floor(accumulator / TICK_MS);
-      accumulator -= ticks * TICK_MS;
-      if (ticks > MAX_CATCH_UP_TICKS) ticksDropped.inc(ticks - MAX_CATCH_UP_TICKS);
-      const stopTimer = tickDuration.startTimer();
-      this.advance(Math.min(ticks, MAX_CATCH_UP_TICKS));
-      stopTimer();
-    }, TICK_MS / 2);
+  /**
+   * Uruchamia pętlę czasu rzeczywistego; `alsoAdvance` (np. pokoje 1v1) liczy się w tym samym
+   * obiegu, więc `blockfall_tick_duration_seconds` i alert wolnego ticka obejmują całą grę.
+   * Zwraca funkcję, która zatrzymuje pętlę.
+   */
+  start(alsoAdvance?: (ticks: number) => void): () => void {
+    const stopLoop = startTickLoop(
+      this.now,
+      (ticks) => {
+        const stopTimer = tickDuration.startTimer();
+        this.advance(ticks);
+        alsoAdvance?.(ticks);
+        stopTimer();
+      },
+      (dropped) => ticksDropped.inc(dropped),
+    );
     const sweep = setInterval(() => this.expire(), 1000);
     return () => {
-      clearInterval(loop);
+      stopLoop();
       clearInterval(sweep);
     };
   }

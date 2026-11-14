@@ -6,10 +6,11 @@ import { runCli } from "./cli";
 import { loadConfig } from "./config";
 import { createPool, migrate, type Db } from "./db/pool";
 import { deleteExpiredSessions } from "./db/sessions";
-import { authenticateWebSocket, saveGameResult } from "./game/accounts";
+import { authenticateWebSocket, saveGameResult, saveMatchResult } from "./game/accounts";
 import { SessionStore } from "./game/session-store";
 import { log } from "./observability/logger";
-import { createMetricsServer, trackGauge, trackPool } from "./observability/metrics";
+import { RoomStore } from "./rooms/room-store";
+import { createMetricsServer, trackGauge, trackPool, trackRooms } from "./observability/metrics";
 import { attachWebSocket } from "./ws";
 
 /** Przy pierwszym deployu Postgres może startować dłużej niż serwer: ponawiamy przez ok. 2 min. */
@@ -44,12 +45,25 @@ async function main(): Promise<void> {
     process.exit(code);
   }
 
+  const saveMatch = saveMatchResult(db);
+  const rooms = new RoomStore({
+    bufferTicks: config.bufferTicks,
+    maxAheadTicks: TICKS_PER_SECOND,
+    ttlMs: config.sessionTtlMs,
+    maxRooms: config.maxRooms,
+    onMatchEnd: (result) => void saveMatch(result),
+  });
   const api = createApi({
     db,
+    rooms,
     ...(config.allowedOrigin ? { allowedOrigin: config.allowedOrigin } : {}),
     secureCookies: config.secureCookies,
   });
-  const app = createApp(staticDir ? { version, staticDir, api } : { version, api });
+  let draining = false;
+  const isReady = () => !draining;
+  const app = createApp(
+    staticDir ? { version, staticDir, api, isReady } : { version, api, isReady },
+  );
   const server = createServer(app);
 
   const saveResult = saveGameResult(db);
@@ -60,7 +74,9 @@ async function main(): Promise<void> {
     ttlMs: config.sessionTtlMs,
     onGameOver: (session, result) => void saveResult(session, result),
   });
-  const stopLoop = store.start();
+  // Jedna pętla dla sesji i pokoi: alert wolnego ticka obejmuje też mecze 1v1.
+  const stopLoop = store.start((ticks) => rooms.advance(ticks));
+  trackRooms(() => rooms.countByState());
   trackGauge(
     "blockfall_game_sessions",
     "Sesje gry w pamięci (także czekające na wznowienie)",
@@ -71,8 +87,9 @@ async function main(): Promise<void> {
   metricsServer?.listen(config.metricsPort, () => {
     log.info({ port: config.metricsPort }, "metrics listening");
   });
-  const closeWs = attachWebSocket(server, {
+  const ws = attachWebSocket(server, {
     store,
+    rooms,
     ...(config.allowedOrigin ? { allowedOrigin: config.allowedOrigin } : {}),
     trustProxy: config.trustProxy,
     maxConnectionsPerIp: config.maxConnectionsPerIp,
@@ -96,19 +113,36 @@ async function main(): Promise<void> {
     log.info({ port: config.port, bufferTicks: config.bufferTicks }, "server listening");
   });
 
-  // Kubernetes wysyła SIGTERM przed zatrzymaniem poda: zamykamy WebSockety
-  // (klienci połączą się ponownie), kończymy trwające żądania i wychodzimy.
-  for (const signal of ["SIGTERM", "SIGINT"] as const) {
-    process.on(signal, () => {
-      clearInterval(cleanup);
-      stopLoop();
-      closeWs();
-      metricsServer?.close();
-      server.close(() => {
-        void db.end().finally(() => process.exit(0));
-      });
+  const shutdown = () => {
+    clearInterval(cleanup);
+    stopLoop();
+    ws();
+    metricsServer?.close();
+    server.close(() => {
+      void db.end().finally(() => process.exit(0));
     });
-  }
+  };
+
+  // Deploy (spec 007): Kubernetes wysyła SIGTERM, gdy nowy pod jest już gotowy. Stary pod
+  // przestaje być `ready`, odsyła graczy spoza meczów do nowego (zamknięcie WebSocketu
+  // i ponowne połączenie) i czeka, aż skończą się trwające mecze, najdłużej DRAIN_TIMEOUT_MS.
+  // Ctrl+C (SIGINT) i drugi SIGTERM zamykają serwer od razu.
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", () => {
+    if (draining) return shutdown();
+    draining = true;
+    rooms.drain();
+    ws.drain();
+    const deadline = Date.now() + config.drainTimeoutMs;
+    log.info({ matches: rooms.playing, timeoutMs: config.drainTimeoutMs }, "draining");
+    const check = setInterval(() => {
+      ws.drain();
+      if (rooms.playing > 0 && Date.now() < deadline) return;
+      clearInterval(check);
+      log.info({ unfinishedMatches: rooms.playing }, "drained, shutting down");
+      shutdown();
+    }, 1000);
+  });
 }
 
 main().catch((error: unknown) => {

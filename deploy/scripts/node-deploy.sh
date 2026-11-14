@@ -45,6 +45,7 @@ workdir=$(mktemp -d)
 trap 'rm -rf "$workdir"' EXIT
 helm pull "oci://$registry/charts/tetris" --version "0.0.0-g$version" --untar -d "$workdir"
 
+# Timeout z zapasem: stary pod może dogrywać mecze do 5 min (spec 007), a SSM ma limit 10 min.
 helm upgrade --install tetris "$workdir/tetris" \
   --namespace "$namespace" \
   --values "$workdir/tetris/values-$env.yaml" \
@@ -54,6 +55,6 @@ helm upgrade --install tetris "$workdir/tetris" \
   --set backup.bucket="tetris-backups-${account}" \
   "${auth_args[@]}" \
   --rollback-on-failure \
-  --timeout 3m
+  --timeout 7m
 
 echo "Wdrożono $version na https://$host (basic auth: $auth_enabled)"

@@ -1,7 +1,7 @@
 import { once } from "node:events";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
-import type { ServerMessage } from "@tetris/protocol";
+import { PROTOCOL_VERSION, type ServerMessage } from "@tetris/protocol";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { WebSocket } from "ws";
@@ -61,7 +61,7 @@ async function playUntilOver(cookie?: string) {
   return new Promise<Extract<ServerMessage, { type: "over" }>>((resolve, reject) => {
     let seq = 0;
     let timer: NodeJS.Timeout | undefined;
-    ws.on("open", () => ws.send(JSON.stringify({ type: "hello", protocol: 1 })));
+    ws.on("open", () => ws.send(JSON.stringify({ type: "hello", protocol: PROTOCOL_VERSION })));
     ws.on("message", (data: Buffer) => {
       const msg = JSON.parse(data.toString()) as ServerMessage;
       if (msg.type === "game") {

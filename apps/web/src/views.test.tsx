@@ -1,7 +1,7 @@
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
-import type { ConnectFn } from "./components/Game";
+import type { ConnectFn } from "./net/server";
 import { GUEST, fakeApi } from "./test/fake-api";
 
 const PLAYER = { id: 2, username: "pawn", role: null };

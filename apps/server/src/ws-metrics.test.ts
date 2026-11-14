@@ -1,7 +1,7 @@
 import { once } from "node:events";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
-import type { ServerMessage } from "@tetris/protocol";
+import { PROTOCOL_VERSION, type ServerMessage } from "@tetris/protocol";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { WebSocket } from "ws";
 import { metricValue } from "../test/metrics";
@@ -110,7 +110,7 @@ describe("WebSocket metrics", () => {
     };
 
     const client = await connect();
-    client.send({ type: "hello", protocol: 1 });
+    client.send({ type: "hello", protocol: PROTOCOL_VERSION });
     await client.next("welcome");
     client.send({ type: "newGame" });
     client.send("{not json");
@@ -122,7 +122,7 @@ describe("WebSocket metrics", () => {
 
     for (let i = 0; i < 2; i++) {
       const other = await connect({ "x-forwarded-for": `10.2.0.${i}` });
-      other.send({ type: "hello", protocol: 1 });
+      other.send({ type: "hello", protocol: PROTOCOL_VERSION });
       await other.next(i === 0 ? "welcome" : "error");
     }
     expect(await metricValue(serverFull)).toBe(before.full + 1);

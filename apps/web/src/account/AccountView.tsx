@@ -1,5 +1,13 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { api, errorMessage, formatDate, type SavedGame } from "../api";
+import {
+  MATCH_END_LABELS,
+  api,
+  errorMessage,
+  formatDate,
+  formatDuration,
+  type PlayerMatch,
+  type SavedGame,
+} from "../api";
 import styles from "../styles/views.module.scss";
 import { useAccount } from "./AccountContext";
 
@@ -130,7 +138,64 @@ function History({ active }: { active: boolean }) {
   );
 }
 
-/** Logowanie i rejestracja albo profil z historią gier (R1, R3). */
+function MatchHistory({ active }: { active: boolean }) {
+  const [matches, setMatches] = useState<PlayerMatch[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!active) return;
+    let cancelled = false;
+    api.myMatches().then(
+      (list) => !cancelled && setMatches(list),
+      (err: unknown) => !cancelled && setError(errorMessage(err)),
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [active]);
+
+  return (
+    <section className={styles.card}>
+      <h2>Twoje mecze 1v1</h2>
+      {error && <p className={styles.error}>{error}</p>}
+      {matches?.length === 0 && (
+        <p className={styles.muted}>Nie masz jeszcze rozegranych meczów.</p>
+      )}
+      {matches && matches.length > 0 && (
+        <div className={styles.tableWrap}>
+          <table className={styles.table} aria-label="Mecze 1v1">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Przeciwnik</th>
+                <th>Wynik</th>
+                <th className={styles.number}>Wysłane</th>
+                <th className={styles.number}>Otrzymane</th>
+                <th className={styles.number}>Czas</th>
+              </tr>
+            </thead>
+            <tbody>
+              {matches.map((match) => (
+                <tr key={match.id}>
+                  <td>{formatDate(match.endedAt)}</td>
+                  <td>{match.opponent}</td>
+                  <td title={MATCH_END_LABELS[match.reason]}>
+                    {match.won ? "Wygrana" : "Przegrana"}
+                  </td>
+                  <td className={styles.number}>{match.linesSent}</td>
+                  <td className={styles.number}>{match.linesReceived}</td>
+                  <td className={styles.number}>{formatDuration(match.ticks)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/** Logowanie i rejestracja albo profil z historią gier (spec 005 R1, R3) i meczów (spec 007 R5). */
 export function AccountView({ active }: { active: boolean }) {
   const { user, logout } = useAccount();
   if (user === undefined) return null;
@@ -147,6 +212,7 @@ export function AccountView({ active }: { active: boolean }) {
         </div>
       </section>
       <History active={active} />
+      <MatchHistory active={active} />
     </div>
   );
 }

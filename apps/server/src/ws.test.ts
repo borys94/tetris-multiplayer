@@ -2,7 +2,7 @@ import { once } from "node:events";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { createGame } from "@tetris/game-core";
-import { MAX_MESSAGE_BYTES, type ServerMessage } from "@tetris/protocol";
+import { MAX_MESSAGE_BYTES, PROTOCOL_VERSION, type ServerMessage } from "@tetris/protocol";
 import { afterEach, describe, expect, it } from "vitest";
 import { WebSocket } from "ws";
 import { SessionStore } from "./game/session-store";
@@ -92,7 +92,7 @@ describe("WebSocket /ws", () => {
   it("plays a game: hello → welcome + paused game, inputs → snapshots (S1)", async () => {
     await start();
     const client = await connect();
-    client.send({ type: "hello", protocol: 1 });
+    client.send({ type: "hello", protocol: PROTOCOL_VERSION });
 
     const welcome = await client.next("welcome");
     const game = await client.next("game");
@@ -111,7 +111,7 @@ describe("WebSocket /ws", () => {
   it("resumes the same paused game after reconnecting (S4)", async () => {
     await start();
     const first = await connect();
-    first.send({ type: "hello", protocol: 1 });
+    first.send({ type: "hello", protocol: PROTOCOL_VERSION });
     const { sessionId, token } = await first.next("welcome");
     first.send({ type: "resume" });
     first.send({ type: "input", seq: 1, tick: 0, actions: ["left"] });
@@ -122,7 +122,7 @@ describe("WebSocket /ws", () => {
     await once(first.ws, "close");
 
     const second = await connect();
-    second.send({ type: "hello", protocol: 1, resume: { sessionId, token } });
+    second.send({ type: "hello", protocol: PROTOCOL_VERSION, resume: { sessionId, token } });
     const game = await second.next("game");
 
     expect(game).toEqual({ type: "game", tick: 5, state: paused.state, paused: true });
@@ -131,17 +131,21 @@ describe("WebSocket /ws", () => {
   it("expires sessions after the TTL and rejects a wrong token (S4)", async () => {
     await start();
     const first = await connect();
-    first.send({ type: "hello", protocol: 1 });
+    first.send({ type: "hello", protocol: PROTOCOL_VERSION });
     const { sessionId, token } = await first.next("welcome");
     first.ws.close();
     await once(first.ws, "close");
 
     const second = await connect();
-    second.send({ type: "hello", protocol: 1, resume: { sessionId, token: "x".repeat(22) } });
+    second.send({
+      type: "hello",
+      protocol: PROTOCOL_VERSION,
+      resume: { sessionId, token: "x".repeat(22) },
+    });
     expect(await second.next("error")).toEqual({ type: "error", code: "session_expired" });
 
     now += 60_000;
-    second.send({ type: "hello", protocol: 1, resume: { sessionId, token } });
+    second.send({ type: "hello", protocol: PROTOCOL_VERSION, resume: { sessionId, token } });
     expect(await second.next("error")).toEqual({ type: "error", code: "session_expired" });
     expect(store.size).toBe(0);
   });
@@ -149,11 +153,11 @@ describe("WebSocket /ws", () => {
   it("hands a session over to a new connection and closes the old one", async () => {
     await start();
     const first = await connect();
-    first.send({ type: "hello", protocol: 1 });
+    first.send({ type: "hello", protocol: PROTOCOL_VERSION });
     const { sessionId, token } = await first.next("welcome");
 
     const second = await connect();
-    second.send({ type: "hello", protocol: 1, resume: { sessionId, token } });
+    second.send({ type: "hello", protocol: PROTOCOL_VERSION, resume: { sessionId, token } });
     await second.next("game");
     const [code] = (await once(first.ws, "close")) as [number];
 
@@ -186,7 +190,7 @@ describe("WebSocket /ws", () => {
   it("rate-limits message floods (S3)", async () => {
     await start();
     const client = await connect();
-    client.send({ type: "hello", protocol: 1 });
+    client.send({ type: "hello", protocol: PROTOCOL_VERSION });
     for (let i = 0; i < 15; i++) client.send({ type: "pause", tick: 0 });
 
     expect(await client.next("error")).toEqual({ type: "error", code: "rate_limited" });
@@ -204,11 +208,11 @@ describe("WebSocket /ws", () => {
     await start();
     for (let i = 0; i < 2; i++) {
       const client = await connect({ "x-forwarded-for": `10.0.0.${i}` });
-      client.send({ type: "hello", protocol: 1 });
+      client.send({ type: "hello", protocol: PROTOCOL_VERSION });
       await client.next("welcome");
     }
     const third = await connect({ "x-forwarded-for": "10.0.0.9" });
-    third.send({ type: "hello", protocol: 1 });
+    third.send({ type: "hello", protocol: PROTOCOL_VERSION });
 
     expect(await third.next("error")).toEqual({ type: "error", code: "server_full" });
   });

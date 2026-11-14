@@ -3,6 +3,8 @@ import {
   ACTIONS,
   MAX_ACTIONS_PER_INPUT,
   MAX_MESSAGE_BYTES,
+  ROOM_CODE_ALPHABET,
+  ROOM_CODE_LENGTH,
   type ClientMessage,
   type ServerMessage,
 } from "./messages";
@@ -29,6 +31,13 @@ function isCounter(value: unknown, min: number): value is number {
 
 function isId(value: unknown): value is string {
   return typeof value === "string" && ID_PATTERN.test(value);
+}
+
+/** Kod pokoju bez względu na wielkość liter; zwraca go wielkimi literami. */
+function parseRoomCode(value: unknown): string | null {
+  if (typeof value !== "string" || value.length !== ROOM_CODE_LENGTH) return null;
+  const code = value.toUpperCase();
+  return [...code].every((char) => ROOM_CODE_ALPHABET.includes(char)) ? code : null;
 }
 
 function isAction(value: unknown): value is Action {
@@ -66,7 +75,19 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     }
     case "newGame":
     case "resume":
+    case "watchRooms":
+    case "unwatchRooms":
+    case "leaveRoom":
+    case "ready":
       return { type: msg.type };
+    case "createRoom":
+      return msg.visibility === "public" || msg.visibility === "private"
+        ? { type: "createRoom", visibility: msg.visibility }
+        : null;
+    case "joinRoom": {
+      const code = parseRoomCode(msg.code);
+      return code ? { type: "joinRoom", code } : null;
+    }
     case "input": {
       const actions = parseActions(msg.actions);
       if (!isCounter(msg.seq, 1) || !isCounter(msg.tick, 0) || !actions) return null;
@@ -85,6 +106,12 @@ const SERVER_TYPES: ReadonlySet<unknown> = new Set([
   "snapshot",
   "over",
   "error",
+  "rooms",
+  "room",
+  "roomClosed",
+  "match",
+  "matchSnapshot",
+  "result",
 ]);
 
 /** Odczytuje wiadomość od serwera; serwerowi ufamy, więc sprawdzamy tylko JSON i typ. */

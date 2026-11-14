@@ -15,11 +15,13 @@ export {
   createGame,
   ghostPiece,
   previewQueue,
+  receiveGarbage,
   tick,
   type Action,
   type GameState,
   type GameStatus,
 } from "./game";
+export { GARBAGE_CELL, attackLines, garbageLines, randomHole, type GarbageBatch } from "./garbage";
 export {
   PIECE_TYPES,
   pieceCells,
