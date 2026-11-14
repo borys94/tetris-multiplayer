@@ -18,7 +18,7 @@ Od M4 gra jest publiczna, a od M5 wyniki trafiają do rankingu ([ADR-0003](0003-
 
 Wybieramy **opcję 3**:
 
-- czas gry wyznacza zegar serwera; symulacja serwera idzie za zegarem o bufor wejścia, żeby akcje z typowym RTT trafiały dokładnie na tick, na którym gracz je wykonał. Bufor jest parametrem konfiguracji, domyślnie 150 ms. Większy bufor eliminuje korekty u graczy z wyższym RTT, ale o tyle samo wydłuża okno, w którym zmodyfikowany klient może opóźnić akcję i podpisać ją wcześniejszym tickiem (przy lock delay 500 ms: 150 ms to ok. 1/3, 300 ms ponad połowa);
+- czas gry wyznacza zegar serwera, uruchamiany po odebraniu `resume` od klienta (klient rusza swój zegar w chwili wysłania). Symulacja serwera idzie za zegarem o bufor wejścia, więc akcja trafia dokładnie na tick, na którym gracz ją wykonał, dopóki jej opóźnienie nie wzrośnie o więcej niż bufor względem opóźnienia `resume`. O korektach decydują więc wahania opóźnienia (jitter, retransmisje), a nie sam RTT. Bufor jest parametrem konfiguracji, domyślnie 150 ms. Większy bufor eliminuje korekty przy większych wahaniach, ale o tyle samo wydłuża okno, w którym zmodyfikowany klient może opóźnić akcję i podpisać ją wcześniejszym tickiem (przy lock delay 500 ms: 150 ms to ok. 1/3, 300 ms ponad połowa);
 - akcja spóźniona ponad bufor trafia na bieżący tick serwera (nie da się cofnąć czasu), a akcja z przyszłości jest odrzucana (nie da się go przyspieszyć);
 - klient nigdy nie wysyła stanu ani wyniku; wynik, game over i ranking (M5) biorą się wyłącznie ze stanu serwera;
 - seed jest jawny dla klienta, bo potrzebuje go do przewidywania. Akceptujemy, że zmodyfikowany klient może poznać kolejność klocków dalej niż podgląd 3 następnych.
@@ -27,17 +27,17 @@ Wybieramy **opcję 3**:
 
 **Pozytywne**
 
-- Wynik jest wiarygodny, a gra przy RTT do wartości bufora (domyślnie 150 ms) działa jak lokalna.
+- Wynik jest wiarygodny, a gra przy stabilnym łączu działa jak lokalna, także przy wysokim RTT.
 - Ten sam model (zegar serwera, akcje z tickiem, snapshoty) przenosi się na pokoje w M7.
 
 **Negatywne**
 
 - Klient musi trzymać historię stanów i akcji oraz umieć odtworzyć grę od snapshotu.
 - Sesje żyją w pamięci jednego procesu: restart poda kończy trwające gry, a skalowanie wymaga sticky sessions albo przeniesienia sesji (M7).
-- Przy RTT powyżej bufora gracz widzi korekty pozycji klocka.
+- Gdy opóźnienie skoczy o więcej niż bufor (np. retransmisja na słabym Wi-Fi), gracz widzi korektę pozycji klocka.
 
 ## Kiedy wrócić do decyzji
 
 - Ranking (M5) pokaże wyniki możliwe tylko dzięki znajomości dalszej kolejki klocków: wtedy serwer wysyła kolejkę zamiast seeda.
-- Metryki (M6) pokażą rozkład RTT graczy: wtedy rewidujemy domyślne 150 ms (np. 200–250 ms, jeśli wielu graczy ma RTT powyżej bufora).
+- Metryki (M6) pokażą wahania opóźnienia i liczbę korekt u graczy: wtedy rewidujemy domyślne 150 ms (np. 200–250 ms, jeśli korekty są częste).
 - W M7 bufor dla pokoi może być inny niż dla singleplayera, bo opóźnia też linie śmieci między graczami.

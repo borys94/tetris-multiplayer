@@ -1,6 +1,6 @@
 # Runbook: deploy na AWS
 
-Infrastruktura i deploy z [spec 003](../specs/003-deploy-aws.md): serwer EC2 z k3s w eu-central-1, beta i prod w jednym klastrze, deploy przez SSM i Helm ([ADR-0005](../adr/0005-deploy-przez-ssm-i-helm.md)).
+Infrastruktura i deploy z [spec 003](../specs/003-deploy-aws.md): serwer EC2 z k3s w eu-central-1, beta i prod w jednym klastrze, deploy przez SSM i Helm ([ADR-0005](../adr/0005-deploy-przez-ssm-i-helm.md)). Od M4 ([spec 004](../specs/004-serwer-zrodlem-prawdy.md)) prod jest publiczny, a beta zostaje za basic auth.
 
 Wszystkie komendy uruchamiamy z katalogu głównego repo, z ustawionym regionem:
 
@@ -80,17 +80,16 @@ deploy/scripts/ssm-run.sh 'kubectl get nodes; cloud-init status'
 
 Oczekiwany wynik: węzeł `Ready` i `status: done`.
 
-### 1.5. Hasło basic auth (ADR-0003)
+### 1.5. Hasło basic auth bety (ADR-0003)
 
-Ustaw login i hasło dla obu środowisk (podmień `HASLO`):
+Ustaw login i hasło dla bety (podmień `HASLO`). Prod od M4 jest publiczny i hasła nie potrzebuje (sekcja 5).
 
 ```sh
 deploy/scripts/ssm-run.sh '
-for ns in tetris-beta tetris-prod; do
-  kubectl create namespace $ns --dry-run=client -o yaml | kubectl apply -f -
-  htpasswd -nbB tetris "HASLO" | kubectl -n $ns create secret generic basic-auth \
-    --from-file=users=/dev/stdin --dry-run=client -o yaml | kubectl apply -f -
-done'
+ns=tetris-beta
+kubectl create namespace $ns --dry-run=client -o yaml | kubectl apply -f -
+htpasswd -nbB tetris "HASLO" | kubectl -n $ns create secret generic basic-auth \
+  --from-file=users=/dev/stdin --dry-run=client -o yaml | kubectl apply -f -'
 ```
 
 Hasło trafia do historii komend SSM w koncie AWS (widocznej dla administratorów konta), ale nie do repo ani logów GitHuba. Zmiana hasła: uruchom tę samą komendę z nowym hasłem.
@@ -105,7 +104,7 @@ Merge do `main` wdraża betę automatycznie. Bez nowego merge'a: **Actions → D
 | ------------------ | ------------------------------------------------------------------------------------------------------------ |
 | Deploy na betę     | Merge PR do `main`                                                                                           |
 | Deploy na prod     | **Actions → Deploy → Run workflow**: `prod` + SHA działający na becie → akceptacja w środowisku `production` |
-| Sprawdzenie wersji | `curl -u tetris:HASLO https://beta.<IP>.sslip.io/health`                                                     |
+| Sprawdzenie wersji | Beta: `curl -u tetris:HASLO https://beta.<IP>.sslip.io/health`; prod: `curl https://<IP>.sslip.io/health`    |
 | Rollback           | **Deploy → Run workflow** z SHA poprzedniej wersji. Nieudany deploy cofa się sam (`--rollback-on-failure`)   |
 | Adresy             | `cd infra/terraform/main && tofu output`                                                                     |
 
@@ -142,3 +141,46 @@ deploy/scripts/ssm-run.sh 'kubectl -n kube-system logs deploy/traefik | grep -i 
 ```
 
 Certyfikat Let's Encrypt pojawia się przy pierwszym wejściu na nowy host i wymaga otwartego portu 80 (wyzwanie HTTP-01).
+
+Sesje gry żyją w pamięci poda ([ADR-0006](../adr/0006-serwer-zrodlem-prawdy.md)): każdy deploy i restart poda kończy trwające gry. Klienci łączą się ponownie sami i zaczynają nową grę.
+
+## 5. Publiczny prod (M4)
+
+Prod jest publiczny, bo `values-prod.yaml` ma `basicAuth.enabled: false` (ADR-0003). Beta zostaje zamknięta na stałe.
+
+**Sprawdzenie po deployu (scenariusz S5 ze spec 004):**
+
+```sh
+IP=$(cd infra/terraform/main && tofu output -raw public_ip)
+curl -s -o /dev/null -w '%{http_code}\n' "https://$IP.sslip.io/"        # 200
+curl -s -o /dev/null -w '%{http_code}\n' "https://beta.$IP.sslip.io/"   # 401
+# Upgrade do WebSocketu z obcym Origin jest odrzucany: 403
+curl -s -o /dev/null -w '%{http_code}\n' --http1.1 -H 'Connection: Upgrade' -H 'Upgrade: websocket' \
+  -H 'Sec-WebSocket-Version: 13' -H 'Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==' \
+  -H 'Origin: https://evil.example' "https://$IP.sslip.io/ws"
+```
+
+Potem zagraj na `https://<IP>.sslip.io` w przeglądarce. Status w panelu powinien pokazywać „Połączono”.
+
+**Limit połączeń na IP** (5 na adres) działa tylko wtedy, gdy Traefik widzi prawdziwy adres klienta. Sprawdź to po pierwszym deployu: otwórz grę w 6 kartach. Szósta powinna dostać odmowę, a gra z innej sieci (np. z telefonu na LTE) w tym samym czasie powinna działać. Jeśli z innej sieci też nie działa, wszyscy klienci mają ten sam adres i trzeba ustawić `externalTrafficPolicy: Local` dla usługi Traefika.
+
+**Awaryjne zamknięcie prod** (np. przy incydencie) bez zmian w repo. Działa do następnego deployu prod. Najpierw utwórz Secret `basic-auth` w `tetris-prod` (komenda z 1.5 z `ns=tetris-prod`), potem:
+
+```sh
+deploy/scripts/ssm-run.sh '
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+cat <<EOF | kubectl -n tetris-prod apply -f -
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: basic-auth
+spec:
+  basicAuth:
+    secret: basic-auth
+    realm: Blockfall prod
+EOF
+kubectl -n tetris-prod annotate ingress tetris --overwrite \
+  traefik.ingress.kubernetes.io/router.middlewares=tetris-prod-basic-auth@kubernetescrd'
+```
+
+Trwałe zamknięcie: `basicAuth.enabled: true` w `values-prod.yaml`, merge i deploy prod.

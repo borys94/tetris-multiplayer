@@ -13,7 +13,7 @@ export interface Config {
   maxConnectionsPerIp: number;
 }
 
-/** Domyślny bufor wejścia; do rewizji po M6 na podstawie rozkładu RTT (ADR-0006). */
+/** Domyślny bufor wejścia; do rewizji po M6 na podstawie wahań opóźnienia (ADR-0006). */
 export const DEFAULT_INPUT_BUFFER_MS = 150;
 
 function positiveInt(env: NodeJS.ProcessEnv, name: string, fallback: number): number {
