@@ -27,6 +27,32 @@ resources:
   limits:
     memory: 192Mi
 
+# Postgres w namespace środowiska (ADR-0008); hasło generuje chart przy pierwszej instalacji.
+postgres:
+  image: postgres:17-alpine
+  storage: 2Gi
+  sharedBuffers: 32MB
+  resources:
+    requests:
+      cpu: 50m
+      memory: 96Mi
+    limits:
+      memory: 192Mi
+
+# Codzienny pg_dump do S3 (bucket z `bootstrap`, ustawiany przez skrypt deployu).
+backup:
+  enabled: true
+  schedule: "0 3 * * *"
+  bucket: ""
+  region: eu-central-1
+  awsCliImage: amazon/aws-cli:2.27.0
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+
 # Secret z kluczem `users` (format htpasswd), tworzony ręcznie według runbooka (ADR-0003).
 basicAuth:
   enabled: true

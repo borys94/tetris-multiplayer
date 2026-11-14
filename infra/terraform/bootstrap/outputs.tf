@@ -10,3 +10,8 @@ output "ecr_registry" {
 output "ecr_repositories" {
   value = { for name, repo in aws_ecr_repository.this : name => repo.repository_url }
 }
+
+output "backup_bucket" {
+  description = "Bucket na codzienne backupy Postgresa (beta/ i prod/)."
+  value       = aws_s3_bucket.backups.bucket
+}

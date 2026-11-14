@@ -4,18 +4,31 @@ import { createApi } from "./api";
 import { createApp } from "./app";
 import { runCli } from "./cli";
 import { loadConfig } from "./config";
-import { createPool, migrate } from "./db/pool";
+import { createPool, migrate, type Db } from "./db/pool";
 import { deleteExpiredSessions } from "./db/sessions";
 import { authenticateWebSocket, saveGameResult } from "./game/accounts";
 import { SessionStore } from "./game/session-store";
 import { attachWebSocket } from "./ws";
+
+/** Przy pierwszym deployu Postgres może startować dłużej niż serwer: ponawiamy przez ok. 2 min. */
+async function migrateWhenReady(db: Db): Promise<number[]> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await migrate(db);
+    } catch (error) {
+      if (attempt >= 60) throw error;
+      console.log(`database not ready (attempt ${attempt}), retrying in 2 s`);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+  }
+}
 
 async function main(): Promise<void> {
   const config = loadConfig(process.env);
   const { version, staticDir } = config;
 
   const db = createPool(config.databaseUrl);
-  const migrated = await migrate(db);
+  const migrated = await migrateWhenReady(db);
   if (migrated.length > 0) console.log(`applied migrations: ${migrated.join(", ")}`);
 
   // `node main.cjs <komenda>`: komenda administracyjna zamiast serwera.

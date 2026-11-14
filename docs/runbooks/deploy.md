@@ -1,6 +1,6 @@
 # Runbook: deploy na AWS
 
-Infrastruktura i deploy z [spec 003](../specs/003-deploy-aws.md): serwer EC2 z k3s w eu-central-1, beta i prod w jednym klastrze, deploy przez SSM i Helm ([ADR-0005](../adr/0005-deploy-przez-ssm-i-helm.md)). Od M4 ([spec 004](../specs/004-serwer-zrodlem-prawdy.md)) prod jest publiczny, a beta zostaje za basic auth.
+Infrastruktura i deploy z [spec 003](../specs/003-deploy-aws.md): serwer EC2 z k3s w eu-central-1, beta i prod w jednym klastrze, deploy przez SSM i Helm ([ADR-0005](../adr/0005-deploy-przez-ssm-i-helm.md)). Od M4 ([spec 004](../specs/004-serwer-zrodlem-prawdy.md)) prod jest publiczny, a beta zostaje za basic auth. Od M5 ([spec 005](../specs/005-konta-wyniki.md)) każde środowisko ma własnego Postgresa z backupem do S3 (sekcja 6).
 
 Wszystkie komendy uruchamiamy z katalogu głównego repo, z ustawionym regionem:
 
@@ -62,6 +62,8 @@ EOF
 ```
 
 Środowisko `production` wymaga akceptacji przed każdym deployem na prod.
+
+Bootstrap tworzy też bucket `tetris-backups-<ACCOUNT_ID>` na backupy Postgresa (retencja 30 dni).
 
 ### 1.4. Serwer z k3s
 
@@ -188,3 +190,59 @@ kubectl -n tetris-prod annotate ingress tetris --overwrite \
 ```
 
 Trwałe zamknięcie: `basicAuth.enabled: true` w `values-prod.yaml`, merge i deploy prod.
+
+## 6. Baza danych i konta (M5)
+
+Postgres działa w każdym namespace jako StatefulSet `postgres` z danymi na dysku serwera ([ADR-0008](../adr/0008-postgres-w-klastrze.md)). Hasło generuje chart przy pierwszej instalacji (Secret `postgres`, zostaje przy usunięciu release'u). Serwer aplikacji stosuje migracje przy starcie.
+
+**Pierwszy admin** (konto musi już istnieć; podmień `LOGIN`, dla bety `tetris-beta`):
+
+```sh
+deploy/scripts/ssm-run.sh 'kubectl -n tetris-prod exec deploy/tetris -- node main.cjs promote LOGIN'
+```
+
+Kolejnych adminów nadaje się w panelu (`#/admin`).
+
+**Backup:** CronJob `postgres-backup` codziennie o 03:00 (Europe/Warsaw) zapisuje `pg_dump -Fc` do `s3://tetris-backups-<ACCOUNT_ID>/<env>/<czas>.dump`. Bucket usuwa pliki po 30 dniach. Ręczny backup i lista plików:
+
+```sh
+deploy/scripts/ssm-run.sh 'kubectl -n tetris-beta create job --from=cronjob/postgres-backup backup-manual-$(date +%s)'
+deploy/scripts/ssm-run.sh 'kubectl -n tetris-beta get jobs; kubectl -n tetris-beta logs job/<nazwa-joba> -c upload'
+aws s3 ls "s3://tetris-backups-$(aws sts get-caller-identity --query Account --output text)/beta/"
+```
+
+**Test odtworzenia** (do pustej bazy obok produkcyjnej, bez przerwy w grze; podmień `PLIK`, np. `beta/2026-11-15T020000Z.dump`):
+
+```sh
+deploy/scripts/ssm-run.sh '
+ns=tetris-beta; acct=$(aws sts get-caller-identity --query Account --output text)
+aws s3 cp "s3://tetris-backups-$acct/PLIK" /tmp/restore.dump --only-show-errors
+kubectl -n $ns exec postgres-0 -- createdb -U blockfall restore_test
+kubectl -n $ns exec -i postgres-0 -- pg_restore -U blockfall -d restore_test --no-owner < /tmp/restore.dump
+for db in blockfall restore_test; do
+  echo "$db: konta, gry"
+  kubectl -n $ns exec postgres-0 -- psql -U blockfall -d $db -tAc "select (select count(*) from users), (select count(*) from games)"
+done
+kubectl -n $ns exec postgres-0 -- dropdb -U blockfall restore_test
+rm /tmp/restore.dump'
+```
+
+**Odtworzenie po awarii** zastępuje bieżące dane: najpierw zatrzymaj aplikację, potem przywróć dump, na końcu uruchom aplikację:
+
+```sh
+deploy/scripts/ssm-run.sh '
+ns=tetris-prod; acct=$(aws sts get-caller-identity --query Account --output text)
+aws s3 cp "s3://tetris-backups-$acct/PLIK" /tmp/restore.dump --only-show-errors
+kubectl -n $ns scale deploy/tetris --replicas=0
+kubectl -n $ns exec -i postgres-0 -- pg_restore -U blockfall -d blockfall --clean --if-exists --no-owner < /tmp/restore.dump
+kubectl -n $ns scale deploy/tetris --replicas=1
+rm /tmp/restore.dump'
+```
+
+Utrata dysku serwera (np. `tofu destroy` w `main`) usuwa bazy obu środowisk. Po odtworzeniu serwera i deployu przywróć ostatni dump według kroków powyżej.
+
+**Dostęp do AWS z podów:** limit hopów IMDS to 2, więc pod mógłby pobrać uprawnienia roli serwera. NetworkPolicy `block-imds` odcina IMDS wszystkim podom poza backupem. Sprawdzenie (oczekiwany wynik: `blocked`):
+
+```sh
+deploy/scripts/ssm-run.sh 'kubectl -n tetris-prod exec deploy/tetris -- node -e "fetch(\"http://169.254.169.254/latest/api/token\",{method:\"PUT\",headers:{\"X-aws-ec2-metadata-token-ttl-seconds\":\"60\"},signal:AbortSignal.timeout(3000)}).then(()=>console.log(\"OPEN\"),()=>console.log(\"blocked\"))"'
+```

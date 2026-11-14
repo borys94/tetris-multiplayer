@@ -1,0 +1,87 @@
+{{- if .Values.backup.enabled }}
+# Codzienny pg_dump do S3 (ADR-0008). Uprawnienia z roli serwera przez IMDS (limit 2 hopy);
+# tylko ten pod ma dostęp do IMDS (NetworkPolicy `block-imds`).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+  labels:
+    {{- include "tetris.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  timeZone: Europe/Warsaw
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 900
+      template:
+        metadata:
+          labels:
+            {{- include "tetris.backupLabels" . | nindent 12 }}
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          initContainers:
+            - name: dump
+              image: {{ .Values.postgres.image | quote }}
+              command: ["sh", "-c"]
+              args:
+                - pg_dump -Fc -h postgres -U blockfall -d blockfall -f /backup/blockfall.dump
+              env:
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres
+                      key: password
+              resources:
+                {{- toYaml .Values.backup.resources | nindent 16 }}
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+          containers:
+            - name: upload
+              image: {{ .Values.backup.awsCliImage | quote }}
+              command: ["sh", "-c"]
+              # `$$(...)` trafia do powłoki jako `$(...)`: Kubernetes zamienia `$$` na `$` w args.
+              args:
+                - >-
+                  aws s3 cp /backup/blockfall.dump
+                  "s3://{{ required "backup.bucket jest wymagany" .Values.backup.bucket }}/{{ .Values.environment }}/$$(date -u +%Y-%m-%dT%H%M%SZ).dump"
+                  --only-show-errors
+              env:
+                - name: AWS_REGION
+                  value: {{ .Values.backup.region | quote }}
+                - name: HOME
+                  value: /tmp
+              resources:
+                {{- toYaml .Values.backup.resources | nindent 16 }}
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: backup
+              emptyDir: {}
+            - name: tmp
+              emptyDir: {}
+{{- end }}

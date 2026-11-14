@@ -22,7 +22,7 @@ Wybieramy **opcję 1**:
 - Postgres 17 jako StatefulSet z PVC (`local-path`) w `tetris-beta` i `tetris-prod`; beta i prod nie współdzielą danych;
 - dostęp do bazy tylko z poda aplikacji w tym samym namespace (NetworkPolicy); hasło w Secrecie generowanym przez Helm przy pierwszej instalacji;
 - codzienny `pg_dump` do bucketu S3 z retencją 30 dni; bucket żyje w `bootstrap`, więc przeżywa usunięcie serwera;
-- backup używa roli serwera przez IMDS (limit 2 hopy), a NetworkPolicy odcina IMDS wszystkim podom poza backupem.
+- backup używa roli serwera przez IMDS (limit 2 hopy, domyślny dla AMI Ubuntu 24.04), a NetworkPolicy odcina IMDS wszystkim podom poza backupem.
 
 ## Konsekwencje
 
