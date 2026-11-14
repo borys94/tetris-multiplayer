@@ -30,4 +30,4 @@ Pozostałe decyzje (np. menedżer pakietów, konfiguracja lintera) zapisujemy w 
 | [0006](0006-serwer-zrodlem-prawdy.md)              | Licz grę na serwerze, a klientowi pozwól tylko przewidywać               | Accepted | M4, M5, M7 |
 | [0007](0007-websocket-ws-i-protokol-json.md)       | Używaj biblioteki `ws` i typowanego protokołu JSON                       | Accepted | M4, M7     |
 | [0008](0008-postgres-w-klastrze.md)                | Trzymaj dane w Postgresie uruchomionym w klastrze k3s                    | Accepted | M5, M7     |
-| [0009](0009-monitoring-w-klastrze.md)              | Uruchamiaj monitoring w klastrze na serwerze t4g.medium                  | Proposed | M6, M7     |
+| [0009](0009-monitoring-w-klastrze.md)              | Uruchamiaj monitoring w klastrze na serwerze t4g.medium                  | Accepted | M6, M7     |
