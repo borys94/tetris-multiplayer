@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { useTestDatabase } from "../../test/db";
+import { log } from "../observability/logger";
 import { deleteGame, insertGame, leaderboard, userGames } from "./games";
 import { MIGRATIONS } from "./migrations";
 import { createPool, migrate } from "./pool";
@@ -42,7 +43,7 @@ describe("pool", () => {
   it("survives the database closing idle connections (e.g. a Postgres restart)", async () => {
     const pool = createPool(ctx.url, "pool-test");
     await pool.query("select 1"); // zostawia bezczynne połączenie w puli
-    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    const errors = vi.spyOn(log, "warn");
 
     await ctx.db.query(
       "select pg_terminate_backend(pid) from pg_stat_activity where datname = current_database() and pid <> pg_backend_pid() and application_name = 'pool-test'",
