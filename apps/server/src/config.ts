@@ -12,6 +12,10 @@ export interface Config {
   sessionTtlMs: number;
   /** 0 wyłącza limit połączeń na IP. */
   maxConnectionsPerIp: number;
+  /** Adres Postgresa (konta, sesje, wyniki). */
+  databaseUrl: string;
+  /** Flaga `Secure` cookie sesji; wyłączana tylko lokalnie po HTTP w przeglądarkach bez wyjątku dla localhost. */
+  secureCookies: boolean;
 }
 
 /** Domyślny bufor wejścia; do rewizji po M6 na podstawie wahań opóźnienia (ADR-0006). */
@@ -27,6 +31,12 @@ function positiveInt(env: NodeJS.ProcessEnv, name: string, fallback: number): nu
   return value;
 }
 
+function required(env: NodeJS.ProcessEnv, name: string): string {
+  const value = env[name];
+  if (!value) throw new Error(`Brak zmiennej środowiskowej ${name}`);
+  return value;
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv): Config {
   const bufferMs = positiveInt(env, "INPUT_BUFFER_MS", DEFAULT_INPUT_BUFFER_MS);
   return {
@@ -39,5 +49,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
     maxSessions: positiveInt(env, "MAX_SESSIONS", 200),
     sessionTtlMs: positiveInt(env, "SESSION_TTL_MS", 60_000),
     maxConnectionsPerIp: positiveInt(env, "MAX_CONNECTIONS_PER_IP", 5),
+    databaseUrl: required(env, "DATABASE_URL"),
+    secureCookies: env.COOKIE_SECURE !== "false",
   };
 }

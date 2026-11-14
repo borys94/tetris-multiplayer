@@ -11,6 +11,7 @@ import {
 import { WebSocket, WebSocketServer, type RawData } from "ws";
 import { randomSeed, type SessionStore } from "./game/session-store";
 import type { Session } from "./game/session";
+import type { SessionUser } from "./db/sessions";
 
 export interface WsOptions {
   store: SessionStore;
@@ -24,6 +25,8 @@ export interface WsOptions {
   messagesPerSecond: number;
   messageBurst: number;
   heartbeatMs: number;
+  /** Użytkownik z cookie sesji (spec 005); bez niego wszyscy grają jako goście. */
+  authenticate?: (req: IncomingMessage) => Promise<SessionUser | null>;
 }
 
 export const WS_PATH = "/ws";
@@ -81,6 +84,8 @@ class Connection {
 
   constructor(
     readonly ws: WebSocket,
+    /** Zalogowany gracz tego połączenia; `null` to gość. */
+    private readonly userId: number | null,
     private readonly store: SessionStore,
     options: WsOptions,
     private readonly sessionOwners: Map<string, Connection>,
@@ -115,6 +120,7 @@ class Connection {
 
     switch (msg.type) {
       case "newGame":
+        session.userId = this.userId;
         session.newGame(randomSeed());
         return true;
       case "input":
@@ -157,6 +163,7 @@ class Connection {
         this.ws.close(CLOSE_TRY_AGAIN, "server full");
         return true;
       }
+      session.userId = this.userId;
     }
 
     this.session = session;
@@ -189,6 +196,10 @@ export function attachWebSocket(server: Server, options: WsOptions): () => void 
   const connections = new Set<Connection>();
 
   server.on("upgrade", (req: IncomingMessage, socket: Duplex, head: Buffer) => {
+    void upgrade(req, socket, head);
+  });
+
+  async function upgrade(req: IncomingMessage, socket: Duplex, head: Buffer): Promise<void> {
     const path = new URL(req.url ?? "/", "http://localhost").pathname;
     if (path !== WS_PATH) return reject(socket, 404, "Not Found");
     if (options.allowedOrigin && req.headers.origin !== options.allowedOrigin) {
@@ -201,8 +212,26 @@ export function attachWebSocket(server: Server, options: WsOptions): () => void 
     }
 
     connectionsPerIp.set(ip, count + 1);
+    const release = () => {
+      const left = (connectionsPerIp.get(ip) ?? 1) - 1;
+      if (left > 0) connectionsPerIp.set(ip, left);
+      else connectionsPerIp.delete(ip);
+    };
+    // Błąd bazy przy odczycie sesji nie blokuje gry: gracz gra wtedy jako gość.
+    const user = await options.authenticate?.(req).catch((error: unknown) => {
+      console.error("WebSocket auth error", error);
+      return null;
+    });
+    if (socket.destroyed) return release();
+
     wss.handleUpgrade(req, socket, head, (ws) => {
-      const connection = new Connection(ws, options.store, options, sessionOwners);
+      const connection = new Connection(
+        ws,
+        user?.id ?? null,
+        options.store,
+        options,
+        sessionOwners,
+      );
       connections.add(connection);
       ws.on("message", (data, isBinary) => connection.receive(data, isBinary));
       ws.on("pong", () => (connection.alive = true));
@@ -210,12 +239,10 @@ export function attachWebSocket(server: Server, options: WsOptions): () => void 
       ws.on("close", () => {
         connections.delete(connection);
         connection.close();
-        const left = (connectionsPerIp.get(ip) ?? 1) - 1;
-        if (left > 0) connectionsPerIp.set(ip, left);
-        else connectionsPerIp.delete(ip);
+        release();
       });
     });
-  });
+  }
 
   // Heartbeat: połączenie, które nie odpowiedziało na poprzedni ping, zamykamy.
   const heartbeat = setInterval(() => {
