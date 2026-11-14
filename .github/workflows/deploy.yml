@@ -1,0 +1,86 @@
+name: Deploy
+
+# Push do main: budowa obrazu i chartu, deploy na betę.
+# Ręcznie: deploy wskazanej wersji (SHA) na betę albo prod; prod wymaga akceptacji
+# w środowisku GitHub "production" (ADR-0005, spec 003).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Środowisko
+        type: choice
+        options: [prod, beta]
+        default: prod
+      version:
+        description: Pełny SHA commita, którego obraz jest już w ECR (np. ten z bety)
+        type: string
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: eu-central-1
+
+jobs:
+  build:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Build and push image
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          docker buildx build \
+            --file apps/server/Dockerfile \
+            --build-arg APP_VERSION="$GITHUB_SHA" \
+            --tag "$REGISTRY/tetris-app:$GITHUB_SHA" \
+            --cache-from type=gha --cache-to type=gha,mode=max \
+            --push .
+
+      - uses: azure/setup-helm@v5
+        with:
+          version: v4.3.2
+
+      - name: Package and push chart
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          helm package deploy/helm/tetris --version "0.0.0-g$GITHUB_SHA" --app-version "$GITHUB_SHA"
+          helm push "tetris-0.0.0-g$GITHUB_SHA.tgz" "oci://$REGISTRY/charts"
+
+  deploy:
+    needs: build
+    if: ${{ !cancelled() && (needs.build.result == 'success' || needs.build.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ inputs.environment == 'prod' && 'production' || 'beta' }}
+    concurrency:
+      group: deploy-${{ inputs.environment || 'beta' }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy via SSM
+        run: deploy/scripts/ssm-deploy.sh "${{ inputs.environment || 'beta' }}" "${{ inputs.version || github.sha }}"

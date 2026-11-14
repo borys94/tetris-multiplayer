@@ -1,0 +1,28 @@
+# Limity namespace'u (ADR-0002). LimitRange daje domyślne zasoby kontenerom, które ich nie podają.
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: tetris-quota
+  labels:
+    {{- include "tetris.labels" . | nindent 4 }}
+spec:
+  hard:
+    requests.cpu: {{ .Values.quota.requestsCpu | quote }}
+    requests.memory: {{ .Values.quota.requestsMemory | quote }}
+    limits.memory: {{ .Values.quota.limitsMemory | quote }}
+    pods: {{ .Values.quota.pods | quote }}
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: tetris-defaults
+  labels:
+    {{- include "tetris.labels" . | nindent 4 }}
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 50m
+        memory: 64Mi
+      default:
+        memory: 128Mi

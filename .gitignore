@@ -9,3 +9,11 @@ coverage/
 !.yarn/releases
 !.yarn/patches
 !.yarn/plugins
+
+# OpenTofu
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+infra/terraform/backend.hcl
+*.tfplan
