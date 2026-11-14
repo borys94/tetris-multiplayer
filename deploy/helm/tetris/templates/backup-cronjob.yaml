@@ -33,8 +33,14 @@ spec:
             - name: dump
               image: {{ .Values.postgres.image | quote }}
               command: ["sh", "-c"]
+              # kube-router dopisuje IP nowego poda do NetworkPolicy po 1–2 s; do tego czasu
+              # połączenie z bazą jest odrzucane, więc ponawiamy przez ok. 30 s.
               args:
-                - pg_dump -Fc -h postgres -U blockfall -d blockfall -f /backup/blockfall.dump
+                - >-
+                  for attempt in 1 2 3 4 5 6 7 8 9 10; do
+                  pg_dump -Fc -h postgres -U blockfall -d blockfall -f /backup/blockfall.dump && exit 0;
+                  echo "pg_dump: próba $attempt nieudana, ponawiam za 3 s"; sleep 3;
+                  done; exit 1
               env:
                 - name: PGPASSWORD
                   valueFrom:

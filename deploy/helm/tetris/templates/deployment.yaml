@@ -49,6 +49,14 @@ spec:
               value: {{ .Values.game.maxSessions | quote }}
             - name: MAX_CONNECTIONS_PER_IP
               value: {{ .Values.game.maxConnectionsPerIp | quote }}
+          # Serwer zaczyna nasłuchiwać po migracjach, a przy pierwszym deployu czeka na Postgresa
+          # (do ok. 2 min): do tego czasu liveness nie może go restartować.
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+            failureThreshold: 30
           readinessProbe:
             httpGet:
               path: /health
@@ -59,7 +67,6 @@ spec:
             httpGet:
               path: /health
               port: http
-            initialDelaySeconds: 10
             periodSeconds: 10
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
