@@ -20,8 +20,9 @@ Pozostałe decyzje (np. menedżer pakietów, konfiguracja lintera) zapisujemy w 
 
 ## Rejestr
 
-| #                                                  | Tytuł                                                           | Status   | Milestone |
-| -------------------------------------------------- | --------------------------------------------------------------- | -------- | --------- |
-| [0001](0001-k3s-na-ec2.md)                         | Uruchamiaj Kubernetes jako k3s na EC2 zamiast EKS               | Accepted | M3        |
-| [0002](0002-jeden-klaster-beta-prod.md)            | Trzymaj betę i prod w jednym klastrze, w osobnych namespace'ach | Accepted | M3        |
-| [0003](0003-publiczne-wydanie-tylko-z-serwerem.md) | Udostępniaj grę publicznie dopiero, gdy liczy ją serwer         | Accepted | M3, M4    |
+| #                                                  | Tytuł                                                                    | Status   | Milestone  |
+| -------------------------------------------------- | ------------------------------------------------------------------------ | -------- | ---------- |
+| [0001](0001-k3s-na-ec2.md)                         | Uruchamiaj Kubernetes jako k3s na EC2 zamiast EKS                        | Accepted | M3         |
+| [0002](0002-jeden-klaster-beta-prod.md)            | Trzymaj betę i prod w jednym klastrze, w osobnych namespace'ach          | Accepted | M3         |
+| [0003](0003-publiczne-wydanie-tylko-z-serwerem.md) | Udostępniaj grę publicznie dopiero, gdy liczy ją serwer                  | Accepted | M3, M4     |
+| [0004](0004-deterministyczny-silnik-gry.md)        | Buduj silnik gry jako czyste, deterministyczne funkcje liczone w tickach | Accepted | M2, M4, M7 |

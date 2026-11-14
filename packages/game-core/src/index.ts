@@ -1,11 +1,32 @@
-export const BOARD_WIDTH = 10;
-export const BOARD_HEIGHT = 20;
-
-export type Cell = 0 | 1;
-export type Board = Cell[][];
-
-export function createEmptyBoard(): Board {
-  return Array.from({ length: BOARD_HEIGHT }, () =>
-    Array.from({ length: BOARD_WIDTH }, () => 0 as const),
-  );
-}
+export {
+  BOARD_HEIGHT,
+  BOARD_WIDTH,
+  HIDDEN_ROWS,
+  TOTAL_ROWS,
+  createEmptyBoard,
+  type Board,
+  type Cell,
+} from "./board";
+export {
+  LOCK_DELAY_TICKS,
+  MAX_LOCK_RESETS,
+  PREVIEW_SIZE,
+  applyAction,
+  createGame,
+  ghostPiece,
+  previewQueue,
+  tick,
+  type Action,
+  type GameState,
+  type GameStatus,
+} from "./game";
+export {
+  PIECE_TYPES,
+  pieceCells,
+  shapeCells,
+  type Piece,
+  type PieceType,
+  type Point,
+  type Rotation,
+} from "./pieces";
+export { TICKS_PER_SECOND } from "./time";
