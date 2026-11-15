@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Uruchamiany NA SERWERZE przez SSM (ADR-0005): instaluje lub aktualizuje chart monitoring
-# (kube-prometheus-stack, Grafana, alerty, dashboard; spec 006) w namespace `monitoring`.
+# (kube-prometheus-stack, Grafana, alerty, dashboard; spec obserwowalnosc) w namespace `monitoring`.
 # Użycie: node-monitoring-deploy.sh <sha> <rejestr ECR> <region>
 set -euo pipefail
 

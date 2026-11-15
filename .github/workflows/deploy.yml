@@ -2,7 +2,7 @@ name: Deploy
 
 # Push do main: budowa obrazu i chartu, deploy na betę.
 # Ręcznie: deploy wskazanej wersji (SHA) na betę albo prod; prod wymaga akceptacji
-# w środowisku GitHub "production" (ADR-0005, spec 003).
+# w środowisku GitHub "production" (ADR-0005, spec infrastruktura).
 on:
   push:
     branches: [main]

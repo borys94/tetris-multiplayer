@@ -1,6 +1,6 @@
 # Runbook: test obciążeniowy 1v1 (k6)
 
-Sprawdza, czy serwer utrzyma równoległe mecze 1v1 bez spowolnienia pętli gry ([spec 007](../specs/007-1v1.md), S6). Scenariusz: [`loadtest/1v1.js`](../../loadtest/1v1.js). Każdy bot łączy się po WebSockecie, dołącza do pokoju publicznego z listy albo zakłada własny, zgłasza gotowość i gra losowymi ruchami. Na jednym połączeniu rozgrywa 3 mecze (ok. 12 s każdy), potem łączy się od nowa.
+Sprawdza, czy serwer utrzyma równoległe mecze 1v1 bez spowolnienia pętli gry ([spec obserwowalnosc](../specs/obserwowalnosc.md), S6). Scenariusz: [`loadtest/1v1.js`](../../loadtest/1v1.js). Każdy bot łączy się po WebSockecie, dołącza do pokoju publicznego z listy albo zakłada własny, zgłasza gotowość i gra losowymi ruchami. Na jednym połączeniu rozgrywa 3 mecze (ok. 12 s każdy), potem łączy się od nowa.
 
 ## Kiedy i gdzie
 

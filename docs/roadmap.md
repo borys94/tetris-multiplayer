@@ -55,6 +55,8 @@ gantt
 
 ## Milestones
 
+Milestone zmienia [specy funkcji](specs/README.md), których dotyczy; tam jest opis, jak gra działa teraz.
+
 | #   | Milestone                  | Zakres                                                                                                                                                                                                                                                                               | Kryterium ukończenia                                                              | ADR-y                                                                                                                          |
 | --- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | M1  | Fundament repo             | Monorepo (`apps/web`, `apps/server`, `packages/game-core`), TS strict, ESLint/Prettier, Vitest, CI (lint, typecheck, test), `docs/`                                                                                                                                                  | CI zielone                                                                        | monorepo, strategia testów                                                                                                     |

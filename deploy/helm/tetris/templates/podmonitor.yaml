@@ -1,5 +1,5 @@
 {{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1/PodMonitor" }}
-# Prometheus (kube-prometheus-stack, spec 006) zbiera metryki aplikacji; etykieta `env` z values.
+# Prometheus (kube-prometheus-stack, spec obserwowalnosc) zbiera metryki aplikacji; etykieta `env` z values.
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:

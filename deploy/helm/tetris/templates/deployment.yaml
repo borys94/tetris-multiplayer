@@ -6,7 +6,7 @@ metadata:
     {{- include "tetris.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicas }}
-  # Deploy bez przerywania meczów (spec 007): najpierw nowy pod, stary dogrywa mecze.
+  # Deploy bez przerywania meczów (spec infrastruktura): najpierw nowy pod, stary dogrywa mecze.
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -34,7 +34,7 @@ spec:
           ports:
             - name: http
               containerPort: 3000
-            # Metryki Prometheusa (spec 006); Service i ingress tego portu nie wystawiają.
+            # Metryki Prometheusa (spec obserwowalnosc); Service i ingress tego portu nie wystawiają.
             - name: metrics
               containerPort: {{ .Values.metrics.port }}
           env:
@@ -52,7 +52,7 @@ spec:
             # Kubernetes podstawia $(POSTGRES_PASSWORD) zdefiniowane wyżej (hasło jest alfanumeryczne).
             - name: DATABASE_URL
               value: "postgres://blockfall:$(POSTGRES_PASSWORD)@postgres:5432/blockfall"
-            # WebSocket /ws przyjmuje połączenia tylko ze strony gry (spec 004).
+            # WebSocket /ws przyjmuje połączenia tylko ze strony gry (spec siec-protokol).
             - name: ALLOWED_ORIGIN
               value: {{ printf "https://%s" .Values.host | quote }}
             # IP klienta z X-Forwarded-For dopisywanego przez Traefika (limit połączeń na IP).

@@ -21,7 +21,7 @@ Wybieramy **opcję 1**:
 - `ws` po stronie serwera na tym samym porcie co Express, ścieżka `/ws`; w przeglądarce natywny `WebSocket`;
 - wiadomości JSON z polem `type`, opisane jako unie typów TypeScript w `packages/protocol`, współdzielone przez `web` i `server`;
 - walidacja ręczna, bez zależności, w `packages/protocol`; wersja protokołu w wiadomości `hello`, przy niezgodności serwer odpowiada błędem `version`;
-- reconnect i wznawianie sesji implementujemy sami (spec 004).
+- reconnect i wznawianie sesji implementujemy sami ([spec siec-protokol](../specs/siec-protokol.md)).
 
 ## Konsekwencje
 

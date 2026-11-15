@@ -6,7 +6,7 @@ Gra w spadające klocki w przeglądarce: singleplayer, 1v1 i battle royale do 16
 
 - [Roadmapa](docs/roadmap.md)
 - [Decyzje architektoniczne (ADR)](docs/adr/README.md)
-- [Specyfikacje milestone'ów](docs/specs/)
+- [Specyfikacje funkcji](docs/specs/)
 
 ## Struktura
 

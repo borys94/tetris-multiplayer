@@ -17,7 +17,7 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: kube-system
-    # Prometheus z namespace'u monitoring czyta tylko port metryk (spec 006).
+    # Prometheus z namespace'u monitoring czyta tylko port metryk (spec obserwowalnosc).
     - from:
         - namespaceSelector:
             matchLabels:

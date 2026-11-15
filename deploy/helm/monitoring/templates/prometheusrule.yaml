@@ -1,4 +1,4 @@
-# Alerty jako kod (spec 006, R5). Bez Alertmanagera: widać je w Grafanie
+# Alerty jako kod (spec obserwowalnosc, R4). Bez Alertmanagera: widać je w Grafanie
 # (Alerting → Alert rules) i w panelu „Aktywne alerty” na dashboardzie.
 {{- $ns := .Values.appNamespaces }}
 {{- $a := .Values.alerts }}

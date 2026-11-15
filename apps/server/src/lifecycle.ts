@@ -1,74 +1,78 @@
-import type { Server } from "node:http";
-import type { Db } from "./db/pool";
-import { deleteExpiredSessions } from "./db/sessions";
-import { log } from "./observability/logger";
-import type { RoomStore } from "./rooms/room-store";
-import type { WsHandle } from "./ws/server";
+import type { Server } from 'node:http'
+import type { Db } from './db/pool'
+import { deleteExpiredSessions } from './db/sessions'
+import { log } from './observability/logger'
+import type { RoomStore } from './rooms/room-store'
+import type { WsHandle } from './ws/server'
 
 /** Co trzeba zatrzymać przy zamykaniu procesu, w tej kolejności. */
 export interface Lifecycle {
-  db: Db;
-  server: Server;
-  metricsServer: Server | null;
-  ws: WsHandle;
-  rooms: RoomStore;
-  stopLoop: () => void;
+  db: Db
+  server: Server
+  metricsServer: Server | null
+  ws: WsHandle
+  rooms: RoomStore
+  stopLoop: () => void
   /** Jak długo po SIGTERM pod dogrywa trwające mecze. */
-  drainTimeoutMs: number;
+  drainTimeoutMs: number
   /** Co ile ms usuwamy wygasłe sesje logowania. */
-  sessionCleanupMs: number;
+  sessionCleanupMs: number
   /** Wołane na początku drenowania (`/ready` zaczyna zwracać 503). */
-  onDrain: () => void;
+  onDrain: () => void
 }
 
 /** Sprzątanie wygasłych sesji logowania; zwraca funkcję, która je zatrzymuje. */
-function startSessionCleanup(db: Db, intervalMs: number): () => void {
+const startSessionCleanup = (db: Db, intervalMs: number): (() => void) => {
   const cleanup = setInterval(() => {
     deleteExpiredSessions(db).catch((error: unknown) =>
-      log.error({ err: error }, "session cleanup failed"),
-    );
-  }, intervalMs);
-  return () => clearInterval(cleanup);
+      log.error({ err: error }, 'session cleanup failed'),
+    )
+  }, intervalMs)
+  return () => clearInterval(cleanup)
 }
 
 /**
- * Obsługa sygnałów procesu. Deploy (spec 007): Kubernetes wysyła SIGTERM, gdy nowy pod jest
+ * Obsługa sygnałów procesu. Deploy (spec infrastruktura): Kubernetes wysyła SIGTERM, gdy nowy pod jest
  * już gotowy. Stary pod przestaje być `ready`, odsyła graczy spoza meczów do nowego
  * (zamknięcie WebSocketu i ponowne połączenie) i czeka, aż skończą się trwające mecze,
  * najdłużej `drainTimeoutMs`. Ctrl+C (SIGINT) i drugi SIGTERM zamykają serwer od razu.
  */
-export function handleSignals(lifecycle: Lifecycle): void {
-  const { db, server, metricsServer, ws, rooms, stopLoop, drainTimeoutMs } = lifecycle;
-  const stopCleanup = startSessionCleanup(db, lifecycle.sessionCleanupMs);
-  let draining = false;
+export const handleSignals = (lifecycle: Lifecycle): void => {
+  const { db, server, metricsServer, ws, rooms, stopLoop, drainTimeoutMs } = lifecycle
+  const stopCleanup = startSessionCleanup(db, lifecycle.sessionCleanupMs)
+  let draining = false
 
   const shutdown = () => {
-    stopCleanup();
-    stopLoop();
-    ws();
-    metricsServer?.close();
+    stopCleanup()
+    stopLoop()
+    ws()
+    metricsServer?.close()
     server.close(() => {
-      void db.end().finally(() => process.exit(0));
-    });
-  };
+      void db.end().finally(() => process.exit(0))
+    })
+  }
 
   const drain = () => {
-    if (draining) return shutdown();
-    draining = true;
-    lifecycle.onDrain();
-    rooms.drain();
-    ws.drain();
-    const deadline = Date.now() + drainTimeoutMs;
-    log.info({ matches: rooms.playing, timeoutMs: drainTimeoutMs }, "draining");
+    if (draining) {
+      return shutdown()
+    }
+    draining = true
+    lifecycle.onDrain()
+    rooms.drain()
+    ws.drain()
+    const deadline = Date.now() + drainTimeoutMs
+    log.info({ matches: rooms.playing, timeoutMs: drainTimeoutMs }, 'draining')
     const check = setInterval(() => {
-      ws.drain();
-      if (rooms.playing > 0 && Date.now() < deadline) return;
-      clearInterval(check);
-      log.info({ unfinishedMatches: rooms.playing }, "drained, shutting down");
-      shutdown();
-    }, 1000);
-  };
+      ws.drain()
+      if (rooms.playing > 0 && Date.now() < deadline) {
+        return
+      }
+      clearInterval(check)
+      log.info({ unfinishedMatches: rooms.playing }, 'drained, shutting down')
+      shutdown()
+    }, 1000)
+  }
 
-  process.on("SIGINT", shutdown);
-  process.on("SIGTERM", drain);
+  process.on('SIGINT', shutdown)
+  process.on('SIGTERM', drain)
 }

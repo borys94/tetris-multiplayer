@@ -1,5 +1,5 @@
-import { defineProject } from "vitest/config";
+import { defineProject } from 'vitest/config'
 
 export default defineProject({
-  test: { name: "game-core", environment: "node" },
-});
+  test: { name: 'game-core', environment: 'node' },
+})

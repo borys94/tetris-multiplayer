@@ -1,231 +1,231 @@
-import request from "supertest";
-import { beforeAll, describe, expect, it, vi } from "vitest";
-import { useTestDatabase } from "../../support/db";
-import { createApp } from "../../../src/http/app";
-import { runCli } from "../../../src/cli";
-import { insertGame } from "../../../src/db/games";
-import { insertMatch } from "../../../src/db/matches";
-import type { RoomInfo } from "../../../src/rooms/room";
-import { createApi } from "../../../src/http/api";
+import request from 'supertest'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
+import { useTestDatabase } from '../../support/db'
+import { createApp } from '../../../src/http/app'
+import { runCli } from '../../../src/cli'
+import { insertGame } from '../../../src/db/games'
+import { insertMatch } from '../../../src/db/matches'
+import type { RoomInfo } from '../../../src/rooms/room'
+import { createApi } from '../../../src/http/api'
 
-const ORIGIN = "https://game.example";
-const PASSWORD = "correct horse battery";
-const ctx = useTestDatabase();
-type Server = ReturnType<typeof createApp>;
-let server: Server;
+const ORIGIN = 'https://game.example'
+const PASSWORD = 'correct horse battery'
+const ctx = useTestDatabase()
+type Server = ReturnType<typeof createApp>
+let server: Server
 
 interface Account {
-  id: number;
-  username: string;
-  cookie: string;
+  id: number
+  username: string
+  cookie: string
 }
 
-function cookieOf(res: request.Response): string {
-  return (res.headers["set-cookie"] as unknown as string[])[0]!.split(";")[0]!;
+const cookieOf = (res: request.Response): string => {
+  return (res.headers['set-cookie'] as unknown as string[])[0]!.split(';')[0]!
 }
 
-async function register(username: string): Promise<Account> {
+const register = async (username: string): Promise<Account> => {
   const res = await request(server)
-    .post("/api/auth/register")
-    .set("Origin", ORIGIN)
-    .send({ username, password: PASSWORD });
-  const { id } = (res.body as { user: { id: number } }).user;
-  return { id, username, cookie: cookieOf(res) };
+    .post('/api/auth/register')
+    .set('Origin', ORIGIN)
+    .send({ username, password: PASSWORD })
+  const { id } = (res.body as { user: { id: number } }).user
+  return { id, username, cookie: cookieOf(res) }
 }
 
-function as(account: Account | null) {
+const as = (account: Account | null) => {
   const withAuth = (req: request.Test) => {
-    req.set("Origin", ORIGIN);
-    return account ? req.set("Cookie", account.cookie) : req;
-  };
+    req.set('Origin', ORIGIN)
+    return account ? req.set('Cookie', account.cookie) : req
+  }
   return {
     get: (path: string) => withAuth(request(server).get(path)),
     post: (path: string, body: object = {}) => withAuth(request(server).post(path)).send(body),
     patch: (path: string, body: object) => withAuth(request(server).patch(path)).send(body),
     delete: (path: string) => withAuth(request(server).delete(path)),
-  };
+  }
 }
 
-let admin: Account;
-let rooms: RoomInfo[] = [];
-let player: Account;
+let admin: Account
+let rooms: RoomInfo[] = []
+let player: Account
 
 beforeAll(async () => {
   server = createApp({
-    version: "test",
+    version: 'test',
     api: createApi({
       db: ctx.db,
       allowedOrigin: ORIGIN,
       secureCookies: true,
       rooms: { list: () => rooms },
     }),
-  });
-  admin = await register("boss");
-  player = await register("pawn");
-  vi.spyOn(console, "log").mockImplementation(() => {});
-  expect(await runCli(ctx.db, ["promote", "BOSS"])).toBe(0);
+  })
+  admin = await register('boss')
+  player = await register('pawn')
+  vi.spyOn(console, 'log').mockImplementation(() => {})
+  expect(await runCli(ctx.db, ['promote', 'BOSS'])).toBe(0)
   admin.cookie = cookieOf(
-    await as(null).post("/api/auth/login", { username: "boss", password: PASSWORD }),
-  );
-});
+    await as(null).post('/api/auth/login', { username: 'boss', password: PASSWORD }),
+  )
+})
 
-describe("promote command", () => {
-  it("grants the admin role to an existing account only", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => {});
-    expect((await as(admin).get("/api/me")).body).toMatchObject({ user: { role: "admin" } });
-    expect(await runCli(ctx.db, ["promote", "ghost"])).toBe(1);
-    expect(await runCli(ctx.db, ["demote", "boss"])).toBe(2);
-  });
-});
+describe('promote command', () => {
+  it('grants the admin role to an existing account only', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect((await as(admin).get('/api/me')).body).toMatchObject({ user: { role: 'admin' } })
+    expect(await runCli(ctx.db, ['promote', 'ghost'])).toBe(1)
+    expect(await runCli(ctx.db, ['demote', 'boss'])).toBe(2)
+  })
+})
 
-describe("leaderboard and history (R3)", () => {
+describe('leaderboard and history (spec ranking-historia, R3, R4)', () => {
   it("shows the public leaderboard and the player's own games", async () => {
-    await insertGame(ctx.db, player.id, { score: 1200, lines: 10, level: 2, ticks: 3000 });
+    await insertGame(ctx.db, player.id, { score: 1200, lines: 10, level: 2, ticks: 3000 })
 
-    const board = await as(null).get("/api/leaderboard");
-    expect(board.status).toBe(200);
+    const board = await as(null).get('/api/leaderboard')
+    expect(board.status).toBe(200)
     expect((board.body as { entries: unknown[] }).entries).toEqual([
       expect.objectContaining({
         rank: 1,
-        username: "pawn",
+        username: 'pawn',
         score: 1200,
         gameId: expect.any(Number) as number,
       }),
-    ]);
+    ])
 
-    expect((await as(null).get("/api/me/games")).status).toBe(401);
-    const games = await as(player).get("/api/me/games");
+    expect((await as(null).get('/api/me/games')).status).toBe(401)
+    const games = await as(player).get('/api/me/games')
     expect((games.body as { games: unknown[] }).games).toEqual([
       expect.objectContaining({ score: 1200, lines: 10, level: 2 }),
-    ]);
-  });
-});
+    ])
+  })
+})
 
-describe("admin API (S4)", () => {
-  it("is closed to guests (401) and players (403)", async () => {
-    expect((await as(null).get("/api/admin/users")).status).toBe(401);
-    expect((await as(player).get("/api/admin/users")).status).toBe(403);
+describe('admin API (spec panel-admina, S1)', () => {
+  it('is closed to guests (401) and players (403)', async () => {
+    expect((await as(null).get('/api/admin/users')).status).toBe(401)
+    expect((await as(player).get('/api/admin/users')).status).toBe(403)
     expect(
-      (await as(player).patch(`/api/admin/users/${player.id}`, { role: "admin" })).status,
-    ).toBe(403);
-  });
+      (await as(player).patch(`/api/admin/users/${player.id}`, { role: 'admin' })).status,
+    ).toBe(403)
+  })
 
-  it("searches accounts", async () => {
-    const res = await as(admin).get("/api/admin/users?q=PAW");
+  it('searches accounts', async () => {
+    const res = await as(admin).get('/api/admin/users?q=PAW')
     expect((res.body as { users: { username: string }[] }).users.map((u) => u.username)).toEqual([
-      "pawn",
-    ]);
-  });
+      'pawn',
+    ])
+  })
 
-  it("disables a player: sessions end, login is refused, and re-enabling restores access", async () => {
-    const victim = await register("victim");
+  it('disables a player: sessions end, login is refused, and re-enabling restores access', async () => {
+    const victim = await register('victim')
 
-    const disabled = await as(admin).patch(`/api/admin/users/${victim.id}`, { disabled: true });
-    expect(disabled.body).toMatchObject({ user: { username: "victim", disabled: true } });
-    expect((await as(victim).get("/api/me")).status).toBe(401);
-    const login = await as(null).post("/api/auth/login", {
-      username: "victim",
+    const disabled = await as(admin).patch(`/api/admin/users/${victim.id}`, { disabled: true })
+    expect(disabled.body).toMatchObject({ user: { username: 'victim', disabled: true } })
+    expect((await as(victim).get('/api/me')).status).toBe(401)
+    const login = await as(null).post('/api/auth/login', {
+      username: 'victim',
       password: PASSWORD,
-    });
-    expect(login.status).toBe(403);
+    })
+    expect(login.status).toBe(403)
 
-    await as(admin).patch(`/api/admin/users/${victim.id}`, { disabled: false });
+    await as(admin).patch(`/api/admin/users/${victim.id}`, { disabled: false })
     expect(
-      (await as(null).post("/api/auth/login", { username: "victim", password: PASSWORD })).status,
-    ).toBe(200);
-  });
+      (await as(null).post('/api/auth/login', { username: 'victim', password: PASSWORD })).status,
+    ).toBe(200)
+  })
 
-  it("sets a temporary password that replaces the old one and logs the account out", async () => {
-    const forgetful = await register("forgetful");
+  it('sets a temporary password that replaces the old one and logs the account out', async () => {
+    const forgetful = await register('forgetful')
 
-    const res = await as(admin).post(`/api/admin/users/${forgetful.id}/password`);
-    const { password } = res.body as { password: string };
-    expect(password).toMatch(/^[\w-]{16}$/);
-    expect((await as(forgetful).get("/api/me")).status).toBe(401);
+    const res = await as(admin).post(`/api/admin/users/${forgetful.id}/password`)
+    const { password } = res.body as { password: string }
+    expect(password).toMatch(/^[\w-]{16}$/)
+    expect((await as(forgetful).get('/api/me')).status).toBe(401)
 
-    const old = await as(null).post("/api/auth/login", {
-      username: "forgetful",
+    const old = await as(null).post('/api/auth/login', {
+      username: 'forgetful',
       password: PASSWORD,
-    });
-    const fresh = await as(null).post("/api/auth/login", { username: "forgetful", password });
-    expect([old.status, fresh.status]).toEqual([401, 200]);
-  });
+    })
+    const fresh = await as(null).post('/api/auth/login', { username: 'forgetful', password })
+    expect([old.status, fresh.status]).toEqual([401, 200])
+  })
 
-  it("grants and revokes the admin role", async () => {
-    const helper = await register("helper");
+  it('grants and revokes the admin role', async () => {
+    const helper = await register('helper')
     expect(
-      (await as(admin).patch(`/api/admin/users/${helper.id}`, { role: "admin" })).body,
-    ).toMatchObject({ user: { role: "admin" } });
+      (await as(admin).patch(`/api/admin/users/${helper.id}`, { role: 'admin' })).body,
+    ).toMatchObject({ user: { role: 'admin' } })
     expect(
       (await as(admin).patch(`/api/admin/users/${helper.id}`, { role: null })).body,
-    ).toMatchObject({ user: { role: null } });
-  });
+    ).toMatchObject({ user: { role: null } })
+  })
 
-  it("does not let an admin demote or disable themselves", async () => {
+  it('does not let an admin demote or disable themselves', async () => {
     for (const change of [{ role: null }, { disabled: true }]) {
-      const res = await as(admin).patch(`/api/admin/users/${admin.id}`, change);
-      expect([res.status, res.body]).toEqual([400, { error: "cannot_change_self" }]);
+      const res = await as(admin).patch(`/api/admin/users/${admin.id}`, change)
+      expect([res.status, res.body]).toEqual([400, { error: 'cannot_change_self' }])
     }
-  });
+  })
 
   it("lists and deletes a player's game", async () => {
-    const id = await insertGame(ctx.db, player.id, { score: 5, lines: 0, level: 1, ticks: 60 });
-    const games = await as(admin).get(`/api/admin/users/${player.id}/games`);
-    expect((games.body as { games: { id: number }[] }).games.map((g) => g.id)).toContain(id);
+    const id = await insertGame(ctx.db, player.id, { score: 5, lines: 0, level: 1, ticks: 60 })
+    const games = await as(admin).get(`/api/admin/users/${player.id}/games`)
+    expect((games.body as { games: { id: number }[] }).games.map((g) => g.id)).toContain(id)
 
-    expect((await as(admin).delete(`/api/admin/games/${id}`)).status).toBe(204);
-    expect((await as(admin).delete(`/api/admin/games/${id}`)).status).toBe(404);
-  });
+    expect((await as(admin).delete(`/api/admin/games/${id}`)).status).toBe(204)
+    expect((await as(admin).delete(`/api/admin/games/${id}`)).status).toBe(404)
+  })
 
   it.each([
-    ["an invalid id", "/api/admin/users/abc", { role: "admin" }, 400],
-    ["an unknown role", `/api/admin/users/1`, { role: "player" }, 400],
-    ["no changes", `/api/admin/users/1`, {}, 400],
-    ["a missing user", "/api/admin/users/999999", { disabled: true }, 404],
-  ])("rejects %s", async (_name, path, body, status) => {
-    expect((await as(admin).patch(path, body)).status).toBe(status);
-  });
-});
+    ['an invalid id', '/api/admin/users/abc', { role: 'admin' }, 400],
+    ['an unknown role', `/api/admin/users/1`, { role: 'player' }, 400],
+    ['no changes', `/api/admin/users/1`, {}, 400],
+    ['a missing user', '/api/admin/users/999999', { disabled: true }, 404],
+  ])('rejects %s', async (_name, path, body, status) => {
+    expect((await as(admin).patch(path, body)).status).toBe(status)
+  })
+})
 
-describe("rooms and matches (spec 007, S5)", () => {
-  it("shows all rooms and running matches to the admin only", async () => {
+describe('rooms and matches (spec panel-admina, S3)', () => {
+  it('shows all rooms and running matches to the admin only', async () => {
     rooms = [
       {
-        code: "ABCDEF",
-        visibility: "private",
-        state: "playing",
-        host: "boss",
+        code: 'ABCDEF',
+        visibility: 'private',
+        state: 'playing',
+        host: 'boss',
         createdAt: 1,
         players: [
-          { name: "boss", userId: admin.id, connected: true },
-          { name: "Gość-0007", userId: null, connected: false },
+          { name: 'boss', userId: admin.id, connected: true },
+          { name: 'Gość-0007', userId: null, connected: false },
         ],
         match: { seconds: 12, players: [] },
       },
-    ];
+    ]
 
-    expect((await as(player).get("/api/admin/rooms")).status).toBe(403);
-    expect((await as(player).get("/api/admin/matches")).status).toBe(403);
-    expect((await as(admin).get("/api/admin/rooms")).body).toEqual({ rooms });
-  });
+    expect((await as(player).get('/api/admin/rooms')).status).toBe(403)
+    expect((await as(player).get('/api/admin/matches')).status).toBe(403)
+    expect((await as(admin).get('/api/admin/rooms')).body).toEqual({ rooms })
+  })
 
-  it("lists finished matches for the admin and own matches for the player", async () => {
+  it('lists finished matches for the admin and own matches for the player', async () => {
     await insertMatch(ctx.db, {
-      winner: { userId: player.id, name: "pawn", linesSent: 4 },
-      loser: { userId: null, name: "Gość-0007", linesSent: 1 },
-      reason: "topout",
+      winner: { userId: player.id, name: 'pawn', linesSent: 4 },
+      loser: { userId: null, name: 'Gość-0007', linesSent: 1 },
+      reason: 'topout',
       ticks: 600,
-    });
+    })
 
-    const all = await as(admin).get("/api/admin/matches?q=0007");
-    expect(all.status).toBe(200);
+    const all = await as(admin).get('/api/admin/matches?q=0007')
+    expect(all.status).toBe(200)
     expect((all.body as { matches: unknown[] }).matches).toEqual([
-      expect.objectContaining({ winnerName: "pawn", loserName: "Gość-0007", reason: "topout" }),
-    ]);
-    const mine = await as(player).get("/api/me/matches");
+      expect.objectContaining({ winnerName: 'pawn', loserName: 'Gość-0007', reason: 'topout' }),
+    ])
+    const mine = await as(player).get('/api/me/matches')
     expect((mine.body as { matches: unknown[] }).matches).toEqual([
-      expect.objectContaining({ won: true, opponent: "Gość-0007", linesSent: 4 }),
-    ]);
-    expect((await as(null).get("/api/me/matches")).status).toBe(401);
-  });
-});
+      expect.objectContaining({ won: true, opponent: 'Gość-0007', linesSent: 4 }),
+    ])
+    expect((await as(null).get('/api/me/matches')).status).toBe(401)
+  })
+})

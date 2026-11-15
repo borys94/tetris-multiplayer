@@ -6,7 +6,7 @@
 export const MIGRATIONS: readonly { id: number; name: string; sql: string }[] = [
   {
     id: 1,
-    name: "konta, sesje i gry",
+    name: 'konta, sesje i gry',
     sql: `
       create table users (
         id bigint generated always as identity primary key,
@@ -44,9 +44,9 @@ export const MIGRATIONS: readonly { id: number; name: string; sql: string }[] = 
   },
   {
     id: 2,
-    name: "mecze 1v1",
+    name: 'mecze 1v1',
     sql: `
-      -- Każdy mecz 1v1 (spec 007), także z gośćmi: id konta puste, nazwa zawsze.
+      -- Każdy mecz 1v1 (spec ranking-historia), także z gośćmi: id konta puste, nazwa zawsze.
       -- Usunięcie konta zostawia mecz z nazwą gracza z chwili meczu.
       create table matches (
         id bigint generated always as identity primary key,
@@ -64,4 +64,4 @@ export const MIGRATIONS: readonly { id: number; name: string; sql: string }[] = 
       create index matches_loser on matches (loser_id, id desc);
     `,
   },
-];
+]
