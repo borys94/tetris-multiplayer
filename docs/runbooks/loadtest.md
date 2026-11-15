@@ -45,7 +45,9 @@ W Grafanie (dashboard **Blockfall**, `Środowisko = beta`, ostatnie 15 min):
 
 Wynik testu (data, wersja, liczby z tabel) zapisz w opisie PR-a lub w specu milestone'u.
 
-Punkt odniesienia (2026-11-14, laptop, serwer w trybie dev, 64 boty przez 3 min): 32 pokoje naraz, 406 meczów, 99,98% obiegów pętli < 8 ms (p99 ok. 2–4 ms), 0 pominiętych ticków, ok. 43 MB RSS. Boty grają losowo i prawie nie czyszczą linii, więc test nie obciąża ścieżki śmieci.
+Punkt odniesienia na becie (2026-11-14, wersja `2128bbc`, t4g.medium, 64 boty przez 5 min): 31 pokoi naraz, 642 mecze, 100% sprawdzeń k6, tick p99 2,0 ms (p50 0,37 ms), 0 pominiętych ticków, pod aplikacji 36% limitu pamięci i 0,08 CPU, ruch WebSocket z serwera ok. 0,9 MB/s (prawie w całości `matchSnapshot`).
+
+Lokalnie (laptop, serwer w trybie dev, 64 boty przez 3 min): 32 pokoje naraz, 406 meczów, 99,98% obiegów pętli < 8 ms (p99 ok. 2–4 ms), 0 pominiętych ticków, ok. 43 MB RSS. Boty grają losowo i prawie nie czyszczą linii, więc test nie obciąża ścieżki śmieci.
 
 ## Sprzątanie
 

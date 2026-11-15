@@ -25,6 +25,23 @@ export interface Config {
   databaseUrl: string;
   /** Flaga `Secure` cookie sesji; wyłączana tylko lokalnie po HTTP w przeglądarkach bez wyjątku dla localhost. */
   secureCookies: boolean;
+  /** O ile ticków akcja klienta może wyprzedzać zegar serwera (1 s). */
+  maxAheadTicks: number;
+  /** Limit wiadomości WebSocket na połączenie: średnio na sekundę i chwilowy zapas. */
+  messagesPerSecond: number;
+  messageBurst: number;
+  /** Co ile ms pingujemy połączenia WebSocket. */
+  heartbeatMs: number;
+  /** Co ile ms usuwamy wygasłe sesje logowania. */
+  sessionCleanupMs: number;
+}
+
+export interface LoggerConfig {
+  /** Środowisko (`beta`, `prod`, `dev`) w każdej linii logu. */
+  env: string;
+  /** Wersja aplikacji (SHA commita) w każdej linii logu. */
+  version: string;
+  level: string;
 }
 
 /** Domyślny bufor wejścia; do rewizji po M6 na podstawie wahań opóźnienia (ADR-0006). */
@@ -63,5 +80,19 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
     maxConnectionsPerIp: positiveInt(env, "MAX_CONNECTIONS_PER_IP", 5),
     databaseUrl: required(env, "DATABASE_URL"),
     secureCookies: env.COOKIE_SECURE !== "false",
+    maxAheadTicks: TICKS_PER_SECOND,
+    messagesPerSecond: 90,
+    messageBurst: 120,
+    heartbeatMs: 15_000,
+    sessionCleanupMs: 60 * 60 * 1000,
+  };
+}
+
+/** Logger procesu powstaje przy imporcie (zanim `main` wczyta resztę), więc ma osobną funkcję. */
+export function loadLoggerConfig(env: NodeJS.ProcessEnv): LoggerConfig {
+  return {
+    env: env.APP_ENV ?? "dev",
+    version: env.APP_VERSION ?? "dev",
+    level: env.LOG_LEVEL ?? (env.VITEST ? "silent" : "info"),
   };
 }

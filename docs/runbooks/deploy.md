@@ -163,6 +163,8 @@ Sesje gry i pokoje 1v1 żyją w pamięci poda ([ADR-0006](../adr/0006-serwer-zro
 deploy/scripts/ssm-run.sh 'kubectl -n tetris-prod get pods; kubectl -n tetris-prod logs <stary-pod> | grep drain'
 ```
 
+Gracz, który kończy mecz na dogrywającym podzie, może przez chwilę zobaczyć „Serwer jest pełny” przy próbie założenia nowego pokoju; w ciągu sekundy stary pod go rozłącza, a przeglądarka łączy się z nowym. Test na becie (2026-11-14, restart w trakcie 3 meczów): nowy pod gotowy po ok. 5 s, mecze dograne w 14 s, `rollout status` zakończony po 6 s (dogrywający pod nie blokuje `helm --wait`).
+
 Restart poda bez deployu (awaria, OOM) kończy także trwające mecze.
 
 ## 5. Publiczny prod (M4)

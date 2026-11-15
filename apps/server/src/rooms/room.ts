@@ -1,23 +1,15 @@
-import {
-  TICKS_PER_SECOND,
-  createGame,
-  randomHole,
-  receiveGarbage,
-  type Action,
-} from "@tetris/game-core";
+import type { Action } from "@tetris/game-core";
 import {
   COUNTDOWN_MS,
-  SNAPSHOT_INTERVAL_TICKS,
   type MatchEndReason,
-  type OpponentView,
   type RoomPlayer,
   type RoomState,
   type RoomVisibility,
 } from "@tetris/protocol";
-import { BufferedGame } from "../game/buffered-game";
-import { randomSeed } from "../game/session-store";
-import { garbageLines, matchesFinished } from "../observability/metrics";
-import type { Send } from "../game/session";
+import type { BufferedClockOptions } from "../game/buffered-clock";
+import type { Send } from "../game/send";
+import { matchesFinished } from "../observability/metrics";
+import { Match } from "./match";
 
 /** Gracz w pokoju: jego sesja gry (do wznowienia), konto i nazwa. */
 export interface RoomMember {
@@ -32,10 +24,6 @@ interface Player extends RoomMember {
   ready: boolean;
   /** Kiedy gracz stracił połączenie (ms); `null`, gdy jest połączony. */
   disconnectedAt: number | null;
-  /** Gra w trwającym lub ostatnim meczu. */
-  game: BufferedGame | null;
-  /** Ile z `linesSent` gracza dostarczyliśmy już przeciwnikowi. */
-  delivered: number;
 }
 
 export interface MatchResult {
@@ -48,9 +36,7 @@ export interface MatchResult {
   ticks: number;
 }
 
-export interface RoomOptions {
-  bufferTicks: number;
-  maxAheadTicks: number;
+export interface RoomOptions extends BufferedClockOptions {
   /** Jak długo rozłączony gracz może wrócić (ms); potem opuszcza pokój, a w meczu przegrywa. */
   ttlMs: number;
 }
@@ -72,24 +58,17 @@ export interface RoomInfo {
 /** Liczba graczy w pokoju 1v1; w M8 stanie się parametrem pokoju. */
 export const ROOM_CAPACITY = 2;
 
-function opponentView(game: BufferedGame): OpponentView {
-  const { board, active, garbage, score, lines, linesSent, status } = game.game;
-  return { board, active, garbage, score, lines, linesSent, status };
-}
-
 /**
- * Pokój meczu 1v1 (spec 007, ADR-0010): poczekalnia z gotowością, odliczanie
- * i mecz liczony we wspólnym zegarze. Gracze grają tym samym seedem, bez pauzy;
- * linie wysłane przez gracza trafiają do kolejki przeciwnika na tym samym ticku.
+ * Pokój meczu 1v1 (spec 007, ADR-0010): członkostwo, gotowość, odliczanie, połączenia
+ * graczy i wynik. Samą rozgrywkę liczy `Match`.
  * Założyciel jest zawsze pierwszy na liście; jego wyjście zamyka pokój.
  */
 export class Room {
   private _state: RoomState = "waiting";
   private readonly players: Player[] = [];
   private startsAt: number | null = null;
-  private clock = 0;
-  private simTick = 0;
-  private holeRng = 0;
+  /** Trwający lub ostatni mecz. */
+  private match: Match<Player> | null = null;
   private closed = false;
 
   /** Koniec meczu (np. zapis wyniku). */
@@ -142,8 +121,6 @@ export class Room {
       send,
       ready: false,
       disconnectedAt: null,
-      game: null,
-      delivered: 0,
     });
     this.broadcastRoom();
     this.onChange?.();
@@ -197,11 +174,11 @@ export class Room {
   }
 
   input(sessionId: string, seq: number, clientTick: number, actions: readonly Action[]): boolean {
-    const game = this.find(sessionId)?.game;
+    const player = this.find(sessionId);
     // Akcje spóźnione po końcu meczu ignorujemy; przed startem to błąd protokołu.
     if (this._state === "finished") return true;
-    if (this._state !== "playing" || !game) return false;
-    return game.accept(seq, clientTick, actions, this.clock + this.options.maxAheadTicks);
+    if (this._state !== "playing" || !player || !this.match) return false;
+    return this.match.input(player, seq, clientTick, actions);
   }
 
   /** Nowe połączenie gracza: dostaje stan pokoju, a w trakcie meczu cały stan gry. */
@@ -211,10 +188,7 @@ export class Room {
     player.send = send;
     player.disconnectedAt = null;
     this.broadcastRoom();
-    if (this._state === "playing" && player.game) {
-      player.game.resetInputs();
-      this.sendMatch(player);
-    }
+    if (this._state === "playing") this.match?.reattach(player);
   }
 
   /** Rozłączenie nie pauzuje meczu: plansza gracza dalej opada (R4). */
@@ -239,17 +213,11 @@ export class Room {
     if (this._state === "countdown" && this.startsAt !== null && now >= this.startsAt) {
       this.startMatch();
     }
-    if (this._state !== "playing") return;
-    for (let i = 0; i < ticks && this._state === "playing"; i++) {
-      this.clock++;
-      while (this._state === "playing" && this.simTick < this.clock - this.options.bufferTicks) {
-        this.step();
-      }
-    }
+    if (this._state === "playing") this.match?.advance(ticks);
   }
 
   info(): RoomInfo {
-    const playing = this._state === "playing";
+    const match = this._state === "playing" ? this.match : null;
     return {
       code: this.code,
       visibility: this.visibility,
@@ -261,68 +229,31 @@ export class Room {
         userId: p.userId,
         connected: p.send !== null,
       })),
-      match: playing
+      match: match
         ? {
-            seconds: Math.floor(this.simTick / TICKS_PER_SECOND),
-            players: this.players.map((p) => ({
-              name: p.name,
-              score: p.game?.game.score ?? 0,
-              lines: p.game?.game.lines ?? 0,
-              linesSent: p.game?.game.linesSent ?? 0,
-            })),
+            seconds: match.seconds,
+            players: this.players.map((p) => ({ name: p.name, ...match.stats(p) })),
           }
         : null,
     };
   }
 
   private startMatch(): void {
-    const seed = randomSeed();
     this._state = "playing";
     this.startsAt = null;
-    this.clock = 0;
-    this.simTick = 0;
-    this.holeRng = randomSeed();
-    for (const player of this.players) {
-      player.ready = false;
-      player.delivered = 0;
-      player.game = new BufferedGame(createGame(seed));
-    }
+    for (const player of this.players) player.ready = false;
+    const match = new Match([...this.players], this.options);
+    match.onTopout = (loser) => this.finish(this.opponentOf(loser)!, loser, "topout");
+    this.match = match;
     this.broadcastRoom();
-    for (const player of this.players) this.sendMatch(player);
+    match.sendStates();
     this.onChange?.();
-  }
-
-  /** Jeden tick symulacji wszystkich graczy w stałej kolejności (kolejność dołączenia). */
-  private step(): void {
-    for (const player of this.players) {
-      const game = player.game!;
-      game.step();
-      this.deliverGarbage(player);
-      if (game.over) {
-        this.finish(this.opponentOf(player)!, player, "topout");
-        return;
-      }
-    }
-    this.simTick++;
-    if (this.simTick % SNAPSHOT_INTERVAL_TICKS === 0) this.sendSnapshots();
-  }
-
-  /** Linie wysłane przez gracza od ostatniego ticka trafiają jedną paczką do przeciwnika. */
-  private deliverGarbage(player: Player): void {
-    const sent = player.game!.game.linesSent - player.delivered;
-    const target = this.opponentOf(player)?.game;
-    if (sent <= 0 || !target) return;
-    const { hole, rng } = randomHole(this.holeRng);
-    this.holeRng = rng;
-    target.game = receiveGarbage(target.game, { lines: sent, hole });
-    player.delivered += sent;
-    garbageLines.inc(sent);
   }
 
   private finish(winner: Player, loser: Player, reason: MatchEndReason): void {
     this._state = "finished";
     matchesFinished.inc({ reason });
-    this.sendSnapshots();
+    this.match?.end();
     for (const player of this.players) {
       player.send?.({ type: "result", won: player === winner, winner: winner.name, reason });
     }
@@ -330,9 +261,9 @@ export class Room {
       winner: { sessionId: winner.sessionId, userId: winner.userId, name: winner.name },
       loser: { sessionId: loser.sessionId, userId: loser.userId, name: loser.name },
       reason,
-      winnerLinesSent: winner.game?.game.linesSent ?? 0,
-      loserLinesSent: loser.game?.game.linesSent ?? 0,
-      ticks: this.simTick,
+      winnerLinesSent: this.match?.stats(winner).linesSent ?? 0,
+      loserLinesSent: this.match?.stats(loser).linesSent ?? 0,
+      ticks: this.match?.ticks ?? 0,
     });
     this.broadcastRoom();
     this.onChange?.();
@@ -344,31 +275,6 @@ export class Room {
     this._state = "waiting";
     this.startsAt = null;
     for (const player of this.players) player.ready = false;
-  }
-
-  private sendMatch(player: Player): void {
-    const opponent = this.opponentOf(player)?.game;
-    if (!player.game || !opponent) return;
-    player.send?.({
-      type: "match",
-      tick: this.simTick,
-      state: player.game.game,
-      opponent: opponentView(opponent),
-    });
-  }
-
-  private sendSnapshots(): void {
-    for (const player of this.players) {
-      const opponent = this.opponentOf(player)?.game;
-      if (!player.game || !opponent) continue;
-      player.send?.({
-        type: "matchSnapshot",
-        tick: this.simTick,
-        ackSeq: player.game.ackSeq,
-        state: player.game.game,
-        opponent: opponentView(opponent),
-      });
-    }
   }
 
   private broadcastRoom(): void {

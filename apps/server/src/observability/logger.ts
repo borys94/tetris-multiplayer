@@ -1,14 +1,8 @@
 import pino, { type DestinationStream, type Logger } from "pino";
+import { loadLoggerConfig, type LoggerConfig } from "../config";
 
 export type { Logger };
-
-export interface LoggerOptions {
-  /** Środowisko (`beta`, `prod`, `dev`) w każdej linii logu. */
-  env: string;
-  /** Wersja aplikacji (SHA commita) w każdej linii logu. */
-  version: string;
-  level: string;
-}
+export type LoggerOptions = LoggerConfig;
 
 /**
  * Pola, które nigdy nie trafiają do logu (spec 006, R2): cookie sesji, hasła i tokeny,
@@ -44,8 +38,4 @@ export function createLogger(options: LoggerOptions, destination?: DestinationSt
 }
 
 /** Logger procesu skonfigurowany ze zmiennych środowiskowych; w testach domyślnie cichy. */
-export const log = createLogger({
-  env: process.env.APP_ENV ?? "dev",
-  version: process.env.APP_VERSION ?? "dev",
-  level: process.env.LOG_LEVEL ?? (process.env.VITEST ? "silent" : "info"),
-});
+export const log = createLogger(loadLoggerConfig(process.env));

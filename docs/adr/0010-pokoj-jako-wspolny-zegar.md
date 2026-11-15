@@ -1,6 +1,6 @@
 # ADR-0010: Licz mecz w pokoju ze wspólnym zegarem i śmieciami jako zdarzeniami na ticku
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Data:** 2026-11-14
 - **Milestone:** M7, M8
 

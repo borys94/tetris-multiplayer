@@ -31,4 +31,5 @@ Pozostałe decyzje (np. menedżer pakietów, konfiguracja lintera) zapisujemy w 
 | [0007](0007-websocket-ws-i-protokol-json.md)       | Używaj biblioteki `ws` i typowanego protokołu JSON                           | Accepted | M4, M7     |
 | [0008](0008-postgres-w-klastrze.md)                | Trzymaj dane w Postgresie uruchomionym w klastrze k3s                        | Accepted | M5, M7     |
 | [0009](0009-monitoring-w-klastrze.md)              | Uruchamiaj monitoring w klastrze na serwerze t4g.medium                      | Accepted | M6, M7     |
-| [0010](0010-pokoj-jako-wspolny-zegar.md)           | Licz mecz w pokoju ze wspólnym zegarem i śmieciami jako zdarzeniami na ticku | Proposed | M7, M8     |
+| [0010](0010-pokoj-jako-wspolny-zegar.md)           | Licz mecz w pokoju ze wspólnym zegarem i śmieciami jako zdarzeniami na ticku | Accepted | M7, M8     |
+| [0011](0011-warstwy-aplikacji.md)                  | Dziel serwer i web na warstwy z granicami pilnowanymi przez ESLint           | Accepted | M7, M8     |

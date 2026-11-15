@@ -1,22 +1,14 @@
-import { randomBytes, timingSafeEqual } from "node:crypto";
-import { gamesFinished, tickDuration, ticksDropped } from "../observability/metrics";
-import { Session, type GameOver, type SessionOptions } from "./session";
-import { startTickLoop } from "./tick-loop";
+import { timingSafeEqual } from "node:crypto";
+import { gamesFinished } from "../observability/metrics";
+import { randomId, randomSeed } from "./random";
+import { Session, type GameResult, type SessionOptions } from "./session";
 
 export interface SessionStoreOptions extends SessionOptions {
   maxSessions: number;
   /** Jak długo sesja bez połączenia czeka na wznowienie (ms). */
   ttlMs: number;
   /** Koniec gry w dowolnej sesji (np. zapis wyniku zalogowanego gracza). */
-  onGameOver?: (session: Session, result: GameOver) => void;
-}
-
-function randomId(): string {
-  return randomBytes(16).toString("base64url");
-}
-
-export function randomSeed(): number {
-  return randomBytes(4).readUInt32LE();
+  onGameOver?: (session: Session, result: GameResult) => void;
 }
 
 function sameToken(a: string, b: string): boolean {
@@ -25,7 +17,7 @@ function sameToken(a: string, b: string): boolean {
   return left.length === right.length && timingSafeEqual(left, right);
 }
 
-/** Sesje w pamięci procesu: tworzenie, wznawianie, wygasanie i wspólna pętla 60 ticków/s. */
+/** Sesje singleplayer w pamięci procesu: tworzenie, wznawianie i wygasanie. */
 export class SessionStore {
   private readonly sessions = new Map<string, Session>();
   private readonly detachedAt = new Map<string, number>();
@@ -82,28 +74,5 @@ export class SessionStore {
         this.sessions.delete(id);
       }
     }
-  }
-
-  /**
-   * Uruchamia pętlę czasu rzeczywistego; `alsoAdvance` (np. pokoje 1v1) liczy się w tym samym
-   * obiegu, więc `blockfall_tick_duration_seconds` i alert wolnego ticka obejmują całą grę.
-   * Zwraca funkcję, która zatrzymuje pętlę.
-   */
-  start(alsoAdvance?: (ticks: number) => void): () => void {
-    const stopLoop = startTickLoop(
-      this.now,
-      (ticks) => {
-        const stopTimer = tickDuration.startTimer();
-        this.advance(ticks);
-        alsoAdvance?.(ticks);
-        stopTimer();
-      },
-      (dropped) => ticksDropped.inc(dropped),
-    );
-    const sweep = setInterval(() => this.expire(), 1000);
-    return () => {
-      stopLoop();
-      clearInterval(sweep);
-    };
   }
 }
