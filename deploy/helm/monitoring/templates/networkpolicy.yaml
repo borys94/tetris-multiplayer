@@ -1,5 +1,5 @@
 # Grafana jest publiczna, a IMDS (169.254.169.254) daje uprawnienia roli serwera:
-# odcinamy go wszystkim podom w monitoringu (spec 006, jak block-imds w chartcie tetris).
+# odcinamy go wszystkim podom w monitoringu (spec obserwowalnosc, jak block-imds w chartcie tetris).
 # Node-exporter działa w sieci hosta, więc ta polityka go nie dotyczy (nie łączy się z IMDS).
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

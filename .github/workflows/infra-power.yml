@@ -1,6 +1,6 @@
 name: Infra power
 
-# Zatrzymanie lub uruchomienie serwera, żeby ograniczyć koszty (spec 003, S6).
+# Zatrzymanie lub uruchomienie serwera, żeby ograniczyć koszty (spec infrastruktura, S6).
 # Po zatrzymaniu zostają dysk i Elastic IP; po starcie aplikacja wraca sama.
 on:
   workflow_dispatch:

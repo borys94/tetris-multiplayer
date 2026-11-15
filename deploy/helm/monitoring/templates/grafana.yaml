@@ -1,5 +1,5 @@
 # Hasło admina Grafany: generowane przy pierwszej instalacji i stałe między deployami
-# (`lookup`), odczyt według runbooka (spec 006).
+# (`lookup`), odczyt według runbooka (spec obserwowalnosc).
 {{- $existing := lookup "v1" "Secret" .Release.Namespace "grafana-admin" }}
 apiVersion: v1
 kind: Secret

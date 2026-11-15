@@ -5,7 +5,7 @@ basicAuth:
   enabled: false
 
 quota:
-  requestsCpu: "1"
+  requestsCpu: '1'
   requestsMemory: 768Mi
   limitsMemory: 1Gi
   pods: 10

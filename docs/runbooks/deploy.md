@@ -1,6 +1,6 @@
 # Runbook: deploy na AWS
 
-Infrastruktura i deploy z [spec 003](../specs/003-deploy-aws.md): serwer EC2 z k3s w eu-central-1, beta i prod w jednym klastrze, deploy przez SSM i Helm ([ADR-0005](../adr/0005-deploy-przez-ssm-i-helm.md)). Od M4 ([spec 004](../specs/004-serwer-zrodlem-prawdy.md)) prod jest publiczny, a beta zostaje za basic auth. Od M5 ([spec 005](../specs/005-konta-wyniki.md)) każde środowisko ma własnego Postgresa z backupem do S3 (sekcja 6).
+Infrastruktura i deploy z [spec infrastruktura](../specs/infrastruktura.md): serwer EC2 z k3s w eu-central-1, beta i prod w jednym klastrze, deploy przez SSM i Helm ([ADR-0005](../adr/0005-deploy-przez-ssm-i-helm.md)). Od M4 prod jest publiczny, a beta zostaje za basic auth. Od M5 każde środowisko ma własnego Postgresa z backupem do S3 (sekcja 6).
 
 Wszystkie komendy uruchamiamy z katalogu głównego repo, z ustawionym regionem:
 
@@ -157,7 +157,7 @@ deploy/scripts/ssm-run.sh 'kubectl -n kube-system logs deploy/traefik | grep -i 
 
 Certyfikat Let's Encrypt pojawia się przy pierwszym wejściu na nowy host i wymaga otwartego portu 80 (wyzwanie HTTP-01).
 
-Sesje gry i pokoje 1v1 żyją w pamięci poda ([ADR-0006](../adr/0006-serwer-zrodlem-prawdy.md), [spec 007](../specs/007-1v1.md)). Deploy dogrywa trwające mecze: nowy pod startuje obok starego (`maxSurge: 1`), a stary po `SIGTERM` przestaje być `ready` (`/ready` → 503), zamyka pokoje bez meczu, rozłącza graczy spoza meczów (łączą się ponownie, już z nowym podem) i czeka na koniec meczów najwyżej 280 s (`terminationGracePeriodSeconds: 300`). Gry singleplayer i pokoje bez meczu przepadają jak wcześniej: klient zaczyna od nowa. Przebieg widać w logu starego poda (`draining`, potem `drained, shutting down` z liczbą niedokończonych meczów):
+Sesje gry i pokoje 1v1 żyją w pamięci poda ([ADR-0006](../adr/0006-serwer-zrodlem-prawdy.md), [spec infrastruktura](../specs/infrastruktura.md)). Deploy dogrywa trwające mecze: nowy pod startuje obok starego (`maxSurge: 1`), a stary po `SIGTERM` przestaje być `ready` (`/ready` → 503), zamyka pokoje bez meczu, rozłącza graczy spoza meczów (łączą się ponownie, już z nowym podem) i czeka na koniec meczów najwyżej 280 s (`terminationGracePeriodSeconds: 300`). Gry singleplayer i pokoje bez meczu przepadają jak wcześniej: klient zaczyna od nowa. Przebieg widać w logu starego poda (`draining`, potem `drained, shutting down` z liczbą niedokończonych meczów):
 
 ```sh
 deploy/scripts/ssm-run.sh 'kubectl -n tetris-prod get pods; kubectl -n tetris-prod logs <stary-pod> | grep drain'
@@ -171,7 +171,7 @@ Restart poda bez deployu (awaria, OOM) kończy także trwające mecze.
 
 Prod jest publiczny, bo `values-prod.yaml` ma `basicAuth.enabled: false` (ADR-0003). Beta zostaje zamknięta na stałe.
 
-**Sprawdzenie po deployu (scenariusz S5 ze spec 004):**
+**Sprawdzenie po deployu (scenariusz S3 ze spec infrastruktura):**
 
 ```sh
 IP=$(cd infra/terraform/main && tofu output -raw public_ip)
@@ -222,7 +222,7 @@ Postgres działa w każdym namespace jako StatefulSet `postgres` z danymi na dys
 deploy/scripts/ssm-run.sh 'kubectl -n tetris-prod exec deploy/tetris -- node main.cjs promote LOGIN'
 ```
 
-Kolejnych adminów nadaje się w panelu (`#/admin`).
+Kolejnych adminów nadaje się w panelu (`/admin`).
 
 **Backup:** CronJob `postgres-backup` codziennie o 03:00 (Europe/Warsaw) zapisuje `pg_dump -Fc` do `s3://tetris-backups-<ACCOUNT_ID>/<env>/<czas>.dump`. Bucket usuwa pliki po 30 dniach. Ręczny backup i lista plików:
 

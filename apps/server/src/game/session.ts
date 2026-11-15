@@ -1,18 +1,18 @@
-import { createGame, type Action } from "@tetris/game-core";
-import { SNAPSHOT_INTERVAL_TICKS } from "@tetris/protocol";
-import { BufferedClock, type BufferedClockOptions } from "./buffered-clock";
-import { BufferedGame } from "./buffered-game";
-import type { Send } from "./send";
+import { createGame, type Action } from '@tetris/game-core'
+import { SNAPSHOT_INTERVAL_TICKS } from '@tetris/protocol'
+import { BufferedClock, type BufferedClockOptions } from './buffered-clock'
+import { BufferedGame } from './buffered-game'
+import type { Send } from './send'
 
 /** Wynik zakończonej gry, liczony przez serwer. */
 export interface GameResult {
-  score: number;
-  lines: number;
-  level: number;
-  ticks: number;
+  score: number
+  lines: number
+  level: number
+  ticks: number
 }
 
-export type SessionOptions = BufferedClockOptions;
+export type SessionOptions = BufferedClockOptions
 
 /**
  * Jedna gra jednego gracza liczona przez serwer (ADR-0006).
@@ -23,15 +23,15 @@ export type SessionOptions = BufferedClockOptions;
  * Klient nie może więc ani cofnąć czasu o więcej niż bufor, ani go zatrzymać.
  */
 export class Session {
-  private readonly sim: BufferedGame;
-  private readonly clock: BufferedClock;
-  private paused = true;
-  private over = false;
-  private send: Send | null = null;
-  /** Konto, na które zapisujemy wynik; `null` to gość (spec 005). */
-  userId: number | null = null;
+  private readonly sim: BufferedGame
+  private readonly clock: BufferedClock
+  private paused = true
+  private over = false
+  private send: Send | null = null
+  /** Konto, na które zapisujemy wynik; `null` to gość (spec ranking-historia, R1). */
+  userId: number | null = null
   /** Wywoływane raz na koniec każdej gry. */
-  onOver: ((result: GameResult) => void) | null = null;
+  onOver: ((result: GameResult) => void) | null = null
 
   constructor(
     readonly id: string,
@@ -39,12 +39,12 @@ export class Session {
     seed: number,
     options: SessionOptions,
   ) {
-    this.sim = new BufferedGame(createGame(seed));
-    this.clock = new BufferedClock(options);
+    this.sim = new BufferedGame(createGame(seed))
+    this.clock = new BufferedClock(options)
   }
 
   get connected(): boolean {
-    return this.send !== null;
+    return this.send !== null
   }
 
   /**
@@ -53,89 +53,103 @@ export class Session {
    * a akcje jeszcze niezastosowane (wyprzedzające zegar w chwili rozłączenia) przepadają.
    */
   attach(send: Send): void {
-    this.send = send;
-    this.sim.resetInputs();
-    this.sendGame();
+    this.send = send
+    this.sim.resetInputs()
+    this.sendGame()
   }
 
-  /** Wstrzymuje grę na bieżącym ticku zegara (np. gdy gracz przechodzi do pokoju, spec 007). */
+  /** Wstrzymuje grę na bieżącym ticku zegara (np. gdy gracz przechodzi do pokoju, spec versus-1v1). */
   suspend(): void {
-    this.pauseAt(this.clock.tick);
+    this.pauseAt(this.clock.tick)
   }
 
   /** Odłącza połączenie; rozłączenie działa jak pauza na bieżącym ticku zegara. */
   detach(): void {
-    this.pauseAt(this.clock.tick);
-    this.send = null;
+    this.pauseAt(this.clock.tick)
+    this.send = null
   }
 
   newGame(seed: number): void {
-    this.sim.reset(createGame(seed));
-    this.clock.set(0);
-    this.paused = true;
-    this.over = false;
-    this.sendGame();
+    this.sim.reset(createGame(seed))
+    this.clock.set(0)
+    this.paused = true
+    this.over = false
+    this.sendGame()
   }
 
   /** Przyjmuje akcje klienta. Zwraca `false`, gdy wiadomość łamie protokół. */
   input(seq: number, clientTick: number, actions: readonly Action[]): boolean {
-    if (this.over) return true; // klient nie wiedział jeszcze o końcu gry
-    if (this.paused) return false;
-    return this.sim.accept(seq, clientTick, actions, this.clock.maxInputTick);
+    if (this.over) {
+      return true
+    } // klient nie wiedział jeszcze o końcu gry
+    if (this.paused) {
+      return false
+    }
+    return this.sim.accept(seq, clientTick, actions, this.clock.maxInputTick)
   }
 
   /** Pauza na ticku klienta, ograniczonym do zakresu, którego klient nie może nadużyć. */
   pause(clientTick: number): void {
-    this.pauseAt(Math.min(Math.max(clientTick, this.sim.simTick), this.clock.maxInputTick));
+    this.pauseAt(Math.min(Math.max(clientTick, this.sim.simTick), this.clock.maxInputTick))
   }
 
   resume(): void {
-    if (!this.over) this.paused = false;
+    if (!this.over) {
+      this.paused = false
+    }
   }
 
   /** Przesuwa zegar sesji o `ticks` ticków czasu rzeczywistego. */
   advance(ticks: number): void {
-    if (this.paused || this.over) return;
-    this.clock.advance(ticks, (target) => this.catchUp(target));
+    if (this.paused || this.over) {
+      return
+    }
+    this.clock.advance(ticks, (target) => this.catchUp(target))
   }
 
   private catchUp(target: number): void {
-    while (!this.over && this.sim.simTick < target) this.step();
+    while (!this.over && this.sim.simTick < target) {
+      this.step()
+    }
   }
 
   private pauseAt(target: number): void {
-    if (this.paused || this.over) return;
-    this.catchUp(target);
-    this.clock.set(this.sim.simTick);
-    this.paused = true;
-    if (!this.over) this.sendSnapshot();
+    if (this.paused || this.over) {
+      return
+    }
+    this.catchUp(target)
+    this.clock.set(this.sim.simTick)
+    this.paused = true
+    if (!this.over) {
+      this.sendSnapshot()
+    }
   }
 
   private step(): void {
-    this.sim.step();
+    this.sim.step()
 
     if (this.sim.over) {
-      this.over = true;
-      this.sendSnapshot();
-      const { score, lines, level } = this.sim.game;
-      this.send?.({ type: "over", score, lines, level });
-      this.onOver?.({ score, lines, level, ticks: this.sim.simTick });
+      this.over = true
+      this.sendSnapshot()
+      const { score, lines, level } = this.sim.game
+      this.send?.({ type: 'over', score, lines, level })
+      this.onOver?.({ score, lines, level, ticks: this.sim.simTick })
     } else if (this.sim.simTick % SNAPSHOT_INTERVAL_TICKS === 0) {
-      this.sendSnapshot();
+      this.sendSnapshot()
     }
   }
 
   private sendSnapshot(): void {
-    const { simTick, ackSeq, game } = this.sim;
-    this.send?.({ type: "snapshot", tick: simTick, ackSeq, state: game });
+    const { simTick, ackSeq, game } = this.sim
+    this.send?.({ type: 'snapshot', tick: simTick, ackSeq, state: game })
   }
 
   private sendGame(): void {
     this.send?.({
-      type: "game",
+      type: 'game',
       tick: this.sim.simTick,
       state: this.sim.game,
       paused: this.paused || this.over,
-    });
+    })
   }
 }

@@ -45,7 +45,7 @@ workdir=$(mktemp -d)
 trap 'rm -rf "$workdir"' EXIT
 helm pull "oci://$registry/charts/tetris" --version "0.0.0-g$version" --untar -d "$workdir"
 
-# Timeout z zapasem: stary pod może dogrywać mecze do 5 min (spec 007), a SSM ma limit 10 min.
+# Timeout z zapasem: stary pod może dogrywać mecze do 5 min (spec infrastruktura), a SSM ma limit 10 min.
 helm upgrade --install tetris "$workdir/tetris" \
   --namespace "$namespace" \
   --values "$workdir/tetris/values-$env.yaml" \

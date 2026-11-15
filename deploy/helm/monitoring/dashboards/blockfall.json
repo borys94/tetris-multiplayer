@@ -1,7 +1,7 @@
 {
   "uid": "blockfall",
   "title": "Blockfall",
-  "description": "Beta i prod: gra, HTTP, zasoby, baza i alerty (spec 006). Źródło: deploy/helm/monitoring/dashboards/blockfall.json",
+  "description": "Beta i prod: gra, HTTP, zasoby, baza i alerty (spec obserwowalnosc). Źródło: deploy/helm/monitoring/dashboards/blockfall.json",
   "tags": ["blockfall"],
   "timezone": "browser",
   "editable": false,

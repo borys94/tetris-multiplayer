@@ -1,6 +1,6 @@
 name: Monitoring
 
-# Chart monitoring (Prometheus, Grafana, alerty, dashboard; spec 006): pakowanie do ECR
+# Chart monitoring (Prometheus, Grafana, alerty, dashboard; spec obserwowalnosc): pakowanie do ECR
 # i instalacja przez SSM. Jeden monitoring dla bety i produ, więc bez środowisk GitHub.
 on:
   push:

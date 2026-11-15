@@ -1,11 +1,11 @@
-import { defineProject } from "vitest/config";
+import { defineProject } from 'vitest/config'
 
 export default defineProject({
   test: {
-    name: "server",
-    environment: "node",
+    name: 'server',
+    environment: 'node',
     // Postgres z Testcontainers (wymaga Dockera); start kontenera trwa kilka sekund.
-    globalSetup: ["./tests/support/global-setup.ts"],
+    globalSetup: ['./tests/support/global-setup.ts'],
     hookTimeout: 60_000,
   },
-});
+})

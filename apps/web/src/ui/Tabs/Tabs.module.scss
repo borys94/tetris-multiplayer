@@ -1,0 +1,9 @@
+.tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.tab[aria-selected='true'] {
+  color: var(--bg);
+  background: var(--accent);
+}

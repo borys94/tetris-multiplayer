@@ -6,7 +6,7 @@ export {
   createEmptyBoard,
   type Board,
   type Cell,
-} from "./board";
+} from './board'
 export {
   LOCK_DELAY_TICKS,
   MAX_LOCK_RESETS,
@@ -20,8 +20,8 @@ export {
   type Action,
   type GameState,
   type GameStatus,
-} from "./game";
-export { GARBAGE_CELL, attackLines, garbageLines, randomHole, type GarbageBatch } from "./garbage";
+} from './game'
+export { GARBAGE_CELL, attackLines, garbageLines, randomHole, type GarbageBatch } from './garbage'
 export {
   PIECE_TYPES,
   pieceCells,
@@ -30,5 +30,5 @@ export {
   type PieceType,
   type Point,
   type Rotation,
-} from "./pieces";
-export { TICKS_PER_SECOND } from "./time";
+} from './pieces'
+export { TICKS_PER_SECOND } from './time'

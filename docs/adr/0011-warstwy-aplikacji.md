@@ -1,6 +1,6 @@
 # ADR-0011: Dziel serwer i web na warstwy z granicami pilnowanymi przez ESLint
 
-- **Status:** Accepted
+- **Status:** Accepted; część web: Superseded by [ADR-0012](0012-web-domeny-i-ui.md)
 - **Data:** 2026-11-14
 - **Milestone:** M7, M8
 

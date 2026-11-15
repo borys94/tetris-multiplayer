@@ -1,6 +1,6 @@
 # Runbook: monitoring
 
-Prometheus, Grafana i alerty dla bety i produ ([spec 006](../specs/006-metryki.md), [ADR-0009](../adr/0009-monitoring-w-klastrze.md)). Komendy na serwerze uruchamiamy przez `deploy/scripts/ssm-run.sh '<komenda>'` (kubectl i helm mają ustawiony `KUBECONFIG`).
+Prometheus, Grafana i alerty dla bety i produ ([spec obserwowalnosc](../specs/obserwowalnosc.md), [ADR-0009](../adr/0009-monitoring-w-klastrze.md)). Komendy na serwerze uruchamiamy przez `deploy/scripts/ssm-run.sh '<komenda>'` (kubectl i helm mają ustawiony `KUBECONFIG`).
 
 ## Grafana
 

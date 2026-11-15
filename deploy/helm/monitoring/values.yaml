@@ -1,10 +1,10 @@
 # Host Grafany ustawia skrypt deployu, np. grafana.<IP>.sslip.io.
-host: ""
+host: ''
 
 # Namespace'y aplikacji: alerty i dashboard dotyczą tylko ich.
 appNamespaces: tetris-beta|tetris-prod
 
-# Progi alertów (spec 006, R5).
+# Progi alertów (spec obserwowalnosc, R4).
 alerts:
   # Odsetek odpowiedzi 5xx i minimalny ruch (żądania/s), od którego go liczymy.
   errorRatio: 0.05
@@ -58,7 +58,7 @@ kube-prometheus-stack:
         volumeClaimTemplate:
           spec:
             storageClassName: local-path
-            accessModes: ["ReadWriteOnce"]
+            accessModes: ['ReadWriteOnce']
             resources:
               requests:
                 storage: 4Gi
@@ -75,7 +75,7 @@ kube-prometheus-stack:
     ingress:
       enabled: false
     # Bez trwałego wolumenu: dashboard i źródło danych pochodzą z provisioningu,
-    # a zmiany w UI nie są trwałe (spec 006).
+    # a zmiany w UI nie są trwałe (spec obserwowalnosc).
     persistence:
       enabled: false
     grafana.ini:
@@ -100,7 +100,7 @@ kube-prometheus-stack:
       dashboards:
         enabled: true
         label: grafana_dashboard
-        labelValue: "1"
+        labelValue: '1'
         searchNamespace: monitoring
         resources:
           requests: { cpu: 10m, memory: 64Mi }

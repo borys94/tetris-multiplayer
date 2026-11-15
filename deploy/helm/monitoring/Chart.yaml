@@ -1,6 +1,6 @@
 apiVersion: v2
 name: monitoring
-description: Prometheus i Grafana dla Blockfall (spec 006, ADR-0009)
+description: Prometheus i Grafana dla Blockfall (spec obserwowalnosc, ADR-0009)
 type: application
 # Wersję chartu nadpisuje CI przy pakowaniu (helm package --version).
 version: 0.0.0

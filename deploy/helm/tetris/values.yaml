@@ -2,13 +2,13 @@
 environment: beta
 
 # Host ustawia skrypt deployu, np. beta.<IP>.sslip.io.
-host: ""
+host: ''
 
 image:
-  repository: ""
-  tag: ""
+  repository: ''
+  tag: ''
 
-# Sesje gry i pokoje żyją w pamięci procesu (ADR-0006, spec 007), więc zawsze 1 replika.
+# Sesje gry i pokoje żyją w pamięci procesu (ADR-0006, spec versus-1v1), więc zawsze 1 replika.
 replicas: 1
 
 game:
@@ -19,10 +19,10 @@ game:
   # Limit połączeń WebSocket z jednego IP; 0 = wyłączony. Wyłączony, bo Traefik w k3s
   # (externalTrafficPolicy: Cluster) widzi wszystkich klientów pod jednym adresem 10.42.0.1.
   maxConnectionsPerIp: 0
-  # Limit otwartych pokoi 1v1 (spec 007); gracze w pokojach liczą się też do maxSessions.
+  # Limit otwartych pokoi 1v1 (spec versus-1v1); gracze w pokojach liczą się też do maxSessions.
   maxRooms: 50
 
-# Deploy (spec 007): stary pod dogrywa trwające mecze 1v1 najwyżej tyle sekund.
+# Deploy (spec infrastruktura): stary pod dogrywa trwające mecze 1v1 najwyżej tyle sekund.
 # Przez ten czas w namespace działają dwa pody aplikacji, co musi zmieścić się w `quota`.
 drain:
   gracePeriodSeconds: 300
@@ -34,7 +34,7 @@ resources:
   limits:
     memory: 192Mi
 
-# Metryki Prometheusa (spec 006). PodMonitor powstaje tylko, gdy klaster ma CRD
+# Metryki Prometheusa (spec obserwowalnosc). PodMonitor powstaje tylko, gdy klaster ma CRD
 # kube-prometheus-stack, więc deploy aplikacji nie zależy od monitoringu.
 metrics:
   port: 9464
@@ -56,8 +56,8 @@ postgres:
 # Codzienny pg_dump do S3 (bucket z `bootstrap`, ustawiany przez skrypt deployu).
 backup:
   enabled: true
-  schedule: "0 3 * * *"
-  bucket: ""
+  schedule: '0 3 * * *'
+  bucket: ''
   region: eu-central-1
   awsCliImage: amazon/aws-cli:2.27.0
   resources:
